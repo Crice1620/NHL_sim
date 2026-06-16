@@ -1,6 +1,6 @@
 # NHL Basic Stats
 
-Auto-generated — last updated: 2026-06-16 13:37 UTC
+Auto-generated — last updated: 2026-06-16 13:38 UTC
 
 ## Read in R / Shiny
 ```r
