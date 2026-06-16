@@ -1,6 +1,6 @@
 # NHL Edge Stats
 
-Auto-generated — last updated: 2026-06-16 14:11 UTC
+Auto-generated — last updated: 2026-06-16 14:36 UTC
 
 ## Read in R / Shiny
 ```r
