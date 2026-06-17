@@ -587,4 +587,4 @@ run_edge_scraper <- function(seasons_override       = NULL,
 # Teams only (fast):      run_edge_scraper(scrape_players_flag=FALSE, scrape_goalies_flag=FALSE)
 # Test without uploading: run_edge_scraper(debug=TRUE, push=FALSE)
 # =============================================================================
-run_edge_scraper()
+#run_edge_scraper()
