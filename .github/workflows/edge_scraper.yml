@@ -1,4 +1,4 @@
-name: Scrape NHL Edge Stats
+name: Scrape NHL Stats & Edge
 
 on:
   schedule:
@@ -18,14 +18,18 @@ jobs:
       - name: Install R packages
         run: Rscript -e "install.packages(c('httr','jsonlite','dplyr','readr','base64enc'))"
 
-      - name: Run Edge scraper for current season
+      - name: Run scrapers for current season
         env:
           GITHUB_PAT: ${{ secrets.NHL_PAT }}
         run: |
           Rscript -e "
-            source('nhl_edge_scraper.R')
             yr <- as.integer(format(Sys.Date(), '%Y'))
             mo <- as.integer(format(Sys.Date(), '%m'))
             szn <- if (mo >= 9) yr + 1L else yr
+
+            source('nhl_stats_scraper.R')
+            run_stats_scraper(seasons_override = c(szn))
+
+            source('nhl_edge_scraper.R')
             run_edge_scraper(seasons_override = c(szn))
           "
