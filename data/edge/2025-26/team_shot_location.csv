@@ -475,6 +475,23 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2026,2,10,TOR,R Corner,0,2,0
 2026,2,10,TOR,R Net Side,4,50,0.08
 2026,2,10,TOR,R Point,0,123,0
+2026,2,20,CGY,Behind the Net,0,12,0
+2026,2,20,CGY,Beyond Red Line,5,78,0.0641
+2026,2,20,CGY,Center Point,8,189,0.0423
+2026,2,20,CGY,Crease,13,68,0.1912
+2026,2,20,CGY,High Slot,24,203,0.1182
+2026,2,20,CGY,L Circle,13,228,0.057
+2026,2,20,CGY,L Corner,0,8,0
+2026,2,20,CGY,L Net Side,4,56,0.0714
+2026,2,20,CGY,L Point,6,139,0.0432
+2026,2,20,CGY,Low Slot,95,537,0.1769
+2026,2,20,CGY,Offensive Neutral Zone,2,74,0.027
+2026,2,20,CGY,Outside L,7,154,0.0455
+2026,2,20,CGY,Outside R,3,131,0.0229
+2026,2,20,CGY,R Circle,21,221,0.095
+2026,2,20,CGY,R Corner,0,3,0
+2026,2,20,CGY,R Net Side,3,50,0.06
+2026,2,20,CGY,R Point,4,154,0.026
 2026,2,3,NYR,Behind the Net,3,9,0.3333
 2026,2,3,NYR,Beyond Red Line,5,72,0.0694
 2026,2,3,NYR,Center Point,14,182,0.0769
