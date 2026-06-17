@@ -392,4 +392,4 @@ run_stats_scraper <- function(seasons_override = NULL,
 # Current season only:    run_stats_scraper(seasons_override = c(2026))
 # Test without uploading: run_stats_scraper(debug=TRUE, push=FALSE)
 # =============================================================================
-run_stats_scraper()
+#run_stats_scraper()
