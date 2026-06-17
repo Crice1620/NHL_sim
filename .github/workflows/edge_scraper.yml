@@ -21,4 +21,11 @@ jobs:
       - name: Run Edge scraper for current season
         env:
           GITHUB_PAT: ${{ secrets.NHL_PAT }}
-        run: Rscript -e "source('nhl_edge_scraper.R'); run_edge_scraper(seasons_override=c(2026))"
+        run: |
+          Rscript -e "
+            source('nhl_edge_scraper.R')
+            yr <- as.integer(format(Sys.Date(), '%Y'))
+            mo <- as.integer(format(Sys.Date(), '%m'))
+            szn <- if (mo >= 9) yr + 1L else yr
+            run_edge_scraper(seasons_override = c(szn))
+          "
