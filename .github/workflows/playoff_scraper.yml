@@ -1,0 +1,32 @@
+name: Scrape Playoff Results
+
+on:
+  schedule:
+    - cron: '0 12 1 9 *'   # September 1st at noon UTC each year
+  workflow_dispatch:        # also lets you trigger manually anytime
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.NHL_PAT }}
+
+      - uses: r-lib/actions/setup-r@v2
+
+      - name: Install R packages
+        run: Rscript -e "install.packages(c('httr','jsonlite','dplyr','readr','base64enc'))"
+
+      - name: Scrape previous season playoff results
+        env:
+          GITHUB_PAT: ${{ secrets.NHL_PAT }}
+        run: |
+          Rscript -e "
+            source('NHL_stats_scraper.R')
+            yr <- as.integer(format(Sys.Date(), '%Y'))
+            mo <- as.integer(format(Sys.Date(), '%m'))
+            # On Sept 1, the previous season just ended (e.g. Sept 2026 -> season 2026)
+            prev_szn <- if (mo >= 9) yr else yr - 1L
+            run_playoff_scraper(seasons_override = c(prev_szn))
+          "
