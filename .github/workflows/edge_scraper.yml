@@ -27,9 +27,9 @@ jobs:
             mo <- as.integer(format(Sys.Date(), '%m'))
             szn <- if (mo >= 9) yr + 1L else yr
 
-            source('nhl_stats_scraper.R')
+            source('NHL_stats_scraper.R')
             run_stats_scraper(seasons_override = c(szn))
-
-            source('nhl_edge_scraper.R')
+            
+            source('NHL_edge_scraper.R')
             run_edge_scraper(seasons_override = c(szn))
           "
