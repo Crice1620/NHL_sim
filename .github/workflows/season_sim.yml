@@ -1,5 +1,8 @@
 name: Season Sim Projection
 
+permissions:
+  contents: write   # required so the default GITHUB_TOKEN can push commits
+
 on:
   schedule:
     # Runs once daily. The script itself checks the date and exits with no
@@ -34,6 +37,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/season_sim/*.json
-          git diff --cached --quiet || git commit -m "Update season sim projection [skip ci]"
-          git push
+          if compgen -G "data/season_sim/*.json" > /dev/null; then
+            git add data/season_sim/*.json
+            git diff --cached --quiet || git commit -m "Update season sim projection [skip ci]"
+            git push
+          else
+            echo "No season_sim JSON output found — script likely exited early (outside projection window or season already started). Nothing to commit."
+          fi
