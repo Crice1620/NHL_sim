@@ -18,9 +18,14 @@ jobs:
         with:
           r-version: 'release'
 
+      - name: Install system dependencies (needed to build httr/curl/openssl)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","httr","jsonlite"), repos="https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("dplyr","httr","jsonlite"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
 
       - name: Run season sim projection
         run: Rscript season_sim.R
