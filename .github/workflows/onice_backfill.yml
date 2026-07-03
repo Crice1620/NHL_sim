@@ -4,9 +4,9 @@ permissions:
   contents: write   # required so the default GITHUB_TOKEN can push commits
 
 # Manual-only — this is a deliberate bulk job, never scheduled. Run it from
-# the Actions tab, choose which season to backfill, and re-run it a few
-# times if one run doesn't finish the whole season (it processes up to 200
-# new games per run and picks up where it left off automatically).
+# the Actions tab and choose which season to backfill. Processes the ENTIRE
+# remaining backlog for that season in one run (no per-run cap) — a full
+# season is ~1,300 games, so this can genuinely take 30-90+ minutes.
 on:
   workflow_dispatch:
     inputs:
@@ -18,6 +18,7 @@ on:
 jobs:
   run-onice-backfill:
     runs-on: ubuntu-latest
+    timeout-minutes: 300   # generous headroom for a full-season backlog; GitHub's own default is 360
     steps:
       - uses: actions/checkout@v4
 
