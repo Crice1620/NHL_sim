@@ -557,6 +557,23 @@ shots_raw_new <- list()
 
 for (gid in new_games) {
   cat("Processing game", gid, "...\n")
+  if (isTRUE(get0("DEBUG_PENALTY_STRUCTURE", ifnotfound = FALSE))) {
+    pbp_dbg <- nhl_get(paste0("https://api-web.nhle.com/v1/gamecenter/", gid, "/play-by-play"))
+    if (!is.null(pbp_dbg) && !is.null(pbp_dbg$plays)) {
+      pen_events <- Filter(function(pl) {
+        typ <- tryCatch(pl$typeDescKey %||% "", error = function(e) "")
+        grepl("penalt", typ, ignore.case = TRUE)
+      }, pbp_dbg$plays)
+      if (length(pen_events) > 0) {
+        cat("=== FOUND PENALTY-LIKE EVENT, RAW STRUCTURE ===\n")
+        str(pen_events[[1]], max.level = 3)
+        cat("=== END ===\n")
+        stop("Debug dump complete — remove DEBUG_PENALTY_STRUCTURE and re-run normally.")
+      } else {
+        cat("  No penalty-like event found in this game, trying next...\n")
+      }
+    }
+  }
   res <- tryCatch(process_game(gid), error = function(e) { cat("  ERROR:", conditionMessage(e), "\n"); NULL })
   if (is.null(res)) { cat("  Skipped entirely (no usable play-by-play).\n"); next }
 
