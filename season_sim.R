@@ -300,7 +300,8 @@ project_skater_stats <- function(hist_df) {
       r_shots   = coalesce(shots, 0)   / gp,
       r_hits    = coalesce(hits, 0)    / gp,
       r_blocks  = coalesce(blocks, 0)  / gp,
-      r_pim     = coalesce(pim, 0)     / gp
+      r_pim     = coalesce(pim, 0)     / gp,
+      r_toi_min = coalesce(toi_pg_sec, 0) / 60   # toi_pg_sec is already a per-game average, just converting units
     )
   if (nrow(rates) == 0) return(NULL)
   rates %>%
@@ -323,10 +324,11 @@ project_skater_stats <- function(hist_df) {
       rate_hits    = { w <- recency_weights_gp(season, gp); sum(w * r_hits) },
       rate_blocks  = { w <- recency_weights_gp(season, gp); sum(w * r_blocks) },
       rate_pim     = { w <- recency_weights_gp(season, gp); sum(w * r_pim) },
+      rate_toi_min = { w <- recency_weights_gp(season, gp); sum(w * r_toi_min) },
       .groups = "drop"
     ) %>%
     select(player_id, player_name, position, n_seasons, proj_gp,
-           rate_goals, rate_assists, rate_shots, rate_hits, rate_blocks, rate_pim)
+           rate_goals, rate_assists, rate_shots, rate_hits, rate_blocks, rate_pim, rate_toi_min)
 }
 
 cat("Computing skater stat-line projections...\n")
@@ -721,13 +723,23 @@ team_offense <- skater_output %>%
   group_by(team_abbrev) %>%
   arrange(desc(proj_points), .by_group = TRUE) %>%
   slice_head(n = 18) %>%   # top 18 by projected points ~ approximate active lineup
+  mutate(
+    indiv_sh_pct = ifelse(coalesce(rate_shots, 0) > 0, rate_goals / rate_shots, NA_real_),
+    toi_w = coalesce(rate_toi_min, 12)   # fallback to a modest bottom-six-ish 12 min/gm if TOI history is missing
+  ) %>%
   summarise(
-    shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
-    goals_for_pg      = sum(coalesce(rate_goals, 0), na.rm = TRUE),
-    def_proxy         = sum(coalesce(rate_hits, 0) * 0.5 + coalesce(rate_blocks, 0), na.rm = TRUE),
-    onice_ca_pg_sum   = sum(onice_ca_pg, na.rm = TRUE),
-    onice_cf_pg_sum   = sum(onice_cf_pg, na.rm = TRUE),
-    n_with_onice_def  = sum(!is.na(onice_ca_pg)),
+    shots_for_pg         = sum(coalesce(rate_shots, 0), na.rm = TRUE),
+    goals_for_pg         = sum(coalesce(rate_goals, 0), na.rm = TRUE),
+    # TOI-weighted average of each player's OWN shooting %, instead of a
+    # shot-count-weighted team aggregate. An elite finisher who plays heavy
+    # minutes but only takes a modest SHARE of the team's total shot volume
+    # (which is how a star's efficiency previously got diluted by depth
+    # players' shot totals) now gets weighted by his actual role/ice time.
+    shooting_pct_toi_wtd = sum(coalesce(indiv_sh_pct, 0.09) * toi_w, na.rm = TRUE) / sum(toi_w, na.rm = TRUE),
+    def_proxy            = sum(coalesce(rate_hits, 0) * 0.5 + coalesce(rate_blocks, 0), na.rm = TRUE),
+    onice_ca_pg_sum      = sum(onice_ca_pg, na.rm = TRUE),
+    onice_cf_pg_sum      = sum(onice_cf_pg, na.rm = TRUE),
+    n_with_onice_def     = sum(!is.na(onice_ca_pg)),
     .groups = "drop"
   )
 
@@ -748,7 +760,7 @@ cat("  Teams with a full top-18 of on-ice defense data:", sum(team_offense$n_wit
 
 team_offense <- team_offense %>%
   mutate(
-    shooting_pct              = ifelse(shots_for_pg > 0, goals_for_pg / shots_for_pg, lg_avg_shooting_pct),
+    shooting_pct              = coalesce(shooting_pct_toi_wtd, ifelse(shots_for_pg > 0, goals_for_pg / shots_for_pg, lg_avg_shooting_pct)),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
     shots_against_onice       = onice_ca_pg_sum * sog_to_corsi_ratio,
