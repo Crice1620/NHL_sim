@@ -499,35 +499,34 @@ all_rosters <- all_rosters %>%
   )
 cat("  Players with usable birth date:", sum(!is.na(all_rosters$age_at_season_start)), "of", nrow(all_rosters), "\n")
 
-# Real NHL experience (regular-season years played) from the player landing
-# endpoint — only fetched for skaters under 29, since older players only use
-# the age-based decline side below and don't need this.
-fetch_player_experience <- function(player_id) {
-  raw <- nhl_get(paste0("https://api-web.nhle.com/v1/player/", player_id, "/landing"), 15)
-  if (is.null(raw) || is.null(raw$seasonTotals)) return(NA_integer_)
-  nhl_regular <- Filter(function(x) {
-    league <- tryCatch(x$leagueAbbrev %||% NA_character_, error = function(e) NA_character_)
-    gtype  <- tryCatch(as.integer(x$gameTypeId %||% NA), error = function(e) NA_integer_)
-    !is.na(league) && league == "NHL" && !is.na(gtype) && gtype == 2
-  }, raw$seasonTotals)
-  length(nhl_regular)
-}
-
-young_skater_ids <- all_rosters %>%
-  filter(coalesce(position_group, "") != "goalies",
-         !is.na(age_at_season_start), age_at_season_start < 29) %>%
-  pull(player_id) %>% unique()
-
-cat("Fetching NHL experience for", length(young_skater_ids), "skaters under 29...\n")
-experience_lookup <- setNames(rep(NA_integer_, length(young_skater_ids)), young_skater_ids)
-for (pid in young_skater_ids) {
-  experience_lookup[pid] <- tryCatch(fetch_player_experience(pid), error = function(e) NA_integer_)
-  Sys.sleep(0.05)
-}
-cat("  Experience data fetched for", sum(!is.na(experience_lookup)), "of", length(young_skater_ids), "\n")
-
+# NHL experience fetch is SKIPPED — it was ~350+ individual API calls per
+# run, and the only thing that ever consumed years_in_nhl was
+# age_growth_multiplier(), which is currently disabled (see below). No
+# point paying that cost for data nothing uses. To bring it back: uncomment
+# this block and re-enable the age_mult lines further down.
+# fetch_player_experience <- function(player_id) {
+#   raw <- nhl_get(paste0("https://api-web.nhle.com/v1/player/", player_id, "/landing"), 15)
+#   if (is.null(raw) || is.null(raw$seasonTotals)) return(NA_integer_)
+#   nhl_regular <- Filter(function(x) {
+#     league <- tryCatch(x$leagueAbbrev %||% NA_character_, error = function(e) NA_character_)
+#     gtype  <- tryCatch(as.integer(x$gameTypeId %||% NA), error = function(e) NA_integer_)
+#     !is.na(league) && league == "NHL" && !is.na(gtype) && gtype == 2
+#   }, raw$seasonTotals)
+#   length(nhl_regular)
+# }
+# young_skater_ids <- all_rosters %>%
+#   filter(coalesce(position_group, "") != "goalies",
+#          !is.na(age_at_season_start), age_at_season_start < 29) %>%
+#   pull(player_id) %>% unique()
+# cat("Fetching NHL experience for", length(young_skater_ids), "skaters under 29...\n")
+# experience_lookup <- setNames(rep(NA_integer_, length(young_skater_ids)), young_skater_ids)
+# for (pid in young_skater_ids) {
+#   experience_lookup[pid] <- tryCatch(fetch_player_experience(pid), error = function(e) NA_integer_)
+#   Sys.sleep(0.05)
+# }
+# cat("  Experience data fetched for", sum(!is.na(experience_lookup)), "of", length(young_skater_ids), "\n")
 all_rosters <- all_rosters %>%
-  mutate(years_in_nhl = unname(experience_lookup[player_id]))
+  mutate(years_in_nhl = NA_integer_)
 
 age_growth_multiplier <- function(age, years_in_nhl) {
   growth_mult <- dplyr::case_when(
@@ -689,7 +688,7 @@ project_skater_onice <- function(hist_df) {
 }
 
 cat("Computing skater on-ice defense projections...\n")
-skater_onice_hist <- load_all_skater_onice(tail(recent3, 1))  # EXPERIMENT: only the most recent season, not the 3-year blend
+skater_onice_hist <- load_all_skater_onice(recent3)
 proj_skater_onice <- project_skater_onice(skater_onice_hist)
 cat("  proj_skater_onice rows:", if (is.null(proj_skater_onice)) 0 else nrow(proj_skater_onice), "\n")
 if (!is.null(proj_skater_onice)) {
@@ -727,8 +726,15 @@ team_offense <- skater_output %>%
     shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
     goals_for_pg      = sum(coalesce(rate_goals, 0), na.rm = TRUE),
     def_proxy         = sum(coalesce(rate_hits, 0) * 0.5 + coalesce(rate_blocks, 0), na.rm = TRUE),
-    onice_ca_pg_sum   = sum(onice_ca_pg, na.rm = TRUE),
-    onice_cf_pg_sum   = sum(onice_cf_pg, na.rm = TRUE),
+    # On-ice CA/CF are SHARED stats — every skater on the ice for a shot
+    # gets credited for that same event (~5 skaters at once during 5v5), so
+    # summing 18 players' individual on-ice rates counts almost every event
+    # roughly 5x over. Shots-for is safe to sum (each shot has exactly one
+    # author); on-ice defense is not. Fix: TOI-weighted AVERAGE instead of
+    # a sum — a full-time player's real observed on-ice rate counts
+    # proportionally more than a 4th-liner's, without the ~5x inflation.
+    onice_ca_pg_wtd   = sum(onice_ca_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_ca_pg)], na.rm = TRUE),
+    onice_cf_pg_wtd   = sum(onice_cf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_cf_pg)], na.rm = TRUE),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
     .groups = "drop"
   )
@@ -743,8 +749,22 @@ lg_avg_shooting_pct <- sum(team_offense$goals_for_pg, na.rm=TRUE) / sum(team_off
 # (real league-wide shots_for_pg vs the league-wide Corsi-for sum computed
 # the same roster-aggregated way) so both sides of the formula land on the
 # same shots-on-goal scale — no guessed constant.
-sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) / mean(team_offense$onice_cf_pg_sum[team_offense$onice_cf_pg_sum > 0], na.rm = TRUE)
+sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) / mean(team_offense$onice_cf_pg_wtd[team_offense$onice_cf_pg_wtd > 0], na.rm = TRUE)
 cat("  SOG-to-Corsi conversion ratio (self-calibrated):", round(sog_to_corsi_ratio, 3), "\n")
+
+# Testing a specific hypothesis: our on-ice data is 5v5-ONLY, but real
+# box-score shots-against is ALL SITUATIONS combined (5v5+PP+PK+etc). A
+# single league-wide conversion ratio assumes every team's PP/PK shot
+# patterns are similar enough to not matter — this checks whether that
+# assumption is actually breaking down for Edmonton specifically.
+edm_raw <- team_offense %>% filter(team_abbrev == "EDM")
+if (nrow(edm_raw) > 0) {
+  cat("  EDM raw on-ice (5v5-only, pre-conversion): onice_ca_pg_wtd=", round(edm_raw$onice_ca_pg_wtd,2),
+      "onice_cf_pg_wtd=", round(edm_raw$onice_cf_pg_wtd,2),
+      "-> after conversion:", round(edm_raw$onice_ca_pg_wtd * sog_to_corsi_ratio, 2),
+      "| real all-situation shots-against was 26.7\n")
+}
+
 cat("  Teams with a full top-18 of on-ice defense data:", sum(team_offense$n_with_onice_def >= 15), "of", nrow(team_offense),
     "(partial coverage falls back to the blocks/hits proxy for those teams)\n")
 
@@ -753,7 +773,7 @@ team_offense <- team_offense %>%
     shooting_pct              = ifelse(shots_for_pg > 0, goals_for_pg / shots_for_pg, lg_avg_shooting_pct),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
-    shots_against_onice       = onice_ca_pg_sum * sog_to_corsi_ratio,
+    shots_against_onice       = onice_ca_pg_wtd * sog_to_corsi_ratio,
     # Only trust the on-ice aggregate once most of the top-18 actually has
     # on-ice history (e.g. 15+ of 18) — otherwise a roster with several
     # rookies/no-history skaters would understate shots-against just from
