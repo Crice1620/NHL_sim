@@ -783,6 +783,29 @@ cat("  Team shots/game range:", round(min(team_off_def$shots_for_pg),1), "-", ro
     "| shots-against range:", round(min(team_off_def$shots_against_pg),1), "-", round(max(team_off_def$shots_against_pg),1),
     "| Sv% range:", round(min(team_off_def$goalie_sv_pct),3), "-", round(max(team_off_def$goalie_sv_pct),3), "\n")
 
+# Player-level diagnostic for specific persistently-underprojected teams —
+# rather than continuing to guess at team-level formula changes, this shows
+# exactly what each individual player's projected rates look like, so we
+# can see whether the root cause is a real data/pipeline issue (e.g. a
+# star's history not matching correctly) vs. the model accurately
+# reflecting a thin supporting cast that a reference tool weighs differently.
+cat("\n  ── Player-level diagnostic: EDM, VGK, MIN, NSH top-18 by proj_points ──\n")
+for (tm in c("EDM", "VGK", "MIN", "NSH")) {
+  cat("\n  --", tm, "--\n")
+  tm_players <- skater_output %>%
+    filter(team_abbrev == tm, has_history) %>%
+    arrange(desc(proj_points)) %>%
+    slice_head(n = 18)
+  for (i in seq_len(nrow(tm_players))) {
+    p <- tm_players[i, ]
+    cat(sprintf("    %-20s | proj_pts=%.1f rate_goals=%.3f rate_shots=%.3f rate_toi_min=%.1f n_seasons=%d\n",
+                substr(coalesce(p$player_name, "?"), 1, 20), coalesce(p$proj_points, NA_real_),
+                coalesce(p$rate_goals, NA_real_), coalesce(p$rate_shots, NA_real_),
+                coalesce(p$rate_toi_min, NA_real_), coalesce(p$n_seasons, NA_integer_)))
+  }
+}
+cat("\n")
+
 # Full per-team diagnostic — every input the shot-based engine actually
 # uses, one row per team, sorted by an approximate net quality (shooting %
 # minus shots-against-adjusted save advantage) so it's easy to eyeball
