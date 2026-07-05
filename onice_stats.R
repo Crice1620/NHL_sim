@@ -396,13 +396,21 @@ process_game <- function(game_id) {
       taker <- tryCatch(as.character(det$committedByPlayerId %||% NA), error = function(e) NA_character_)
       drawer <- tryCatch(as.character(det$drawnByPlayerId %||% NA), error = function(e) NA_character_)
       pen_desc <- tryCatch(det$descKey %||% NA_character_, error = function(e) NA_character_)
+      pen_type_code <- tryCatch(det$typeCode %||% NA_character_, error = function(e) NA_character_)
       pen_dur <- tryCatch(suppressWarnings(as.integer(det$duration %||% NA)), error = function(e) NA_integer_)
       # Fights/misconducts/matches shouldn't count toward normal penalty
       # impact the way a minor does — exclude anything not a standard
-      # 2-minute minor from this WAR component (majors/misconducts still
-      # get written to the raw output below if you want them later, they
-      # just aren't counted in the simple taken/drawn tallies).
-      is_std_minor <- !is.na(pen_dur) && pen_dur == 120
+      # minor from this WAR component (majors/misconducts still get
+      # written to the raw output below if you want them later, they just
+      # aren't counted in the simple taken/drawn tallies).
+      # NOTE: duration is reported in MINUTES, not seconds (confirmed from
+      # a real event: a standard minor shows duration=2, not 120) — the
+      # first version of this check assumed seconds and silently excluded
+      # every single penalty as a result. typeCode == "MIN" is the more
+      # explicit, robust signal and is checked first; the duration check
+      # is kept as a secondary guard in case typeCode is ever missing.
+      is_std_minor <- (!is.na(pen_type_code) && pen_type_code == "MIN") ||
+                      (is.na(pen_type_code) && !is.na(pen_dur) && pen_dur == 2)
       if (is_std_minor) {
         if (!is.na(taker)) pen_taken <- bump(pen_taken, taker)
         if (!is.na(drawer)) pen_drawn <- bump(pen_drawn, drawer)
@@ -557,23 +565,6 @@ shots_raw_new <- list()
 
 for (gid in new_games) {
   cat("Processing game", gid, "...\n")
-  if (isTRUE(get0("DEBUG_PENALTY_STRUCTURE", ifnotfound = FALSE))) {
-    pbp_dbg <- nhl_get(paste0("https://api-web.nhle.com/v1/gamecenter/", gid, "/play-by-play"))
-    if (!is.null(pbp_dbg) && !is.null(pbp_dbg$plays)) {
-      pen_events <- Filter(function(pl) {
-        typ <- tryCatch(pl$typeDescKey %||% "", error = function(e) "")
-        grepl("penalt", typ, ignore.case = TRUE)
-      }, pbp_dbg$plays)
-      if (length(pen_events) > 0) {
-        cat("=== FOUND PENALTY-LIKE EVENT, RAW STRUCTURE ===\n")
-        str(pen_events[[1]], max.level = 3)
-        cat("=== END ===\n")
-        stop("Debug dump complete — remove DEBUG_PENALTY_STRUCTURE and re-run normally.")
-      } else {
-        cat("  No penalty-like event found in this game, trying next...\n")
-      }
-    }
-  }
   res <- tryCatch(process_game(gid), error = function(e) { cat("  ERROR:", conditionMessage(e), "\n"); NULL })
   if (is.null(res)) { cat("  Skipped entirely (no usable play-by-play).\n"); next }
 
