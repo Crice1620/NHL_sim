@@ -555,7 +555,9 @@ player_team_rows <- list()
 # everything else in this script, so backfill runs can resume/extend.
 shots_raw_new <- list()
 
-for (gid in new_games) {
+DEBUG_PENALTY_STRUCTURE <- TRUE
+  
+  for (gid in new_games) {
   cat("Processing game", gid, "...\n")
   if (isTRUE(get0("DEBUG_PENALTY_STRUCTURE", ifnotfound = FALSE))) {
     pbp_dbg <- nhl_get(paste0("https://api-web.nhle.com/v1/gamecenter/", gid, "/play-by-play"))
