@@ -285,8 +285,8 @@ cat("  proj_goalie_vals rows:", nrow(proj_goalie_vals), "\n")
 # rates instead of the composite value score, so we can show real projected
 # goals/assists/points/etc, not just an abstract "value".
 NHL_GAMES <- 84L  # matches app.R's NHL_GAMES — the NHL expanded to an 84-game
-# regular season starting with 2026-27, which is exactly
-# the season this script projects.
+                  # regular season starting with 2026-27, which is exactly
+                  # the season this script projects.
 FULL_SEASON_GP <- NHL_GAMES
 GOALIE_GP_CAP  <- round(60L * NHL_GAMES / 82L)  # scaled proportionally from the old 82-game-season cap
 
@@ -885,15 +885,15 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
   n <- length(home_abbrevs)
   home_shots <- pmax(1, round((shots_for_lu[home_abbrevs] + shots_against_lu[away_abbrevs]) / 2 + HOME_SHOT_BOOST))
   away_shots <- pmax(1, round((shots_for_lu[away_abbrevs] + shots_against_lu[home_abbrevs]) / 2))
-  
+
   home_goal_prob <- pmin(0.30, pmax(0.01,
-                                    shooting_pct_lu[home_abbrevs] * (1 - goalie_sv_lu[away_abbrevs]) / (1 - league_avg_sv_pct) + HOME_GOAL_BOOST))
+    shooting_pct_lu[home_abbrevs] * (1 - goalie_sv_lu[away_abbrevs]) / (1 - league_avg_sv_pct) + HOME_GOAL_BOOST))
   away_goal_prob <- pmin(0.30, pmax(0.01,
-                                    shooting_pct_lu[away_abbrevs] * (1 - goalie_sv_lu[home_abbrevs]) / (1 - league_avg_sv_pct)))
-  
+    shooting_pct_lu[away_abbrevs] * (1 - goalie_sv_lu[home_abbrevs]) / (1 - league_avg_sv_pct)))
+
   home_goals <- rbinom(n, home_shots, home_goal_prob)
   away_goals <- rbinom(n, away_shots, away_goal_prob)
-  
+
   tied <- home_goals == away_goals
   if (any(tied)) {
     nt <- sum(tied)
@@ -906,8 +906,8 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
     away_wins_ot <- ot_a_score & !ot_h_score
     needs_so <- !(home_wins_ot | away_wins_ot)
     so_edge <- 0.5 + pmin(0.15, pmax(-0.15,
-                                     (shooting_pct_lu[home_abbrevs[tied]] - shooting_pct_lu[away_abbrevs[tied]]) * 3 +
-                                       (goalie_sv_lu[away_abbrevs[tied]] - goalie_sv_lu[home_abbrevs[tied]]) * 3))
+      (shooting_pct_lu[home_abbrevs[tied]] - shooting_pct_lu[away_abbrevs[tied]]) * 3 +
+      (goalie_sv_lu[away_abbrevs[tied]] - goalie_sv_lu[home_abbrevs[tied]]) * 3))
     so_home_wins <- runif(nt) < so_edge
     home_wins_final <- home_wins_ot | (needs_so & so_home_wins)
     idx <- which(tied)
@@ -1012,10 +1012,10 @@ pts_sum      <- setNames(numeric(length(net_lookup)), names(net_lookup))
 for (i in seq_len(N_SIMS)) {
   pts_i <- simulate_one_season_pts()
   pts_sum <- pts_sum + pts_i[names(pts_sum)]
-  
+
   df <- data.frame(team_abbrev = names(pts_i), pts = as.numeric(pts_i), stringsAsFactors = FALSE) %>%
     left_join(cd_map, by = "team_abbrev")
-  
+
   conf_champs <- c()
   for (conf in unique(na.omit(df$conference))) {
     cdf <- df %>% filter(conference == conf)
