@@ -689,7 +689,7 @@ project_skater_onice <- function(hist_df) {
 }
 
 cat("Computing skater on-ice defense projections...\n")
-skater_onice_hist <- load_all_skater_onice(recent3)
+skater_onice_hist <- load_all_skater_onice(tail(recent3, 1))  # EXPERIMENT: only the most recent season, not the 3-year blend
 proj_skater_onice <- project_skater_onice(skater_onice_hist)
 cat("  proj_skater_onice rows:", if (is.null(proj_skater_onice)) 0 else nrow(proj_skater_onice), "\n")
 if (!is.null(proj_skater_onice)) {
@@ -802,6 +802,21 @@ for (tm in c("EDM", "VGK", "MIN", "NSH")) {
                 substr(coalesce(p$player_name, "?"), 1, 20), coalesce(p$proj_points, NA_real_),
                 coalesce(p$rate_goals, NA_real_), coalesce(p$rate_shots, NA_real_),
                 coalesce(p$rate_toi_min, NA_real_), coalesce(p$n_seasons, NA_integer_)))
+  }
+}
+cat("\n")
+
+cat("  ── Goalie-level diagnostic: EDM, VGK, MIN, NSH ──\n")
+for (tm in c("EDM", "VGK", "MIN", "NSH")) {
+  cat("\n  --", tm, "goalies --\n")
+  tm_goalies <- goalie_output %>% filter(team_abbrev == tm) %>% arrange(desc(coalesce(proj_gp, -1)))
+  for (i in seq_len(nrow(tm_goalies))) {
+    g <- tm_goalies[i, ]
+    cat(sprintf("    %-20s | has_history=%s proj_gp=%.1f proj_wins=%s proj_sv_pct=%s\n",
+                substr(coalesce(g$player_name, "?"), 1, 20), g$has_history,
+                coalesce(g$proj_gp, NA_real_),
+                if (is.null(g$proj_wins) || is.na(g$proj_wins)) "NA" else sprintf("%.1f", g$proj_wins),
+                if (is.null(g$proj_sv_pct) || is.na(g$proj_sv_pct)) "NA" else sprintf("%.4f", g$proj_sv_pct)))
   }
 }
 cat("\n")
