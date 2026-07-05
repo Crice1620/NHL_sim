@@ -181,11 +181,11 @@ parse_situation <- function(code) {
   home_sk <- suppressWarnings(as.integer(ch[3])); home_g <- suppressWarnings(as.integer(ch[4]))
   if (any(is.na(c(away_g, away_sk, home_sk, home_g)))) return(list(label = "other"))
   label <- if (away_g == 1 && home_g == 1 && away_sk == 5 && home_sk == 5) "5v5"
-  else if (away_g == 1 && home_g == 1 && away_sk == 4 && home_sk == 4) "4v4"
-  else if (away_g == 1 && home_g == 1 && away_sk == 3 && home_sk == 3) "3v3"
-  else if (away_g == 1 && home_g == 1 && home_sk > away_sk) "home_pp"
-  else if (away_g == 1 && home_g == 1 && away_sk > home_sk) "away_pp"
-  else "other"
+    else if (away_g == 1 && home_g == 1 && away_sk == 4 && home_sk == 4) "4v4"
+    else if (away_g == 1 && home_g == 1 && away_sk == 3 && home_sk == 3) "3v3"
+    else if (away_g == 1 && home_g == 1 && home_sk > away_sk) "home_pp"
+    else if (away_g == 1 && home_g == 1 && away_sk > home_sk) "away_pp"
+    else "other"
   list(label = label)
 }
 
@@ -209,19 +209,24 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df) {
   })
   shifts_df <- bind_rows(Filter(Negate(is.null), shifts))
   if (nrow(shifts_df) == 0) return(NULL)
-  
+
   on_ice_at <- function(t_abs, team_id) {
     if (is.na(t_abs) || is.na(team_id)) return(character(0))
     rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs <= t_abs & shifts_df$end_abs >= t_abs, ]
     unique(rows$player_id)
   }
-  
+
   cf <- list(); ca <- list(); gf <- list(); ga <- list()
   ev_goals <- list(); ev_assists <- list()
   pp_goals <- list(); pp_assists <- list()
   pk_ga <- list()
+  # Individual on-ice PP-shots-for / PK-shots-against — same shift-matching
+  # approach as 5v5 CF/CA above, just filtered to power-play/penalty-kill
+  # situations instead. This is what makes real per-player PK/PP shot
+  # volume possible (not just goals), which wasn't tracked before.
+  pp_shots_ind <- list(); pk_shots_against_ind <- list()
   toi_5v5 <- list(); toi_pp <- list(); toi_pk <- list()
-  
+
   if (nrow(sit_df) > 0) {
     game_end_abs <- suppressWarnings(max(shifts_df$end_abs, na.rm = TRUE))
     seg_start <- sit_df$t_abs; seg_end <- c(sit_df$t_abs[-1], game_end_abs); seg_label <- sit_df$label
@@ -242,7 +247,7 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df) {
       toi_5v5[[pid]] <- t5; toi_pp[[pid]] <- tpp; toi_pk[[pid]] <- tpk
     }
   }
-  
+
   for (pl in pbp$plays) {
     typ  <- tryCatch(pl$typeDescKey %||% "", error = function(e) "")
     code <- tryCatch(as.character(pl$situationCode %||% NA), error = function(e) NA_character_)
@@ -252,7 +257,7 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df) {
     per <- tryCatch(as.integer(pl$periodDescriptor$number %||% NA), error = function(e) NA_integer_)
     tip <- tryCatch(parse_mmss(pl$timeInPeriod %||% NA), error = function(e) NA_real_)
     t_abs <- if (!is.na(per) && !is.na(tip)) (per - 1) * 1200 + tip else NA_real_
-    
+
     is_shot_evt <- typ %in% c("shot-on-goal", "missed-shot", "blocked-shot", "goal")
     if (is_shot_evt && sit$label == "5v5" && !is.na(t_abs) && !is.na(owner_team)) {
       against_team <- if (identical(owner_team, home_id)) away_id else home_id
@@ -260,12 +265,27 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df) {
       cf <- bump(cf, for_on); ca <- bump(ca, against_on)
       if (typ == "goal") { gf <- bump(gf, for_on); ga <- bump(ga, against_on) }
     }
-    
+    if (is_shot_evt && sit$label %in% c("home_pp", "away_pp") && !is.na(t_abs) && !is.na(owner_team)) {
+      owner_on_pp <- (identical(owner_team, home_id) && sit$label == "home_pp") ||
+                     (identical(owner_team, away_id) && sit$label == "away_pp")
+      against_team <- if (identical(owner_team, home_id)) away_id else home_id
+      if (isTRUE(owner_on_pp)) {
+        # owner_team has the power play; against_team is killing the penalty
+        pp_shooters_on <- on_ice_at(t_abs, owner_team)
+        pk_defenders_on <- on_ice_at(t_abs, against_team)
+        pp_shots_ind <- bump(pp_shots_ind, pp_shooters_on)
+        pk_shots_against_ind <- bump(pk_shots_against_ind, pk_defenders_on)
+      }
+      # Shorthanded shot BY the penalty-killing team (rare) isn't tracked
+      # here — matches the existing team-level handling, which also treats
+      # this as a minor edge case rather than precisely modeling it.
+    }
+
     if (typ == "goal") {
       scorer <- tryCatch(as.character(det$scoringPlayerId %||% NA), error = function(e) NA_character_)
       a1 <- tryCatch(as.character(det$assist1PlayerId %||% NA), error = function(e) NA_character_)
       a2 <- tryCatch(as.character(det$assist2PlayerId %||% NA), error = function(e) NA_character_)
-      
+
       if (sit$label == "5v5") {
         if (!is.na(scorer)) ev_goals <- bump(ev_goals, scorer)
         if (!is.na(a1)) ev_assists <- bump(ev_assists, a1)
@@ -285,9 +305,10 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df) {
       }
     }
   }
-  
+
   list(cf = cf, ca = ca, gf = gf, ga = ga, ev_goals = ev_goals, ev_assists = ev_assists,
        pp_goals = pp_goals, pp_assists = pp_assists, pk_ga = pk_ga,
+       pp_shots_ind = pp_shots_ind, pk_shots_against_ind = pk_shots_against_ind,
        toi_5v5 = toi_5v5, toi_pp = toi_pp, toi_pk = toi_pk)
 }
 
@@ -295,13 +316,13 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df) {
 process_game <- function(game_id) {
   pbp <- nhl_get(paste0("https://api-web.nhle.com/v1/gamecenter/", game_id, "/play-by-play"))
   if (is.null(pbp) || is.null(pbp$plays) || length(pbp$plays) == 0) return(NULL)
-  
+
   home_id <- tryCatch(as.character(pbp$homeTeam$id), error = function(e) NA_character_)
   away_id <- tryCatch(as.character(pbp$awayTeam$id), error = function(e) NA_character_)
   home_abbrev <- tryCatch(as.character(pbp$homeTeam$abbrev %||% NA), error = function(e) NA_character_)
   away_abbrev <- tryCatch(as.character(pbp$awayTeam$abbrev %||% NA), error = function(e) NA_character_)
   if (is.na(home_id) || is.na(away_id) || is.na(home_abbrev) || is.na(away_abbrev)) return(NULL)
-  
+
   sit_events <- lapply(pbp$plays, function(pl) {
     tryCatch({
       per <- suppressWarnings(as.integer(pl$periodDescriptor$number %||% NA))
@@ -326,11 +347,11 @@ process_game <- function(game_id) {
       else if (lbl == "away_pp") { team_toi$away_pp <- team_toi$away_pp + dur; team_toi$home_pk <- team_toi$home_pk + dur }
     }
   }
-  
+
   t_cf <- list(); t_ca <- list(); t_gf <- list(); t_ga <- list()
   t_pp_goals <- list(); t_pp_shots <- list(); t_pk_ga <- list(); t_pk_shots <- list()
   g_shots5 <- list(); g_ga5 <- list(); g_shotspk <- list(); g_gapk <- list()
-  
+
   for (pl in pbp$plays) {
     typ  <- tryCatch(pl$typeDescKey %||% "", error = function(e) "")
     code <- tryCatch(as.character(pl$situationCode %||% NA), error = function(e) NA_character_)
@@ -341,7 +362,7 @@ process_game <- function(game_id) {
     is_shot_evt <- typ %in% c("shot-on-goal", "missed-shot", "blocked-shot", "goal")
     if (!is_shot_evt || is.na(owner_team)) next
     against_team <- if (identical(owner_team, home_id)) away_id else home_id
-    
+
     if (sit$label == "5v5") {
       t_cf <- bump1(t_cf, owner_team); t_ca <- bump1(t_ca, against_team)
       if (typ == "goal") { t_gf <- bump1(t_gf, owner_team); t_ga <- bump1(t_ga, against_team) }
@@ -351,7 +372,7 @@ process_game <- function(game_id) {
       }
     } else if (sit$label %in% c("home_pp", "away_pp")) {
       owner_on_pp <- (identical(owner_team, home_id) && sit$label == "home_pp") ||
-        (identical(owner_team, away_id) && sit$label == "away_pp")
+                     (identical(owner_team, away_id) && sit$label == "away_pp")
       if (isTRUE(owner_on_pp)) {
         t_pp_shots <- bump1(t_pp_shots, owner_team)
         if (typ == "goal") { t_pp_goals <- bump1(t_pp_goals, owner_team); t_pk_ga <- bump1(t_pk_ga, against_team) }
@@ -364,19 +385,19 @@ process_game <- function(game_id) {
       }
     }
   }
-  
+
   team_result <- list(home_id = home_id, away_id = away_id, home_abbrev = home_abbrev, away_abbrev = away_abbrev,
-                      cf = t_cf, ca = t_ca, gf = t_gf, ga = t_ga,
-                      pp_goals = t_pp_goals, pp_shots = t_pp_shots, pk_ga = t_pk_ga, pk_shots = t_pk_shots,
-                      toi = team_toi)
+                       cf = t_cf, ca = t_ca, gf = t_gf, ga = t_ga,
+                       pp_goals = t_pp_goals, pp_shots = t_pp_shots, pk_ga = t_pk_ga, pk_shots = t_pk_shots,
+                       toi = team_toi)
   goalie_result <- list(shots_5v5 = g_shots5, ga_5v5 = g_ga5, shots_pk = g_shotspk, ga_pk = g_gapk)
-  
+
   skater_result <- NULL
   shifts_raw <- nhl_get(paste0("https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=", game_id))
   if (!is.null(shifts_raw) && !is.null(shifts_raw$data) && length(shifts_raw$data) > 0) {
     skater_result <- tryCatch(process_game_skaters(pbp, shifts_raw, home_id, away_id, sit_df), error = function(e) NULL)
   }
-  
+
   list(team = team_result, goalie = goalie_result, skater = skater_result)
 }
 
@@ -386,20 +407,30 @@ existing_team   <- if (file.exists(TEAM_OUT))   tryCatch(read.csv(TEAM_OUT,   st
 existing_goalie <- if (file.exists(GOALIE_OUT)) tryCatch(read.csv(GOALIE_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
 
 blank_skater <- function() list(cf=list(),ca=list(),gf=list(),ga=list(),ev_goals=list(),ev_assists=list(),
-                                pp_goals=list(),pp_assists=list(),pk_ga=list(),
-                                toi_5v5=list(),toi_pp=list(),toi_pk=list(),gp=list())
+                                 pp_goals=list(),pp_assists=list(),pk_ga=list(),pp_shots=list(),pk_shots_against=list(),
+                                 toi_5v5=list(),toi_pp=list(),toi_pk=list(),gp=list())
+# Guard against older skater_onice.csv files from before pp_shots/
+# pk_shots_against existed — default to 0 rather than erroring, meaning
+# those already-processed games just won't contribute to the new columns
+# until reprocessed (not a correctness issue, just a coverage gap that
+# closes naturally as new games get processed).
+if (!is.null(existing_skater) && nrow(existing_skater) > 0) {
+  if (!"pp_shots" %in% names(existing_skater)) existing_skater$pp_shots <- 0
+  if (!"pk_shots_against" %in% names(existing_skater)) existing_skater$pk_shots_against <- 0
+}
 skater_totals <- if (is.null(existing_skater) || nrow(existing_skater) == 0) blank_skater() else list(
   cf = to_named_list(existing_skater$player_id, existing_skater$cf_5v5), ca = to_named_list(existing_skater$player_id, existing_skater$ca_5v5),
   gf = to_named_list(existing_skater$player_id, existing_skater$gf_5v5), ga = to_named_list(existing_skater$player_id, existing_skater$ga_5v5),
   ev_goals = to_named_list(existing_skater$player_id, existing_skater$ev_goals), ev_assists = to_named_list(existing_skater$player_id, existing_skater$ev_assists),
   pp_goals = to_named_list(existing_skater$player_id, existing_skater$pp_goals), pp_assists = to_named_list(existing_skater$player_id, existing_skater$pp_assists),
   pk_ga = to_named_list(existing_skater$player_id, existing_skater$pk_ga),
+  pp_shots = to_named_list(existing_skater$player_id, existing_skater$pp_shots), pk_shots_against = to_named_list(existing_skater$player_id, existing_skater$pk_shots_against),
   toi_5v5 = to_named_list(existing_skater$player_id, existing_skater$toi_5v5_sec), toi_pp = to_named_list(existing_skater$player_id, existing_skater$toi_pp_sec),
   toi_pk = to_named_list(existing_skater$player_id, existing_skater$toi_pk_sec), gp = to_named_list(existing_skater$player_id, existing_skater$gp_onice)
 )
 
 blank_team <- function() list(cf=list(),ca=list(),gf=list(),ga=list(),pp_goals=list(),pp_shots=list(),
-                              pk_ga=list(),pk_shots=list(),toi_5v5=list(),toi_pp=list(),toi_pk=list(),gp=list())
+                               pk_ga=list(),pk_shots=list(),toi_5v5=list(),toi_pp=list(),toi_pk=list(),gp=list())
 team_totals <- if (is.null(existing_team) || nrow(existing_team) == 0) blank_team() else list(
   cf = to_named_list(existing_team$team_abbrev, existing_team$cf_5v5), ca = to_named_list(existing_team$team_abbrev, existing_team$ca_5v5),
   gf = to_named_list(existing_team$team_abbrev, existing_team$gf_5v5), ga = to_named_list(existing_team$team_abbrev, existing_team$ga_5v5),
@@ -433,7 +464,7 @@ for (gid in new_games) {
   cat("Processing game", gid, "...\n")
   res <- tryCatch(process_game(gid), error = function(e) { cat("  ERROR:", conditionMessage(e), "\n"); NULL })
   if (is.null(res)) { cat("  Skipped entirely (no usable play-by-play).\n"); next }
-  
+
   tr <- res$team
   team_totals$cf       <- merge_add(team_totals$cf,       remap_team_keys(tr$cf, tr$home_id, tr$away_id, tr$home_abbrev, tr$away_abbrev))
   team_totals$ca       <- merge_add(team_totals$ca,       remap_team_keys(tr$ca, tr$home_id, tr$away_id, tr$home_abbrev, tr$away_abbrev))
@@ -448,7 +479,7 @@ for (gid in new_games) {
   team_totals$toi_pk   <- merge_add(team_totals$toi_pk,  setNames(list(tr$toi$home_pk,  tr$toi$away_pk),  c(tr$home_abbrev, tr$away_abbrev)))
   team_totals$gp       <- merge_add(team_totals$gp,      setNames(list(1, 1), c(tr$home_abbrev, tr$away_abbrev)))
   team_games_ok <- team_games_ok + 1L
-  
+
   gr <- res$goalie
   goalie_totals$shots_5v5 <- merge_add(goalie_totals$shots_5v5, gr$shots_5v5)
   goalie_totals$ga_5v5    <- merge_add(goalie_totals$ga_5v5,    gr$ga_5v5)
@@ -456,7 +487,7 @@ for (gid in new_games) {
   goalie_totals$ga_pk     <- merge_add(goalie_totals$ga_pk,     gr$ga_pk)
   goalie_game_players <- unique(c(names(gr$shots_5v5), names(gr$shots_pk)))
   goalie_totals$gp <- merge_add(goalie_totals$gp, to_named_list(goalie_game_players, rep(1, length(goalie_game_players))))
-  
+
   if (!is.null(res$skater)) {
     sk <- res$skater
     skater_totals$cf <- merge_add(skater_totals$cf, sk$cf); skater_totals$ca <- merge_add(skater_totals$ca, sk$ca)
@@ -464,6 +495,8 @@ for (gid in new_games) {
     skater_totals$ev_goals <- merge_add(skater_totals$ev_goals, sk$ev_goals); skater_totals$ev_assists <- merge_add(skater_totals$ev_assists, sk$ev_assists)
     skater_totals$pp_goals <- merge_add(skater_totals$pp_goals, sk$pp_goals); skater_totals$pp_assists <- merge_add(skater_totals$pp_assists, sk$pp_assists)
     skater_totals$pk_ga <- merge_add(skater_totals$pk_ga, sk$pk_ga)
+    skater_totals$pp_shots <- merge_add(skater_totals$pp_shots, sk$pp_shots_ind)
+    skater_totals$pk_shots_against <- merge_add(skater_totals$pk_shots_against, sk$pk_shots_against_ind)
     skater_totals$toi_5v5 <- merge_add(skater_totals$toi_5v5, sk$toi_5v5)
     skater_totals$toi_pp  <- merge_add(skater_totals$toi_pp,  sk$toi_pp)
     skater_totals$toi_pk  <- merge_add(skater_totals$toi_pk,  sk$toi_pk)
@@ -539,6 +572,8 @@ if (length(all_pids) > 0) {
     pp_goals    = sapply(all_pids, gv, lst = skater_totals$pp_goals),
     pp_assists  = sapply(all_pids, gv, lst = skater_totals$pp_assists),
     pk_ga       = sapply(all_pids, gv, lst = skater_totals$pk_ga),
+    pp_shots         = sapply(all_pids, gv, lst = skater_totals$pp_shots),
+    pk_shots_against = sapply(all_pids, gv, lst = skater_totals$pk_shots_against),
     toi_5v5_sec = sapply(all_pids, gv, lst = skater_totals$toi_5v5),
     toi_pp_sec  = sapply(all_pids, gv, lst = skater_totals$toi_pp),
     toi_pk_sec  = sapply(all_pids, gv, lst = skater_totals$toi_pk),
@@ -549,7 +584,13 @@ if (length(all_pids) > 0) {
     ga_per60_5v5    = ifelse(toi_5v5_sec > 0, round(ga_5v5 / (toi_5v5_sec / 3600), 2), NA_real_),
     ev_points_per60 = ifelse(toi_5v5_sec > 0, round((ev_goals + ev_assists) / (toi_5v5_sec / 3600), 2), NA_real_),
     pp_points_per60 = ifelse(toi_pp_sec > 0, round((pp_goals + pp_assists) / (toi_pp_sec / 3600), 2), NA_real_),
-    pk_ga_per60     = ifelse(toi_pk_sec > 0, round(pk_ga / (toi_pk_sec / 3600), 2), NA_real_)
+    pk_ga_per60     = ifelse(toi_pk_sec > 0, round(pk_ga / (toi_pk_sec / 3600), 2), NA_real_),
+    # Real on-ice PK save rate — how often shots against were stopped while
+    # THIS player was on the ice killing a penalty. Previously impossible
+    # (no per-player PK shot volume existed); pk_ga_per60 alone can't tell
+    # you whether a low goals-against rate reflects genuinely good penalty
+    # killing or just facing very few shots.
+    pk_save_pct     = ifelse(pk_shots_against > 0, round(1 - pk_ga / pk_shots_against, 4), NA_real_)
   )
   write.csv(skater_df, SKATER_OUT, row.names = FALSE)
 }
