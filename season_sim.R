@@ -670,11 +670,13 @@ load_all_skater_onice <- function(seasons) {
 
 project_skater_onice <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
+  if (!"pk_shots_against" %in% names(hist_df)) hist_df$pk_shots_against <- NA_real_  # guard for pre-update on-ice CSVs
   rates <- hist_df %>%
     filter(coalesce(gp_onice, 0) > 0) %>%
     mutate(
       ca_pg = coalesce(ca_5v5, 0) / gp_onice,   # on-ice Corsi-against per game while this player is on the ice
-      cf_pg = coalesce(cf_5v5, 0) / gp_onice    # on-ice Corsi-for per game — used only to self-calibrate the SOG/Corsi ratio below
+      cf_pg = coalesce(cf_5v5, 0) / gp_onice,   # on-ice Corsi-for per game — used only to self-calibrate the SOG/Corsi ratio below
+      pk_sa_pg = coalesce(pk_shots_against, 0) / gp_onice   # real individual on-ice PK shots-against per game (now tracked at the source)
     )
   if (nrow(rates) == 0) return(NULL)
   rates %>%
@@ -683,6 +685,7 @@ project_skater_onice <- function(hist_df) {
     summarise(
       onice_ca_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * ca_pg) },
       onice_cf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * cf_pg) },
+      onice_pk_sa_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * pk_sa_pg) },
       .groups = "drop"
     )
 }
@@ -694,8 +697,10 @@ cat("  proj_skater_onice rows:", if (is.null(proj_skater_onice)) 0 else nrow(pro
 if (!is.null(proj_skater_onice)) {
   skater_output <- skater_output %>% left_join(proj_skater_onice, by = "player_id")
 } else {
-  skater_output$onice_ca_pg <- NA_real_; skater_output$onice_cf_pg <- NA_real_
+  skater_output$onice_ca_pg <- NA_real_; skater_output$onice_cf_pg <- NA_real_; skater_output$onice_pk_sa_pg <- NA_real_
 }
+
+abbrev_fix <- c("ARI" = "UTA", "PHX" = "UTA")  # extend if another franchise relocates/renames
 
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
@@ -715,33 +720,15 @@ LEAGUE_AVG_SV_PCT_FALLBACK <- 0.905  # used only if a team has literally no goal
 DEF_PROXY_SCALE <- 3         # max approx +/- shots/game swing from the blocks/hits defensive proxy — only used as a fallback now, for skaters without on-ice history
 HOME_SHOT_BOOST <- 0.4       # extra shots/game for the home team (was 1.0 — too strong, same issue found and fixed in the live app)
 HOME_GOAL_BOOST <- 0.003     # small additive bump to the home team's per-shot goal probability (was 0.01 — a huge relative swing on a ~0.09 base probability)
-abbrev_fix <- c("ARI" = "UTA", "PHX" = "UTA")  # extend if another franchise relocates/renames
 
 team_offense <- skater_output %>%
   filter(has_history) %>%
   group_by(team_abbrev) %>%
   arrange(desc(proj_points), .by_group = TRUE) %>%
   slice_head(n = 18) %>%   # top 18 by projected points ~ approximate active lineup
-  mutate(
-    # EXPERIMENT: continuous "star power" boost proportional to each
-    # player's OWN shot volume, replacing an earlier binary top-3-forwards
-    # cutoff. A team's highest-volume shooter (usually its true star) gets
-    # close to the full boost; defensemen and low-volume depth players
-    # naturally get little to none, WITHOUT needing an explicit position
-    # check or an arbitrary rank threshold — shot volume itself already
-    # separates "real offensive driver" from "plays a lot but doesn't
-    # shoot much" (which is exactly where the earlier TOI-weighting
-    # attempt went wrong, rewarding heavy-minute low-scoring D-men).
-    # Reflects a real hockey-analytics idea: truly elite players contribute
-    # more to winning than their box-score rate alone suggests (extra
-    # defensive attention drawn, disproportionate PP1 usage, high-leverage
-    # deployment).
-    max_team_shots = max(coalesce(rate_shots, 0), na.rm = TRUE),
-    star_boost     = 1 + 0.15 * (coalesce(rate_shots, 0) / pmax(max_team_shots, 0.1))
-  ) %>%
   summarise(
-    shots_for_pg      = sum(coalesce(rate_shots, 0) * star_boost, na.rm = TRUE),
-    goals_for_pg      = sum(coalesce(rate_goals, 0) * star_boost, na.rm = TRUE),
+    shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
+    goals_for_pg      = sum(coalesce(rate_goals, 0), na.rm = TRUE),
     def_proxy         = sum(coalesce(rate_hits, 0) * 0.5 + coalesce(rate_blocks, 0), na.rm = TRUE),
     # On-ice CA/CF are SHARED stats — every skater on the ice for a shot
     # gets credited for that same event (~5 skaters at once during 5v5), so
@@ -752,6 +739,12 @@ team_offense <- skater_output %>%
     # proportionally more than a 4th-liner's, without the ~5x inflation.
     onice_ca_pg_wtd   = sum(onice_ca_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_ca_pg)], na.rm = TRUE),
     onice_cf_pg_wtd   = sum(onice_cf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_cf_pg)], na.rm = TRUE),
+    # Same shared-stat reasoning as CA above — multiple PK defenders get
+    # credited for the same shot-against event, so this is a TOI-weighted
+    # average, not a sum. This is the roster-driven replacement for the
+    # earlier team-level PK compromise, now that real per-skater PK shot
+    # volume is tracked at the source (onice_stats.R).
+    onice_pk_sa_pg_wtd = sum(onice_pk_sa_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_pk_sa_pg)], na.rm = TRUE),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
     .groups = "drop"
   )
@@ -790,7 +783,12 @@ team_offense <- team_offense %>%
     shooting_pct              = ifelse(shots_for_pg > 0, goals_for_pg / shots_for_pg, lg_avg_shooting_pct),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
-    shots_against_onice       = onice_ca_pg_wtd * sog_to_corsi_ratio,
+    # 5v5-only on-ice shots-against PLUS real roster-driven PK shots-against
+    # (both Corsi-scale, both converted via the same SOG ratio) — this is
+    # what makes it all-situation instead of 5v5-only. Falls back to 0
+    # added PK shots if that data isn't available for enough of the roster,
+    # rather than erroring.
+    shots_against_onice       = (onice_ca_pg_wtd + coalesce(onice_pk_sa_pg_wtd, 0)) * sog_to_corsi_ratio,
     # Only trust the on-ice aggregate once most of the top-18 actually has
     # on-ice history (e.g. 15+ of 18) — otherwise a roster with several
     # rookies/no-history skaters would understate shots-against just from
