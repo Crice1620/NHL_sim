@@ -1,229 +1,229 @@
 {
   "season": 2027,
-  "generated_at": "2026-07-05 04:24:40 UTC",
+  "generated_at": "2026-07-05 04:45:40 UTC",
   "n_sims": 10000,
   "results": [
     {
       "team_abbrev": "TBL",
-      "proj_points": 114.8,
-      "playoff_pct": 98.9,
-      "cup_pct": 13.4,
+      "proj_points": 116.2,
+      "playoff_pct": 99.3,
+      "cup_pct": 14.8,
       "_row": "TBL"
     },
     {
       "team_abbrev": "WSH",
-      "proj_points": 112.9,
-      "playoff_pct": 97.9,
-      "cup_pct": 12.5,
+      "proj_points": 111.8,
+      "playoff_pct": 97,
+      "cup_pct": 10.8,
       "_row": "WSH"
     },
     {
       "team_abbrev": "NYR",
-      "proj_points": 107.4,
-      "playoff_pct": 92.6,
-      "cup_pct": 7.3,
+      "proj_points": 106.5,
+      "playoff_pct": 89.9,
+      "cup_pct": 6.3,
       "_row": "NYR"
     },
     {
       "team_abbrev": "DAL",
-      "proj_points": 105.7,
-      "playoff_pct": 98.4,
-      "cup_pct": 10.8,
+      "proj_points": 104.9,
+      "playoff_pct": 98,
+      "cup_pct": 10.5,
       "_row": "DAL"
     },
     {
       "team_abbrev": "BUF",
-      "proj_points": 102.9,
-      "playoff_pct": 84.6,
-      "cup_pct": 5.2,
+      "proj_points": 102.5,
+      "playoff_pct": 82.2,
+      "cup_pct": 4.6,
       "_row": "BUF"
     },
     {
-      "team_abbrev": "COL",
-      "proj_points": 99.9,
-      "playoff_pct": 93.3,
-      "cup_pct": 8.3,
-      "_row": "COL"
-    },
-    {
       "team_abbrev": "CAR",
-      "proj_points": 99.4,
-      "playoff_pct": 73.5,
-      "cup_pct": 4.7,
+      "proj_points": 99.9,
+      "playoff_pct": 73.1,
+      "cup_pct": 5,
       "_row": "CAR"
     },
     {
       "team_abbrev": "CBJ",
-      "proj_points": 97.9,
-      "playoff_pct": 66.4,
-      "cup_pct": 2.9,
+      "proj_points": 99.9,
+      "playoff_pct": 72.6,
+      "cup_pct": 3.7,
       "_row": "CBJ"
     },
     {
-      "team_abbrev": "BOS",
-      "proj_points": 97.8,
-      "playoff_pct": 68.6,
-      "cup_pct": 3.2,
-      "_row": "BOS"
+      "team_abbrev": "COL",
+      "proj_points": 99.7,
+      "playoff_pct": 93.7,
+      "cup_pct": 8.1,
+      "_row": "COL"
     },
     {
       "team_abbrev": "PHI",
-      "proj_points": 95.8,
-      "playoff_pct": 54.2,
-      "cup_pct": 2.3,
+      "proj_points": 98.9,
+      "playoff_pct": 66.7,
+      "cup_pct": 3.8,
       "_row": "PHI"
     },
     {
+      "team_abbrev": "BOS",
+      "proj_points": 97.4,
+      "playoff_pct": 65.4,
+      "cup_pct": 3.3,
+      "_row": "BOS"
+    },
+    {
       "team_abbrev": "ANA",
-      "proj_points": 95,
-      "playoff_pct": 85.5,
-      "cup_pct": 4.3,
+      "proj_points": 96,
+      "playoff_pct": 89.3,
+      "cup_pct": 5.1,
       "_row": "ANA"
     },
     {
-      "team_abbrev": "UTA",
-      "proj_points": 94.2,
-      "playoff_pct": 78.2,
-      "cup_pct": 4.1,
-      "_row": "UTA"
-    },
-    {
       "team_abbrev": "WPG",
-      "proj_points": 92.9,
-      "playoff_pct": 73.2,
-      "cup_pct": 4.2,
+      "proj_points": 93.2,
+      "playoff_pct": 75.8,
+      "cup_pct": 4,
       "_row": "WPG"
     },
     {
-      "team_abbrev": "TOR",
-      "proj_points": 92.1,
-      "playoff_pct": 37.7,
-      "cup_pct": 1.2,
-      "_row": "TOR"
+      "team_abbrev": "UTA",
+      "proj_points": 92.7,
+      "playoff_pct": 73.2,
+      "cup_pct": 3.5,
+      "_row": "UTA"
     },
     {
       "team_abbrev": "FLA",
-      "proj_points": 90,
-      "playoff_pct": 31.6,
-      "cup_pct": 1,
+      "proj_points": 92.1,
+      "playoff_pct": 38.8,
+      "cup_pct": 1.6,
       "_row": "FLA"
     },
     {
       "team_abbrev": "OTT",
-      "proj_points": 89.4,
-      "playoff_pct": 28.3,
-      "cup_pct": 0.7,
+      "proj_points": 90.7,
+      "playoff_pct": 31.7,
+      "cup_pct": 0.9,
       "_row": "OTT"
     },
     {
-      "team_abbrev": "SEA",
-      "proj_points": 87.9,
-      "playoff_pct": 58.5,
-      "cup_pct": 2,
-      "_row": "SEA"
+      "team_abbrev": "TOR",
+      "proj_points": 89.4,
+      "playoff_pct": 25.6,
+      "cup_pct": 0.8,
+      "_row": "TOR"
+    },
+    {
+      "team_abbrev": "VGK",
+      "proj_points": 88.7,
+      "playoff_pct": 62.1,
+      "cup_pct": 2.3,
+      "_row": "VGK"
     },
     {
       "team_abbrev": "MIN",
-      "proj_points": 87.5,
+      "proj_points": 87.3,
       "playoff_pct": 52.2,
-      "cup_pct": 2.3,
+      "cup_pct": 2.1,
       "_row": "MIN"
     },
     {
       "team_abbrev": "MTL",
-      "proj_points": 87,
-      "playoff_pct": 20.7,
-      "cup_pct": 0.6,
+      "proj_points": 86.9,
+      "playoff_pct": 19.4,
+      "cup_pct": 0.5,
       "_row": "MTL"
     },
     {
-      "team_abbrev": "VGK",
-      "proj_points": 86.6,
-      "playoff_pct": 51.8,
-      "cup_pct": 1.5,
-      "_row": "VGK"
-    },
-    {
       "team_abbrev": "LAK",
-      "proj_points": 85.8,
-      "playoff_pct": 50.7,
-      "cup_pct": 1.6,
+      "proj_points": 85.7,
+      "playoff_pct": 51.1,
+      "cup_pct": 1.9,
       "_row": "LAK"
     },
     {
+      "team_abbrev": "SEA",
+      "proj_points": 85.7,
+      "playoff_pct": 49.4,
+      "cup_pct": 1.5,
+      "_row": "SEA"
+    },
+    {
       "team_abbrev": "NJD",
-      "proj_points": 85.4,
-      "playoff_pct": 14.5,
-      "cup_pct": 0.4,
+      "proj_points": 84.3,
+      "playoff_pct": 11,
+      "cup_pct": 0.3,
       "_row": "NJD"
     },
     {
       "team_abbrev": "PIT",
-      "proj_points": 83.9,
-      "playoff_pct": 11.1,
+      "proj_points": 84.3,
+      "playoff_pct": 10.4,
       "cup_pct": 0.3,
       "_row": "PIT"
     },
     {
-      "team_abbrev": "SJS",
+      "team_abbrev": "CHI",
       "proj_points": 83.6,
-      "playoff_pct": 39.1,
+      "playoff_pct": 37.1,
+      "cup_pct": 1.1,
+      "_row": "CHI"
+    },
+    {
+      "team_abbrev": "NYI",
+      "proj_points": 83.1,
+      "playoff_pct": 8.1,
+      "cup_pct": 0.2,
+      "_row": "NYI"
+    },
+    {
+      "team_abbrev": "SJS",
+      "proj_points": 83.1,
+      "playoff_pct": 37.2,
       "cup_pct": 1.1,
       "_row": "SJS"
     },
     {
       "team_abbrev": "EDM",
-      "proj_points": 83.3,
-      "playoff_pct": 39,
-      "cup_pct": 1.4,
+      "proj_points": 82.6,
+      "playoff_pct": 37,
+      "cup_pct": 0.8,
       "_row": "EDM"
     },
     {
-      "team_abbrev": "CHI",
-      "proj_points": 83.1,
-      "playoff_pct": 33.4,
-      "cup_pct": 1.1,
-      "_row": "CHI"
-    },
-    {
       "team_abbrev": "DET",
-      "proj_points": 82.9,
-      "playoff_pct": 10.8,
-      "cup_pct": 0.3,
+      "proj_points": 82.4,
+      "playoff_pct": 8.8,
+      "cup_pct": 0.2,
       "_row": "DET"
     },
     {
-      "team_abbrev": "NYI",
-      "proj_points": 82.5,
-      "playoff_pct": 8.6,
-      "cup_pct": 0.2,
-      "_row": "NYI"
-    },
-    {
       "team_abbrev": "CGY",
-      "proj_points": 77.9,
-      "playoff_pct": 19.2,
+      "proj_points": 77.8,
+      "playoff_pct": 19.6,
       "cup_pct": 0.4,
       "_row": "CGY"
     },
     {
       "team_abbrev": "NSH",
-      "proj_points": 77.6,
-      "playoff_pct": 13.2,
-      "cup_pct": 0.3,
+      "proj_points": 76.2,
+      "playoff_pct": 10.8,
+      "cup_pct": 0.2,
       "_row": "NSH"
     },
     {
       "team_abbrev": "STL",
-      "proj_points": 76.5,
-      "playoff_pct": 11.1,
-      "cup_pct": 0.2,
+      "proj_points": 76.1,
+      "playoff_pct": 10.6,
+      "cup_pct": 0.3,
       "_row": "STL"
     },
     {
       "team_abbrev": "VAN",
-      "proj_points": 69.8,
-      "playoff_pct": 3.2,
+      "proj_points": 68.8,
+      "playoff_pct": 3,
       "cup_pct": 0,
       "_row": "VAN"
     }
@@ -258,8 +258,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.7,
-      "onice_ca_pg": 14.3066,
-      "onice_cf_pg": 15.6131
+      "onice_ca_pg": 12.86,
+      "onice_cf_pg": 15.9
     },
     {
       "team_abbrev": "ANA",
@@ -290,8 +290,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.7,
-      "onice_ca_pg": 13.7966,
-      "onice_cf_pg": 14.9671
+      "onice_ca_pg": 13.4107,
+      "onice_cf_pg": 16.5357
     },
     {
       "team_abbrev": "ANA",
@@ -322,8 +322,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.3,
-      "onice_ca_pg": 12.981,
-      "onice_cf_pg": 14.791
+      "onice_ca_pg": 12.3818,
+      "onice_cf_pg": 16.1636
     },
     {
       "team_abbrev": "ANA",
@@ -354,8 +354,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.8,
-      "onice_ca_pg": 15.0504,
-      "onice_cf_pg": 13.8078
+      "onice_ca_pg": 13.1273,
+      "onice_cf_pg": 14.1636
     },
     {
       "team_abbrev": "ANA",
@@ -418,8 +418,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.3,
-      "onice_ca_pg": 17.1024,
-      "onice_cf_pg": 19.4449
+      "onice_ca_pg": 16.9016,
+      "onice_cf_pg": 21.3443
     },
     {
       "team_abbrev": "ANA",
@@ -450,8 +450,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.9,
-      "onice_ca_pg": 11.8881,
-      "onice_cf_pg": 13.3968
+      "onice_ca_pg": 11.1228,
+      "onice_cf_pg": 14.3509
     },
     {
       "team_abbrev": "ANA",
@@ -482,8 +482,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.6,
-      "onice_ca_pg": 12.3772,
-      "onice_cf_pg": 11.5064
+      "onice_ca_pg": 12.431,
+      "onice_cf_pg": 11.7586
     },
     {
       "team_abbrev": "ANA",
@@ -514,8 +514,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.7,
-      "onice_ca_pg": 12.4483,
-      "onice_cf_pg": 13.7543
+      "onice_ca_pg": 11.9508,
+      "onice_cf_pg": 13.8689
     },
     {
       "team_abbrev": "ANA",
@@ -546,8 +546,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 75.1,
-      "onice_ca_pg": 13.3519,
-      "onice_cf_pg": 12.239
+      "onice_ca_pg": 10.875,
+      "onice_cf_pg": 10.0625
     },
     {
       "team_abbrev": "ANA",
@@ -578,8 +578,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 121.7,
-      "onice_ca_pg": 9.3221,
-      "onice_cf_pg": 10.4334
+      "onice_ca_pg": 10.3542,
+      "onice_cf_pg": 12.1458
     },
     {
       "team_abbrev": "ANA",
@@ -610,8 +610,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.8,
-      "onice_ca_pg": 17.1565,
-      "onice_cf_pg": 15.2738
+      "onice_ca_pg": 16.3636,
+      "onice_cf_pg": 15.8727
     },
     {
       "team_abbrev": "ANA",
@@ -642,8 +642,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 36,
-      "onice_ca_pg": 14.4258,
-      "onice_cf_pg": 13.3254
+      "onice_ca_pg": 13.4615,
+      "onice_cf_pg": 13.2051
     },
     {
       "team_abbrev": "ANA",
@@ -674,8 +674,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.1,
-      "onice_ca_pg": 11.2379,
-      "onice_cf_pg": 12.4515
+      "onice_ca_pg": 11.1961,
+      "onice_cf_pg": 12.4314
     },
     {
       "team_abbrev": "ANA",
@@ -706,8 +706,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.2,
-      "onice_ca_pg": 9.9937,
-      "onice_cf_pg": 10.6962
+      "onice_ca_pg": 10.0513,
+      "onice_cf_pg": 10.6667
     },
     {
       "team_abbrev": "ANA",
@@ -898,8 +898,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.7,
-      "onice_ca_pg": 14.9692,
-      "onice_cf_pg": 14.8768
+      "onice_ca_pg": 14.8889,
+      "onice_cf_pg": 14.1556
     },
     {
       "team_abbrev": "BOS",
@@ -930,8 +930,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.7,
-      "onice_ca_pg": 14.0959,
-      "onice_cf_pg": 13.8438
+      "onice_ca_pg": 13.7083,
+      "onice_cf_pg": 13.2917
     },
     {
       "team_abbrev": "BOS",
@@ -962,8 +962,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 77.7,
-      "onice_ca_pg": 17.4421,
-      "onice_cf_pg": 16.9837
+      "onice_ca_pg": 17.3256,
+      "onice_cf_pg": 16.6512
     },
     {
       "team_abbrev": "BOS",
@@ -994,8 +994,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.8,
-      "onice_ca_pg": 12.9641,
-      "onice_cf_pg": 12.4814
+      "onice_ca_pg": 12.0889,
+      "onice_cf_pg": 11.7333
     },
     {
       "team_abbrev": "BOS",
@@ -1026,8 +1026,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31,
-      "onice_ca_pg": 13.4465,
-      "onice_cf_pg": 14.707
+      "onice_ca_pg": 12.4074,
+      "onice_cf_pg": 14.7593
     },
     {
       "team_abbrev": "BOS",
@@ -1058,8 +1058,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.7,
-      "onice_ca_pg": 13.5527,
-      "onice_cf_pg": 12.479
+      "onice_ca_pg": 13.8605,
+      "onice_cf_pg": 12.4651
     },
     {
       "team_abbrev": "BOS",
@@ -1090,8 +1090,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19,
-      "onice_ca_pg": 12.99,
-      "onice_cf_pg": 13.0348
+      "onice_ca_pg": 12.2889,
+      "onice_cf_pg": 12.6222
     },
     {
       "team_abbrev": "BOS",
@@ -1122,8 +1122,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.7,
-      "onice_ca_pg": 12.5198,
-      "onice_cf_pg": 11.6032
+      "onice_ca_pg": 12.5,
+      "onice_cf_pg": 12.1875
     },
     {
       "team_abbrev": "BOS",
@@ -1154,8 +1154,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 67.9,
-      "onice_ca_pg": 14.9593,
-      "onice_cf_pg": 16.5046
+      "onice_ca_pg": 14.6279,
+      "onice_cf_pg": 16.5349
     },
     {
       "team_abbrev": "BOS",
@@ -1186,8 +1186,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.9,
-      "onice_ca_pg": 16.4391,
-      "onice_cf_pg": 15.0725
+      "onice_ca_pg": 15.7442,
+      "onice_cf_pg": 14.6279
     },
     {
       "team_abbrev": "BOS",
@@ -1218,8 +1218,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 63.8,
-      "onice_ca_pg": 9.7633,
-      "onice_cf_pg": 10.0449
+      "onice_ca_pg": 9.9167,
+      "onice_cf_pg": 10.2917
     },
     {
       "team_abbrev": "BOS",
@@ -1250,8 +1250,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.1,
-      "onice_ca_pg": 11.704,
-      "onice_cf_pg": 9.9903
+      "onice_ca_pg": 11.9574,
+      "onice_cf_pg": 11.1702
     },
     {
       "team_abbrev": "BOS",
@@ -1282,8 +1282,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.3,
-      "onice_ca_pg": 16.0023,
-      "onice_cf_pg": 15.7483
+      "onice_ca_pg": 15.2,
+      "onice_cf_pg": 13.7333
     },
     {
       "team_abbrev": "BOS",
@@ -1314,8 +1314,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 59.7,
-      "onice_ca_pg": 10.3221,
-      "onice_cf_pg": 10.9847
+      "onice_ca_pg": 10.8,
+      "onice_cf_pg": 11.1667
     },
     {
       "team_abbrev": "BOS",
@@ -1346,8 +1346,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 154.4,
-      "onice_ca_pg": 17.5821,
-      "onice_cf_pg": 16.4746
+      "onice_ca_pg": 18.0208,
+      "onice_cf_pg": 16.8333
     },
     {
       "team_abbrev": "BOS",
@@ -1378,8 +1378,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 84.7,
-      "onice_ca_pg": 10.8603,
-      "onice_cf_pg": 10.6473
+      "onice_ca_pg": 11.3864,
+      "onice_cf_pg": 10.8864
     },
     {
       "team_abbrev": "BOS",
@@ -1410,8 +1410,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 140.4,
-      "onice_ca_pg": 10.253,
-      "onice_cf_pg": 9.0677
+      "onice_ca_pg": 10.4167,
+      "onice_cf_pg": 9.75
     },
     {
       "team_abbrev": "BOS",
@@ -1442,8 +1442,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.4,
-      "onice_ca_pg": 10.8176,
-      "onice_cf_pg": 11.0459
+      "onice_ca_pg": 9.9792,
+      "onice_cf_pg": 11.0417
     },
     {
       "team_abbrev": "BOS",
@@ -1538,8 +1538,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 37.9,
-      "onice_ca_pg": 14.4801,
-      "onice_cf_pg": 15.0499
+      "onice_ca_pg": 14.3448,
+      "onice_cf_pg": 14.7931
     },
     {
       "team_abbrev": "BUF",
@@ -1570,8 +1570,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 76.1,
-      "onice_ca_pg": 17.1556,
-      "onice_cf_pg": 19.6667
+      "onice_ca_pg": 16.7679,
+      "onice_cf_pg": 18.5357
     },
     {
       "team_abbrev": "BUF",
@@ -1602,8 +1602,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 56.4,
-      "onice_ca_pg": 11.7263,
-      "onice_cf_pg": 12.5801
+      "onice_ca_pg": 10.7073,
+      "onice_cf_pg": 12.8293
     },
     {
       "team_abbrev": "BUF",
@@ -1634,8 +1634,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 47.2,
-      "onice_ca_pg": 11.9828,
-      "onice_cf_pg": 11.6177
+      "onice_ca_pg": 10.9556,
+      "onice_cf_pg": 10.8667
     },
     {
       "team_abbrev": "BUF",
@@ -1666,8 +1666,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.3,
-      "onice_ca_pg": 12.1392,
-      "onice_cf_pg": 12.3808
+      "onice_ca_pg": 11.6379,
+      "onice_cf_pg": 12.0172
     },
     {
       "team_abbrev": "BUF",
@@ -1698,8 +1698,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.2,
-      "onice_ca_pg": 12.4837,
-      "onice_cf_pg": 11.883
+      "onice_ca_pg": 12.4655,
+      "onice_cf_pg": 11.8448
     },
     {
       "team_abbrev": "BUF",
@@ -1730,8 +1730,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.7,
-      "onice_ca_pg": 10.9626,
-      "onice_cf_pg": 13.0264
+      "onice_ca_pg": 11.2931,
+      "onice_cf_pg": 12.7931
     },
     {
       "team_abbrev": "BUF",
@@ -1762,8 +1762,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 57.5,
-      "onice_ca_pg": 11.0905,
-      "onice_cf_pg": 13.5415
+      "onice_ca_pg": 11.3878,
+      "onice_cf_pg": 13.6735
     },
     {
       "team_abbrev": "BUF",
@@ -1826,8 +1826,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.6,
-      "onice_ca_pg": 11.2014,
-      "onice_cf_pg": 11.8333
+      "onice_ca_pg": 11.3714,
+      "onice_cf_pg": 11.8571
     },
     {
       "team_abbrev": "BUF",
@@ -1858,8 +1858,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31,
-      "onice_ca_pg": 17.7967,
-      "onice_cf_pg": 16.0541
+      "onice_ca_pg": 18.4464,
+      "onice_cf_pg": 16.8393
     },
     {
       "team_abbrev": "BUF",
@@ -1890,8 +1890,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 74.2,
-      "onice_ca_pg": 12.2648,
-      "onice_cf_pg": 12.0209
+      "onice_ca_pg": 12.8621,
+      "onice_cf_pg": 12.3448
     },
     {
       "team_abbrev": "BUF",
@@ -1922,8 +1922,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.7,
-      "onice_ca_pg": 16.5834,
-      "onice_cf_pg": 18.3001
+      "onice_ca_pg": 16.2281,
+      "onice_cf_pg": 18.2456
     },
     {
       "team_abbrev": "BUF",
@@ -1954,8 +1954,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26,
-      "onice_ca_pg": 13.7213,
-      "onice_cf_pg": 14.0139
+      "onice_ca_pg": 16.3333,
+      "onice_cf_pg": 13.6667
     },
     {
       "team_abbrev": "BUF",
@@ -1986,8 +1986,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.1,
-      "onice_ca_pg": 12.638,
-      "onice_cf_pg": 11.4693
+      "onice_ca_pg": 10.6667,
+      "onice_cf_pg": 7.6667
     },
     {
       "team_abbrev": "BUF",
@@ -2018,8 +2018,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.2,
-      "onice_ca_pg": 15.7068,
-      "onice_cf_pg": 16.7547
+      "onice_ca_pg": 14.617,
+      "onice_cf_pg": 16.9787
     },
     {
       "team_abbrev": "BUF",
@@ -2050,8 +2050,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 60.1,
-      "onice_ca_pg": 16.2718,
-      "onice_cf_pg": 13.3863
+      "onice_ca_pg": 15.8367,
+      "onice_cf_pg": 13.8571
     },
     {
       "team_abbrev": "BUF",
@@ -2082,8 +2082,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 73.2,
-      "onice_ca_pg": 10.1327,
-      "onice_cf_pg": 9.2061
+      "onice_ca_pg": 9.4773,
+      "onice_cf_pg": 9.4091
     },
     {
       "team_abbrev": "BUF",
@@ -2114,8 +2114,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.9,
-      "onice_ca_pg": 15.1825,
-      "onice_cf_pg": 13.6499
+      "onice_ca_pg": 16.25,
+      "onice_cf_pg": 11.5357
     },
     {
       "team_abbrev": "BUF",
@@ -2146,8 +2146,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.6,
-      "onice_ca_pg": 14.2394,
-      "onice_cf_pg": 13.4648
+      "onice_ca_pg": 13,
+      "onice_cf_pg": 10
     },
     {
       "team_abbrev": "BUF",
@@ -2178,8 +2178,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 36.4,
-      "onice_ca_pg": 9.0514,
-      "onice_cf_pg": 7.905
+      "onice_ca_pg": 8.6897,
+      "onice_cf_pg": 7.8966
     },
     {
       "team_abbrev": "BUF",
@@ -2210,8 +2210,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 4.1,
-      "onice_ca_pg": 10.2857,
-      "onice_cf_pg": 7.7368
+      "onice_ca_pg": 10.25,
+      "onice_cf_pg": 7.6429
     },
     {
       "team_abbrev": "BUF",
@@ -2370,8 +2370,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48.2,
-      "onice_ca_pg": 11.3435,
-      "onice_cf_pg": 16.8199
+      "onice_ca_pg": 10.8095,
+      "onice_cf_pg": 16.4921
     },
     {
       "team_abbrev": "CAR",
@@ -2402,8 +2402,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.7,
-      "onice_ca_pg": 10.9734,
-      "onice_cf_pg": 15.5058
+      "onice_ca_pg": 10.6316,
+      "onice_cf_pg": 15.3333
     },
     {
       "team_abbrev": "CAR",
@@ -2434,8 +2434,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.1,
-      "onice_ca_pg": 10.9368,
-      "onice_cf_pg": 14.7401
+      "onice_ca_pg": 10.0606,
+      "onice_cf_pg": 15.4848
     },
     {
       "team_abbrev": "CAR",
@@ -2466,8 +2466,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 70.5,
-      "onice_ca_pg": 11.2394,
-      "onice_cf_pg": 16.7131
+      "onice_ca_pg": 10.7619,
+      "onice_cf_pg": 16.6508
     },
     {
       "team_abbrev": "CAR",
@@ -2498,8 +2498,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41.4,
-      "onice_ca_pg": 11.3946,
-      "onice_cf_pg": 17.3239
+      "onice_ca_pg": 11.2917,
+      "onice_cf_pg": 17.375
     },
     {
       "team_abbrev": "CAR",
@@ -2530,8 +2530,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.5,
-      "onice_ca_pg": 10.7232,
-      "onice_cf_pg": 15.8516
+      "onice_ca_pg": 11.7231,
+      "onice_cf_pg": 17.1538
     },
     {
       "team_abbrev": "CAR",
@@ -2562,8 +2562,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44,
-      "onice_ca_pg": 11.587,
-      "onice_cf_pg": 15.0255
+      "onice_ca_pg": 10.75,
+      "onice_cf_pg": 15.8125
     },
     {
       "team_abbrev": "CAR",
@@ -2594,8 +2594,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.7,
-      "onice_ca_pg": 11.6667,
-      "onice_cf_pg": 16.2043
+      "onice_ca_pg": 11.0615,
+      "onice_cf_pg": 17.1846
     },
     {
       "team_abbrev": "CAR",
@@ -2626,8 +2626,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.4,
-      "onice_ca_pg": 10.2356,
-      "onice_cf_pg": 15.1188
+      "onice_ca_pg": 9.9194,
+      "onice_cf_pg": 14.5
     },
     {
       "team_abbrev": "CAR",
@@ -2658,8 +2658,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 52.6,
-      "onice_ca_pg": 16.3707,
-      "onice_cf_pg": 20.9989
+      "onice_ca_pg": 14.7167,
+      "onice_cf_pg": 22.8667
     },
     {
       "team_abbrev": "CAR",
@@ -2690,8 +2690,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.2,
-      "onice_ca_pg": 11.3577,
-      "onice_cf_pg": 17.3615
+      "onice_ca_pg": 11.3438,
+      "onice_cf_pg": 17.4062
     },
     {
       "team_abbrev": "CAR",
@@ -2722,8 +2722,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.6,
-      "onice_ca_pg": 9.9553,
-      "onice_cf_pg": 15.1083
+      "onice_ca_pg": 9.2295,
+      "onice_cf_pg": 14.4754
     },
     {
       "team_abbrev": "CAR",
@@ -2754,8 +2754,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 56.5,
-      "onice_ca_pg": 13.8939,
-      "onice_cf_pg": 20.9556
+      "onice_ca_pg": 14.4462,
+      "onice_cf_pg": 22.3077
     },
     {
       "team_abbrev": "CAR",
@@ -2786,8 +2786,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.6,
-      "onice_ca_pg": 10.0737,
-      "onice_cf_pg": 13.4711
+      "onice_ca_pg": 9.0385,
+      "onice_cf_pg": 11.4231
     },
     {
       "team_abbrev": "CAR",
@@ -2818,8 +2818,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27,
-      "onice_ca_pg": 8.1207,
-      "onice_cf_pg": 11.133
+      "onice_ca_pg": 7.6897,
+      "onice_cf_pg": 10.7414
     },
     {
       "team_abbrev": "CAR",
@@ -2850,8 +2850,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.3,
-      "onice_ca_pg": 8.8032,
-      "onice_cf_pg": 12.0442
+      "onice_ca_pg": 8.2712,
+      "onice_cf_pg": 11.3051
     },
     {
       "team_abbrev": "CAR",
@@ -2882,8 +2882,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 8.5,
-      "onice_ca_pg": 15.2552,
-      "onice_cf_pg": 20.5103
+      "onice_ca_pg": 14.3043,
+      "onice_cf_pg": 18.9565
     },
     {
       "team_abbrev": "CAR",
@@ -2914,8 +2914,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.2,
-      "onice_ca_pg": 8.5079,
-      "onice_cf_pg": 11.9719
+      "onice_ca_pg": 7.8525,
+      "onice_cf_pg": 10.9016
     },
     {
       "team_abbrev": "CAR",
@@ -2946,8 +2946,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.6,
-      "onice_ca_pg": 14.1756,
-      "onice_cf_pg": 19.436
+      "onice_ca_pg": 14.8361,
+      "onice_cf_pg": 19.7869
     },
     {
       "team_abbrev": "CAR",
@@ -2978,8 +2978,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 89.1,
-      "onice_ca_pg": 7.5364,
-      "onice_cf_pg": 6.8921
+      "onice_ca_pg": 7.4211,
+      "onice_cf_pg": 6.7368
     },
     {
       "team_abbrev": "CBJ",
@@ -3010,8 +3010,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.2,
-      "onice_ca_pg": 21.0562,
-      "onice_cf_pg": 23.9553
+      "onice_ca_pg": 19.9778,
+      "onice_cf_pg": 23.9333
     },
     {
       "team_abbrev": "CBJ",
@@ -3042,8 +3042,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.8,
-      "onice_ca_pg": 14.4945,
-      "onice_cf_pg": 15.895
+      "onice_ca_pg": 13.8163,
+      "onice_cf_pg": 15.5918
     },
     {
       "team_abbrev": "CBJ",
@@ -3074,8 +3074,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.7,
-      "onice_ca_pg": 12.8627,
-      "onice_cf_pg": 16.364
+      "onice_ca_pg": 12.4828,
+      "onice_cf_pg": 16.1034
     },
     {
       "team_abbrev": "CBJ",
@@ -3106,8 +3106,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.4,
-      "onice_ca_pg": 15.0195,
-      "onice_cf_pg": 14.7073
+      "onice_ca_pg": 14.3529,
+      "onice_cf_pg": 15.3333
     },
     {
       "team_abbrev": "CBJ",
@@ -3138,8 +3138,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19,
-      "onice_ca_pg": 12.8352,
-      "onice_cf_pg": 12.6125
+      "onice_ca_pg": 12.2745,
+      "onice_cf_pg": 12.8431
     },
     {
       "team_abbrev": "CBJ",
@@ -3170,8 +3170,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.8,
-      "onice_ca_pg": 12.9053,
-      "onice_cf_pg": 14.3443
+      "onice_ca_pg": 12.4082,
+      "onice_cf_pg": 13.6735
     },
     {
       "team_abbrev": "CBJ",
@@ -3202,8 +3202,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 72.2,
-      "onice_ca_pg": 13.2426,
-      "onice_cf_pg": 14.1111
+      "onice_ca_pg": 11.875,
+      "onice_cf_pg": 13.0938
     },
     {
       "team_abbrev": "CBJ",
@@ -3234,8 +3234,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.1,
-      "onice_ca_pg": 13.1005,
-      "onice_cf_pg": 12.7676
+      "onice_ca_pg": 13.7872,
+      "onice_cf_pg": 12.3191
     },
     {
       "team_abbrev": "CBJ",
@@ -3266,8 +3266,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.4,
-      "onice_ca_pg": 11.4205,
-      "onice_cf_pg": 11.6753
+      "onice_ca_pg": 10.3333,
+      "onice_cf_pg": 10.75
     },
     {
       "team_abbrev": "CBJ",
@@ -3298,8 +3298,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.7,
-      "onice_ca_pg": 13.7372,
-      "onice_cf_pg": 13.199
+      "onice_ca_pg": 13.0392,
+      "onice_cf_pg": 13.7451
     },
     {
       "team_abbrev": "CBJ",
@@ -3330,8 +3330,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.9,
-      "onice_ca_pg": 17.2318,
-      "onice_cf_pg": 18.4274
+      "onice_ca_pg": 17.1463,
+      "onice_cf_pg": 19.6829
     },
     {
       "team_abbrev": "CBJ",
@@ -3362,8 +3362,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 138.5,
-      "onice_ca_pg": 12.8839,
-      "onice_cf_pg": 12.3922
+      "onice_ca_pg": 11.3939,
+      "onice_cf_pg": 13.3939
     },
     {
       "team_abbrev": "CBJ",
@@ -3394,8 +3394,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12.7,
-      "onice_ca_pg": 15.9356,
-      "onice_cf_pg": 15.8798
+      "onice_ca_pg": 15.75,
+      "onice_cf_pg": 16.3333
     },
     {
       "team_abbrev": "CBJ",
@@ -3426,8 +3426,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.6,
-      "onice_ca_pg": 18.8886,
-      "onice_cf_pg": 18.8957
+      "onice_ca_pg": 18.7059,
+      "onice_cf_pg": 19.8431
     },
     {
       "team_abbrev": "CBJ",
@@ -3458,8 +3458,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 59.4,
-      "onice_ca_pg": 11.7672,
-      "onice_cf_pg": 10.7037
+      "onice_ca_pg": 11.5263,
+      "onice_cf_pg": 9.6842
     },
     {
       "team_abbrev": "CBJ",
@@ -3490,8 +3490,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.6,
-      "onice_ca_pg": 16.8388,
-      "onice_cf_pg": 16.8157
+      "onice_ca_pg": 15.2553,
+      "onice_cf_pg": 14.7021
     },
     {
       "team_abbrev": "CBJ",
@@ -3522,8 +3522,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 6.7,
-      "onice_ca_pg": 11.1099,
-      "onice_cf_pg": 8.7775
+      "onice_ca_pg": 10.6522,
+      "onice_cf_pg": 8.7391
     },
     {
       "team_abbrev": "CBJ",
@@ -3554,8 +3554,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 15.4,
-      "onice_ca_pg": 12.2434,
-      "onice_cf_pg": 10.5088
+      "onice_ca_pg": 9.8,
+      "onice_cf_pg": 10
     },
     {
       "team_abbrev": "CGY",
@@ -3586,8 +3586,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 0,
-      "onice_ca_pg": 15.1765,
-      "onice_cf_pg": 14.1765
+      "onice_ca_pg": 16.3333,
+      "onice_cf_pg": 15.6667
     },
     {
       "team_abbrev": "CGY",
@@ -3618,8 +3618,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.4,
-      "onice_ca_pg": 13.7129,
-      "onice_cf_pg": 14.8756
+      "onice_ca_pg": 12.7308,
+      "onice_cf_pg": 13.3846
     },
     {
       "team_abbrev": "CGY",
@@ -3650,8 +3650,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31,
-      "onice_ca_pg": 13.9873,
-      "onice_cf_pg": 14.0786
+      "onice_ca_pg": 14.2353,
+      "onice_cf_pg": 13.3137
     },
     {
       "team_abbrev": "CGY",
@@ -3714,8 +3714,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.1,
-      "onice_ca_pg": 12.8723,
-      "onice_cf_pg": 14.4093
+      "onice_ca_pg": 12.2444,
+      "onice_cf_pg": 13.3556
     },
     {
       "team_abbrev": "CGY",
@@ -3746,8 +3746,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.8,
-      "onice_ca_pg": 12.6005,
-      "onice_cf_pg": 11.9589
+      "onice_ca_pg": 12.6346,
+      "onice_cf_pg": 11.4038
     },
     {
       "team_abbrev": "CGY",
@@ -3778,8 +3778,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.1,
-      "onice_ca_pg": 13.481,
-      "onice_cf_pg": 14.285
+      "onice_ca_pg": 13.3269,
+      "onice_cf_pg": 13.6346
     },
     {
       "team_abbrev": "CGY",
@@ -3810,8 +3810,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.4,
-      "onice_ca_pg": 13.6022,
-      "onice_cf_pg": 12.911
+      "onice_ca_pg": 12.3056,
+      "onice_cf_pg": 11.9722
     },
     {
       "team_abbrev": "CGY",
@@ -3842,8 +3842,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.2,
-      "onice_ca_pg": 13.3422,
-      "onice_cf_pg": 13.0012
+      "onice_ca_pg": 13.1923,
+      "onice_cf_pg": 12.75
     },
     {
       "team_abbrev": "CGY",
@@ -3874,8 +3874,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.6,
-      "onice_ca_pg": 13.3848,
-      "onice_cf_pg": 13.3362
+      "onice_ca_pg": 13.7347,
+      "onice_cf_pg": 12.9796
     },
     {
       "team_abbrev": "CGY",
@@ -3906,8 +3906,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.5,
-      "onice_ca_pg": 12.0058,
-      "onice_cf_pg": 12.4618
+      "onice_ca_pg": 11.2826,
+      "onice_cf_pg": 10.9783
     },
     {
       "team_abbrev": "CGY",
@@ -3938,8 +3938,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.8,
-      "onice_ca_pg": 16.9131,
-      "onice_cf_pg": 15.6544
+      "onice_ca_pg": 17.1316,
+      "onice_cf_pg": 16.4737
     },
     {
       "team_abbrev": "CGY",
@@ -3970,8 +3970,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12.5,
-      "onice_ca_pg": 15.689,
-      "onice_cf_pg": 15.8865
+      "onice_ca_pg": 15.4516,
+      "onice_cf_pg": 15.3226
     },
     {
       "team_abbrev": "CGY",
@@ -4002,8 +4002,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 85.9,
-      "onice_ca_pg": 11.2004,
-      "onice_cf_pg": 12.2351
+      "onice_ca_pg": 8.8125,
+      "onice_cf_pg": 7
     },
     {
       "team_abbrev": "CGY",
@@ -4034,8 +4034,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.2,
-      "onice_ca_pg": 14.823,
-      "onice_cf_pg": 14.2389
+      "onice_ca_pg": 14.8571,
+      "onice_cf_pg": 14.25
     },
     {
       "team_abbrev": "CGY",
@@ -4066,8 +4066,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 114.2,
-      "onice_ca_pg": 9.5563,
-      "onice_cf_pg": 9.0915
+      "onice_ca_pg": 9.44,
+      "onice_cf_pg": 9.18
     },
     {
       "team_abbrev": "CGY",
@@ -4098,8 +4098,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 51.2,
-      "onice_ca_pg": 18.5756,
-      "onice_cf_pg": 17.228
+      "onice_ca_pg": 18.875,
+      "onice_cf_pg": 16.6875
     },
     {
       "team_abbrev": "CGY",
@@ -4130,8 +4130,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41.3,
-      "onice_ca_pg": 18.6277,
-      "onice_cf_pg": 17.1533
+      "onice_ca_pg": 18.6765,
+      "onice_cf_pg": 17.2059
     },
     {
       "team_abbrev": "CGY",
@@ -4162,8 +4162,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 10.9,
-      "onice_ca_pg": 8.5854,
-      "onice_cf_pg": 11.0976
+      "onice_ca_pg": 7.7778,
+      "onice_cf_pg": 11.2222
     },
     {
       "team_abbrev": "CGY",
@@ -4194,8 +4194,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.7,
-      "onice_ca_pg": 16.6904,
-      "onice_cf_pg": 16.1499
+      "onice_ca_pg": 17.7708,
+      "onice_cf_pg": 15.9375
     },
     {
       "team_abbrev": "CGY",
@@ -4226,8 +4226,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 9.9,
-      "onice_ca_pg": 14.0183,
-      "onice_cf_pg": 13.4954
+      "onice_ca_pg": 14,
+      "onice_cf_pg": 13.4074
     },
     {
       "team_abbrev": "CGY",
@@ -4258,8 +4258,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.4,
-      "onice_ca_pg": 9.3807,
-      "onice_cf_pg": 10.2487
+      "onice_ca_pg": 7.3548,
+      "onice_cf_pg": 8
     },
     {
       "team_abbrev": "CGY",
@@ -4290,8 +4290,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 98.4,
-      "onice_ca_pg": 14.0241,
-      "onice_cf_pg": 12.813
+      "onice_ca_pg": 14.7727,
+      "onice_cf_pg": 11.7727
     },
     {
       "team_abbrev": "CGY",
@@ -4354,8 +4354,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28,
-      "onice_ca_pg": 10.0476,
-      "onice_cf_pg": 7.7619
+      "onice_ca_pg": 9.6,
+      "onice_cf_pg": 7.6
     },
     {
       "team_abbrev": "CGY",
@@ -4386,8 +4386,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.5,
-      "onice_ca_pg": 12.995,
-      "onice_cf_pg": 14.8688
+      "onice_ca_pg": 11.625,
+      "onice_cf_pg": 13.675
     },
     {
       "team_abbrev": "CGY",
@@ -4450,8 +4450,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 62.6,
-      "onice_ca_pg": 19.1003,
-      "onice_cf_pg": 14.2546
+      "onice_ca_pg": 19.2381,
+      "onice_cf_pg": 14.5238
     },
     {
       "team_abbrev": "CHI",
@@ -4514,8 +4514,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 47.7,
-      "onice_ca_pg": 14.8763,
-      "onice_cf_pg": 12.5925
+      "onice_ca_pg": 15.38,
+      "onice_cf_pg": 13.14
     },
     {
       "team_abbrev": "CHI",
@@ -4546,8 +4546,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.9,
-      "onice_ca_pg": 14.773,
-      "onice_cf_pg": 11.1689
+      "onice_ca_pg": 14.9535,
+      "onice_cf_pg": 11.5581
     },
     {
       "team_abbrev": "CHI",
@@ -4578,8 +4578,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 8.7,
-      "onice_ca_pg": 12.1594,
-      "onice_cf_pg": 10.9501
+      "onice_ca_pg": 12.3404,
+      "onice_cf_pg": 10.617
     },
     {
       "team_abbrev": "CHI",
@@ -4610,8 +4610,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.3,
-      "onice_ca_pg": 17.4807,
-      "onice_cf_pg": 17.9239
+      "onice_ca_pg": 16.8793,
+      "onice_cf_pg": 17.8276
     },
     {
       "team_abbrev": "CHI",
@@ -4642,8 +4642,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.7,
-      "onice_ca_pg": 13.5482,
-      "onice_cf_pg": 11.5161
+      "onice_ca_pg": 12.7843,
+      "onice_cf_pg": 11.4118
     },
     {
       "team_abbrev": "CHI",
@@ -4674,8 +4674,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.5,
-      "onice_ca_pg": 10.3186,
-      "onice_cf_pg": 9.7788
+      "onice_ca_pg": 10.2593,
+      "onice_cf_pg": 9.7407
     },
     {
       "team_abbrev": "CHI",
@@ -4738,8 +4738,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.5,
-      "onice_ca_pg": 15.0398,
-      "onice_cf_pg": 11.6915
+      "onice_ca_pg": 15.08,
+      "onice_cf_pg": 11.68
     },
     {
       "team_abbrev": "CHI",
@@ -4770,8 +4770,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 53.3,
-      "onice_ca_pg": 18.1265,
-      "onice_cf_pg": 14.9398
+      "onice_ca_pg": 18.0263,
+      "onice_cf_pg": 14.9474
     },
     {
       "team_abbrev": "CHI",
@@ -4802,8 +4802,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 45.7,
-      "onice_ca_pg": 11.0211,
-      "onice_cf_pg": 10.8974
+      "onice_ca_pg": 11,
+      "onice_cf_pg": 9.7027
     },
     {
       "team_abbrev": "CHI",
@@ -4834,8 +4834,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.2,
-      "onice_ca_pg": 19.4642,
-      "onice_cf_pg": 15.3902
+      "onice_ca_pg": 19.1,
+      "onice_cf_pg": 15.82
     },
     {
       "team_abbrev": "CHI",
@@ -4898,8 +4898,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.7,
-      "onice_ca_pg": 18.3691,
-      "onice_cf_pg": 13.6107
+      "onice_ca_pg": 18.2778,
+      "onice_cf_pg": 13.4722
     },
     {
       "team_abbrev": "CHI",
@@ -4930,8 +4930,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 75.3,
-      "onice_ca_pg": 10.8668,
-      "onice_cf_pg": 9.8288
+      "onice_ca_pg": 9.8667,
+      "onice_cf_pg": 7.7667
     },
     {
       "team_abbrev": "CHI",
@@ -4962,8 +4962,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.8,
-      "onice_ca_pg": 17.0102,
-      "onice_cf_pg": 14.3309
+      "onice_ca_pg": 17.3469,
+      "onice_cf_pg": 14.3469
     },
     {
       "team_abbrev": "CHI",
@@ -4994,8 +4994,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.8,
-      "onice_ca_pg": 16.3137,
-      "onice_cf_pg": 14.0343
+      "onice_ca_pg": 12,
+      "onice_cf_pg": 12
     },
     {
       "team_abbrev": "CHI",
@@ -5026,8 +5026,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.3,
-      "onice_ca_pg": 10.8834,
-      "onice_cf_pg": 7.4825
+      "onice_ca_pg": 9.8182,
+      "onice_cf_pg": 6.697
     },
     {
       "team_abbrev": "CHI",
@@ -5058,8 +5058,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 47.1,
-      "onice_ca_pg": 7.6216,
-      "onice_cf_pg": 8.7297
+      "onice_ca_pg": 7.25,
+      "onice_cf_pg": 8.875
     },
     {
       "team_abbrev": "CHI",
@@ -5090,8 +5090,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.5,
-      "onice_ca_pg": 14.2539,
-      "onice_cf_pg": 12.1055
+      "onice_ca_pg": 13.1111,
+      "onice_cf_pg": 10.8889
     },
     {
       "team_abbrev": "COL",
@@ -5122,8 +5122,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41.8,
-      "onice_ca_pg": 15.412,
-      "onice_cf_pg": 21.424
+      "onice_ca_pg": 15.4444,
+      "onice_cf_pg": 21.1746
     },
     {
       "team_abbrev": "COL",
@@ -5154,8 +5154,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.8,
-      "onice_ca_pg": 13.9375,
-      "onice_cf_pg": 18.8417
+      "onice_ca_pg": 15.2,
+      "onice_cf_pg": 19.8833
     },
     {
       "team_abbrev": "COL",
@@ -5186,8 +5186,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.6,
-      "onice_ca_pg": 16.5853,
-      "onice_cf_pg": 20.698
+      "onice_ca_pg": 16.3333,
+      "onice_cf_pg": 20.1667
     },
     {
       "team_abbrev": "COL",
@@ -5218,8 +5218,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.5,
-      "onice_ca_pg": 13.824,
-      "onice_cf_pg": 16.1658
+      "onice_ca_pg": 12.5484,
+      "onice_cf_pg": 16.8548
     },
     {
       "team_abbrev": "COL",
@@ -5250,8 +5250,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 45.8,
-      "onice_ca_pg": 14.2344,
-      "onice_cf_pg": 16.1468
+      "onice_ca_pg": 13.1967,
+      "onice_cf_pg": 15.377
     },
     {
       "team_abbrev": "COL",
@@ -5282,8 +5282,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26,
-      "onice_ca_pg": 14.1952,
-      "onice_cf_pg": 18.0013
+      "onice_ca_pg": 14.3265,
+      "onice_cf_pg": 17.6531
     },
     {
       "team_abbrev": "COL",
@@ -5314,8 +5314,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.8,
-      "onice_ca_pg": 12.5407,
-      "onice_cf_pg": 16.2679
+      "onice_ca_pg": 12.5686,
+      "onice_cf_pg": 16.1765
     },
     {
       "team_abbrev": "COL",
@@ -5346,8 +5346,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.5,
-      "onice_ca_pg": 16.4836,
-      "onice_cf_pg": 22.2186
+      "onice_ca_pg": 15.661,
+      "onice_cf_pg": 22.1017
     },
     {
       "team_abbrev": "COL",
@@ -5378,8 +5378,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.7,
-      "onice_ca_pg": 14.875,
-      "onice_cf_pg": 19.7141
+      "onice_ca_pg": 14.7778,
+      "onice_cf_pg": 19.3333
     },
     {
       "team_abbrev": "COL",
@@ -5410,8 +5410,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.1,
-      "onice_ca_pg": 14.3295,
-      "onice_cf_pg": 18.5148
+      "onice_ca_pg": 14.3443,
+      "onice_cf_pg": 20.0656
     },
     {
       "team_abbrev": "COL",
@@ -5442,8 +5442,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.6,
-      "onice_ca_pg": 11.6896,
-      "onice_cf_pg": 12.2929
+      "onice_ca_pg": 11.4828,
+      "onice_cf_pg": 11.8793
     },
     {
       "team_abbrev": "COL",
@@ -5474,8 +5474,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 87.3,
-      "onice_ca_pg": 13.6268,
-      "onice_cf_pg": 17.8098
+      "onice_ca_pg": 13.2105,
+      "onice_cf_pg": 18.4211
     },
     {
       "team_abbrev": "COL",
@@ -5506,8 +5506,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.7,
-      "onice_ca_pg": 8.9653,
-      "onice_cf_pg": 11.2625
+      "onice_ca_pg": 8.6667,
+      "onice_cf_pg": 11.8254
     },
     {
       "team_abbrev": "COL",
@@ -5538,8 +5538,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.6,
-      "onice_ca_pg": 9.8469,
-      "onice_cf_pg": 12.0212
+      "onice_ca_pg": 8.68,
+      "onice_cf_pg": 11.44
     },
     {
       "team_abbrev": "COL",
@@ -5570,8 +5570,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.8,
-      "onice_ca_pg": 11.4788,
-      "onice_cf_pg": 10.8559
+      "onice_ca_pg": 11.7234,
+      "onice_cf_pg": 10.8723
     },
     {
       "team_abbrev": "COL",
@@ -5602,8 +5602,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.2,
-      "onice_ca_pg": 16.7239,
-      "onice_cf_pg": 16.9594
+      "onice_ca_pg": 16.9531,
+      "onice_cf_pg": 16.1562
     },
     {
       "team_abbrev": "COL",
@@ -5666,8 +5666,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 96.2,
-      "onice_ca_pg": 15.8701,
-      "onice_cf_pg": 16.0104
+      "onice_ca_pg": 15.3023,
+      "onice_cf_pg": 13.2093
     },
     {
       "team_abbrev": "DAL",
@@ -5698,8 +5698,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28,
-      "onice_ca_pg": 14.1345,
-      "onice_cf_pg": 14.7532
+      "onice_ca_pg": 14.2364,
+      "onice_cf_pg": 14.8182
     },
     {
       "team_abbrev": "DAL",
@@ -5730,8 +5730,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28,
-      "onice_ca_pg": 14.9122,
-      "onice_cf_pg": 13.5429
+      "onice_ca_pg": 15.4182,
+      "onice_cf_pg": 13.4909
     },
     {
       "team_abbrev": "DAL",
@@ -5762,8 +5762,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12.8,
-      "onice_ca_pg": 13.5839,
-      "onice_cf_pg": 12.9371
+      "onice_ca_pg": 12.9149,
+      "onice_cf_pg": 10.7021
     },
     {
       "team_abbrev": "DAL",
@@ -5794,8 +5794,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.7,
-      "onice_ca_pg": 12.9107,
-      "onice_cf_pg": 12.6643
+      "onice_ca_pg": 12.7407,
+      "onice_cf_pg": 12.5185
     },
     {
       "team_abbrev": "DAL",
@@ -5826,8 +5826,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.1,
-      "onice_ca_pg": 16.7532,
-      "onice_cf_pg": 17.6443
+      "onice_ca_pg": 15.8269,
+      "onice_cf_pg": 15.2115
     },
     {
       "team_abbrev": "DAL",
@@ -5858,8 +5858,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12.9,
-      "onice_ca_pg": 12.8875,
-      "onice_cf_pg": 13.6219
+      "onice_ca_pg": 12.6667,
+      "onice_cf_pg": 11.6667
     },
     {
       "team_abbrev": "DAL",
@@ -5890,8 +5890,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26,
-      "onice_ca_pg": 18.1894,
-      "onice_cf_pg": 18.9058
+      "onice_ca_pg": 17.86,
+      "onice_cf_pg": 17.48
     },
     {
       "team_abbrev": "DAL",
@@ -5922,8 +5922,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.5,
-      "onice_ca_pg": 11.2744,
-      "onice_cf_pg": 10.8299
+      "onice_ca_pg": 12.2391,
+      "onice_cf_pg": 10.8696
     },
     {
       "team_abbrev": "DAL",
@@ -5954,8 +5954,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.9,
-      "onice_ca_pg": 10.3822,
-      "onice_cf_pg": 9.7422
+      "onice_ca_pg": 10.4364,
+      "onice_cf_pg": 9.8364
     },
     {
       "team_abbrev": "DAL",
@@ -5986,8 +5986,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.3,
-      "onice_ca_pg": 17.8776,
-      "onice_cf_pg": 15.6378
+      "onice_ca_pg": 16.5455,
+      "onice_cf_pg": 14.6909
     },
     {
       "team_abbrev": "DAL",
@@ -6018,8 +6018,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29,
-      "onice_ca_pg": 9.5276,
-      "onice_cf_pg": 8.8009
+      "onice_ca_pg": 8.2647,
+      "onice_cf_pg": 7.1176
     },
     {
       "team_abbrev": "DAL",
@@ -6050,8 +6050,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 7.9,
-      "onice_ca_pg": 9.0337,
-      "onice_cf_pg": 8.4831
+      "onice_ca_pg": 8.9048,
+      "onice_cf_pg": 8.3333
     },
     {
       "team_abbrev": "DAL",
@@ -6082,8 +6082,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.4,
-      "onice_ca_pg": 9.0303,
-      "onice_cf_pg": 8.6632
+      "onice_ca_pg": 8.7292,
+      "onice_cf_pg": 7.9792
     },
     {
       "team_abbrev": "DAL",
@@ -6114,8 +6114,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 69.4,
-      "onice_ca_pg": 17.3068,
-      "onice_cf_pg": 15.0957
+      "onice_ca_pg": 17.2708,
+      "onice_cf_pg": 14.6042
     },
     {
       "team_abbrev": "DAL",
@@ -6146,8 +6146,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.5,
-      "onice_ca_pg": 14.7036,
-      "onice_cf_pg": 14.5128
+      "onice_ca_pg": 15.325,
+      "onice_cf_pg": 13.9
     },
     {
       "team_abbrev": "DAL",
@@ -6178,8 +6178,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.2,
-      "onice_ca_pg": 8.6491,
-      "onice_cf_pg": 8.186
+      "onice_ca_pg": 8.4706,
+      "onice_cf_pg": 7.7647
     },
     {
       "team_abbrev": "DAL",
@@ -6210,8 +6210,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 66.7,
-      "onice_ca_pg": 12.5798,
-      "onice_cf_pg": 12.0798
+      "onice_ca_pg": 12.7941,
+      "onice_cf_pg": 11.6471
     },
     {
       "team_abbrev": "DAL",
@@ -6242,8 +6242,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.4,
-      "onice_ca_pg": 11.4058,
-      "onice_cf_pg": 11.5507
+      "onice_ca_pg": 11.4706,
+      "onice_cf_pg": 11.6471
     },
     {
       "team_abbrev": "DET",
@@ -6274,8 +6274,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.5,
-      "onice_ca_pg": 14.4467,
-      "onice_cf_pg": 14.7855
+      "onice_ca_pg": 14.3922,
+      "onice_cf_pg": 15.0588
     },
     {
       "team_abbrev": "DET",
@@ -6306,8 +6306,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.3,
-      "onice_ca_pg": 13.6553,
-      "onice_cf_pg": 13.837
+      "onice_ca_pg": 13.9804,
+      "onice_cf_pg": 13.6078
     },
     {
       "team_abbrev": "DET",
@@ -6338,8 +6338,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.9,
-      "onice_ca_pg": 14.0219,
-      "onice_cf_pg": 14.308
+      "onice_ca_pg": 14.0682,
+      "onice_cf_pg": 13.5455
     },
     {
       "team_abbrev": "DET",
@@ -6370,8 +6370,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 53,
-      "onice_ca_pg": 18.068,
-      "onice_cf_pg": 18.7374
+      "onice_ca_pg": 17.5098,
+      "onice_cf_pg": 19.6863
     },
     {
       "team_abbrev": "DET",
@@ -6402,8 +6402,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.7,
-      "onice_ca_pg": 13.2585,
-      "onice_cf_pg": 12.6327
+      "onice_ca_pg": 13.1875,
+      "onice_cf_pg": 13.375
     },
     {
       "team_abbrev": "DET",
@@ -6434,8 +6434,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42,
-      "onice_ca_pg": 18.813,
-      "onice_cf_pg": 15.9084
+      "onice_ca_pg": 19,
+      "onice_cf_pg": 15.8222
     },
     {
       "team_abbrev": "DET",
@@ -6466,8 +6466,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28,
-      "onice_ca_pg": 14.3968,
-      "onice_cf_pg": 12.1614
+      "onice_ca_pg": 14.2941,
+      "onice_cf_pg": 12.902
     },
     {
       "team_abbrev": "DET",
@@ -6530,8 +6530,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 81.5,
-      "onice_ca_pg": 17.9651,
-      "onice_cf_pg": 18.6237
+      "onice_ca_pg": 17.6667,
+      "onice_cf_pg": 19.75
     },
     {
       "team_abbrev": "DET",
@@ -6562,8 +6562,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.8,
-      "onice_ca_pg": 12.1465,
-      "onice_cf_pg": 11.7399
+      "onice_ca_pg": 11.82,
+      "onice_cf_pg": 11.14
     },
     {
       "team_abbrev": "DET",
@@ -6594,8 +6594,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 45,
-      "onice_ca_pg": 13.0744,
-      "onice_cf_pg": 12.3251
+      "onice_ca_pg": 12.1143,
+      "onice_cf_pg": 10
     },
     {
       "team_abbrev": "DET",
@@ -6626,8 +6626,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.8,
-      "onice_ca_pg": 12.2465,
-      "onice_cf_pg": 9.7006
+      "onice_ca_pg": 12.3333,
+      "onice_cf_pg": 9.2564
     },
     {
       "team_abbrev": "DET",
@@ -6658,8 +6658,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 74.3,
-      "onice_ca_pg": 20.3827,
-      "onice_cf_pg": 16.5687
+      "onice_ca_pg": 19.8824,
+      "onice_cf_pg": 16.5098
     },
     {
       "team_abbrev": "DET",
@@ -6690,8 +6690,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.3,
-      "onice_ca_pg": 15.1379,
-      "onice_cf_pg": 12.8467
+      "onice_ca_pg": 15.1373,
+      "onice_cf_pg": 12.451
     },
     {
       "team_abbrev": "DET",
@@ -6722,8 +6722,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.4,
-      "onice_ca_pg": 14.1077,
-      "onice_cf_pg": 12.0118
+      "onice_ca_pg": 14.5714,
+      "onice_cf_pg": 11.4524
     },
     {
       "team_abbrev": "EDM",
@@ -6754,8 +6754,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.6,
-      "onice_ca_pg": 15.4636,
-      "onice_cf_pg": 19.7197
+      "onice_ca_pg": 16.25,
+      "onice_cf_pg": 18.375
     },
     {
       "team_abbrev": "EDM",
@@ -6786,8 +6786,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.4,
-      "onice_ca_pg": 15.0945,
-      "onice_cf_pg": 18.4864
+      "onice_ca_pg": 15.5366,
+      "onice_cf_pg": 16.8049
     },
     {
       "team_abbrev": "EDM",
@@ -6818,8 +6818,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.5,
-      "onice_ca_pg": 16.0693,
-      "onice_cf_pg": 21.0327
+      "onice_ca_pg": 16.375,
+      "onice_cf_pg": 19.5
     },
     {
       "team_abbrev": "EDM",
@@ -6850,8 +6850,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.2,
-      "onice_ca_pg": 14.5957,
-      "onice_cf_pg": 17.5885
+      "onice_ca_pg": 15.7442,
+      "onice_cf_pg": 16.0698
     },
     {
       "team_abbrev": "EDM",
@@ -6882,8 +6882,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.9,
-      "onice_ca_pg": 13.5266,
-      "onice_cf_pg": 13.7382
+      "onice_ca_pg": 14.3208,
+      "onice_cf_pg": 12.7736
     },
     {
       "team_abbrev": "EDM",
@@ -6914,8 +6914,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.1,
-      "onice_ca_pg": 15.1827,
-      "onice_cf_pg": 20.0953
+      "onice_ca_pg": 15.0893,
+      "onice_cf_pg": 18.9107
     },
     {
       "team_abbrev": "EDM",
@@ -6946,8 +6946,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.6,
-      "onice_ca_pg": 12.3589,
-      "onice_cf_pg": 12.3992
+      "onice_ca_pg": 12.375,
+      "onice_cf_pg": 12.3929
     },
     {
       "team_abbrev": "EDM",
@@ -6978,8 +6978,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.7,
-      "onice_ca_pg": 18.0677,
-      "onice_cf_pg": 17.0013
+      "onice_ca_pg": 17.7632,
+      "onice_cf_pg": 15.4211
     },
     {
       "team_abbrev": "EDM",
@@ -7010,8 +7010,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 59.4,
-      "onice_ca_pg": 11.5838,
-      "onice_cf_pg": 13.7676
+      "onice_ca_pg": 12.4286,
+      "onice_cf_pg": 14.3214
     },
     {
       "team_abbrev": "EDM",
@@ -7042,8 +7042,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 97.5,
-      "onice_ca_pg": 19.2323,
-      "onice_cf_pg": 18.646
+      "onice_ca_pg": 19.4821,
+      "onice_cf_pg": 17.5714
     },
     {
       "team_abbrev": "EDM",
@@ -7074,8 +7074,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.2,
-      "onice_ca_pg": 12.2555,
-      "onice_cf_pg": 10.3989
+      "onice_ca_pg": 12,
+      "onice_cf_pg": 10.5652
     },
     {
       "team_abbrev": "EDM",
@@ -7106,8 +7106,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 71.8,
-      "onice_ca_pg": 16.633,
-      "onice_cf_pg": 13.4881
+      "onice_ca_pg": 15.3273,
+      "onice_cf_pg": 12.4182
     },
     {
       "team_abbrev": "EDM",
@@ -7138,8 +7138,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 70.3,
-      "onice_ca_pg": 9.418,
-      "onice_cf_pg": 8.5079
+      "onice_ca_pg": 8.9024,
+      "onice_cf_pg": 8.439
     },
     {
       "team_abbrev": "EDM",
@@ -7170,8 +7170,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.8,
-      "onice_ca_pg": 10.6331,
-      "onice_cf_pg": 9.2878
+      "onice_ca_pg": 10.6522,
+      "onice_cf_pg": 8.4348
     },
     {
       "team_abbrev": "EDM",
@@ -7202,8 +7202,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.4,
-      "onice_ca_pg": 13.0865,
-      "onice_cf_pg": 11.5382
+      "onice_ca_pg": 13.6458,
+      "onice_cf_pg": 11.5417
     },
     {
       "team_abbrev": "EDM",
@@ -7234,8 +7234,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.7,
-      "onice_ca_pg": 11.5632,
-      "onice_cf_pg": 10.3795
+      "onice_ca_pg": 10.1915,
+      "onice_cf_pg": 9.0213
     },
     {
       "team_abbrev": "EDM",
@@ -7298,8 +7298,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.8,
-      "onice_ca_pg": 13.0938,
-      "onice_cf_pg": 13.5781
+      "onice_ca_pg": 12.7027,
+      "onice_cf_pg": 13.2162
     },
     {
       "team_abbrev": "FLA",
@@ -7330,8 +7330,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 109,
-      "onice_ca_pg": 11.7458,
-      "onice_cf_pg": 16.2043
+      "onice_ca_pg": 11.5455,
+      "onice_cf_pg": 15.2273
     },
     {
       "team_abbrev": "FLA",
@@ -7362,8 +7362,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.7,
-      "onice_ca_pg": 11.8989,
-      "onice_cf_pg": 16.7236
+      "onice_ca_pg": null,
+      "onice_cf_pg": null
     },
     {
       "team_abbrev": "FLA",
@@ -7394,8 +7394,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.7,
-      "onice_ca_pg": 12.288,
-      "onice_cf_pg": 14.8677
+      "onice_ca_pg": 12.2857,
+      "onice_cf_pg": 12.4286
     },
     {
       "team_abbrev": "FLA",
@@ -7426,8 +7426,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 68.1,
-      "onice_ca_pg": 13.3992,
-      "onice_cf_pg": 13.4556
+      "onice_ca_pg": 13.7143,
+      "onice_cf_pg": 12.9643
     },
     {
       "team_abbrev": "FLA",
@@ -7458,8 +7458,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 116.9,
-      "onice_ca_pg": 12.3663,
-      "onice_cf_pg": 16.2193
+      "onice_ca_pg": 11,
+      "onice_cf_pg": 15.9545
     },
     {
       "team_abbrev": "FLA",
@@ -7490,8 +7490,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 95.2,
-      "onice_ca_pg": 13.0388,
-      "onice_cf_pg": 15.443
+      "onice_ca_pg": 13.0638,
+      "onice_cf_pg": 14.2128
     },
     {
       "team_abbrev": "FLA",
@@ -7522,8 +7522,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39,
-      "onice_ca_pg": 13.2468,
-      "onice_cf_pg": 16.3365
+      "onice_ca_pg": 13.2917,
+      "onice_cf_pg": 15.1875
     },
     {
       "team_abbrev": "FLA",
@@ -7554,8 +7554,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43,
-      "onice_ca_pg": 11.7238,
-      "onice_cf_pg": 13.3163
+      "onice_ca_pg": 12,
+      "onice_cf_pg": 12.7778
     },
     {
       "team_abbrev": "FLA",
@@ -7586,8 +7586,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.3,
-      "onice_ca_pg": 17.6384,
-      "onice_cf_pg": 17.0042
+      "onice_ca_pg": 16.0556,
+      "onice_cf_pg": 15.75
     },
     {
       "team_abbrev": "FLA",
@@ -7618,8 +7618,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 68.9,
-      "onice_ca_pg": 16.0402,
-      "onice_cf_pg": 18.62
+      "onice_ca_pg": 15.6818,
+      "onice_cf_pg": 16.4773
     },
     {
       "team_abbrev": "FLA",
@@ -7650,8 +7650,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.8,
-      "onice_ca_pg": 11.5248,
-      "onice_cf_pg": 12.962
+      "onice_ca_pg": 11.9184,
+      "onice_cf_pg": 12.8776
     },
     {
       "team_abbrev": "FLA",
@@ -7682,8 +7682,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.5,
-      "onice_ca_pg": 17.0605,
-      "onice_cf_pg": 20.0887
+      "onice_ca_pg": 16.549,
+      "onice_cf_pg": 18.1373
     },
     {
       "team_abbrev": "FLA",
@@ -7714,8 +7714,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.7,
-      "onice_ca_pg": 11.9882,
-      "onice_cf_pg": 12.9429
+      "onice_ca_pg": 13.1034,
+      "onice_cf_pg": 12.7586
     },
     {
       "team_abbrev": "FLA",
@@ -7746,8 +7746,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.9,
-      "onice_ca_pg": 10.6788,
-      "onice_cf_pg": 7.8485
+      "onice_ca_pg": 10.9189,
+      "onice_cf_pg": 7.973
     },
     {
       "team_abbrev": "FLA",
@@ -7778,8 +7778,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65,
-      "onice_ca_pg": 15.8638,
-      "onice_cf_pg": 17.3513
+      "onice_ca_pg": 15.9487,
+      "onice_cf_pg": 16.0513
     },
     {
       "team_abbrev": "FLA",
@@ -7810,8 +7810,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 115.1,
-      "onice_ca_pg": 7.6133,
-      "onice_cf_pg": 7.4133
+      "onice_ca_pg": 7.2,
+      "onice_cf_pg": 5.4
     },
     {
       "team_abbrev": "FLA",
@@ -7842,8 +7842,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48.6,
-      "onice_ca_pg": 13.8857,
-      "onice_cf_pg": 15.7238
+      "onice_ca_pg": 14.2778,
+      "onice_cf_pg": 14.8889
     },
     {
       "team_abbrev": "FLA",
@@ -7874,8 +7874,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 79.6,
-      "onice_ca_pg": 9.5434,
-      "onice_cf_pg": 8.0428
+      "onice_ca_pg": 8.3721,
+      "onice_cf_pg": 6.4419
     },
     {
       "team_abbrev": "LAK",
@@ -7906,8 +7906,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.4,
-      "onice_ca_pg": 14.8851,
-      "onice_cf_pg": 17.1943
+      "onice_ca_pg": 14.7885,
+      "onice_cf_pg": 16.9808
     },
     {
       "team_abbrev": "LAK",
@@ -7938,8 +7938,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.9,
-      "onice_ca_pg": 13.5665,
-      "onice_cf_pg": 14.362
+      "onice_ca_pg": 13.2264,
+      "onice_cf_pg": 14.2453
     },
     {
       "team_abbrev": "LAK",
@@ -7970,8 +7970,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48,
-      "onice_ca_pg": 13.3114,
-      "onice_cf_pg": 15.9225
+      "onice_ca_pg": 13.3103,
+      "onice_cf_pg": 14.5517
     },
     {
       "team_abbrev": "LAK",
@@ -8002,8 +8002,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48.2,
-      "onice_ca_pg": 14.1485,
-      "onice_cf_pg": 15.7503
+      "onice_ca_pg": 15.1538,
+      "onice_cf_pg": 15.9231
     },
     {
       "team_abbrev": "LAK",
@@ -8034,8 +8034,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.5,
-      "onice_ca_pg": 13.7152,
-      "onice_cf_pg": 15.1827
+      "onice_ca_pg": 14.2963,
+      "onice_cf_pg": 15.2593
     },
     {
       "team_abbrev": "LAK",
@@ -8066,8 +8066,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 13.3,
-      "onice_ca_pg": 13.3109,
-      "onice_cf_pg": 15.2977
+      "onice_ca_pg": 13.66,
+      "onice_cf_pg": 15.26
     },
     {
       "team_abbrev": "LAK",
@@ -8098,8 +8098,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 60,
-      "onice_ca_pg": 15.2131,
-      "onice_cf_pg": 17.3281
+      "onice_ca_pg": 16.3889,
+      "onice_cf_pg": 18.5926
     },
     {
       "team_abbrev": "LAK",
@@ -8130,8 +8130,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 47.8,
-      "onice_ca_pg": 17.9503,
-      "onice_cf_pg": 19.419
+      "onice_ca_pg": 17.0943,
+      "onice_cf_pg": 19
     },
     {
       "team_abbrev": "LAK",
@@ -8162,8 +8162,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.1,
-      "onice_ca_pg": 11.2759,
-      "onice_cf_pg": 10.4228
+      "onice_ca_pg": 11.3636,
+      "onice_cf_pg": 11.0455
     },
     {
       "team_abbrev": "LAK",
@@ -8194,8 +8194,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.2,
-      "onice_ca_pg": 9.6203,
-      "onice_cf_pg": 11.3715
+      "onice_ca_pg": 9.2571,
+      "onice_cf_pg": 11.4857
     },
     {
       "team_abbrev": "LAK",
@@ -8226,8 +8226,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.1,
-      "onice_ca_pg": 16.971,
-      "onice_cf_pg": 17.2297
+      "onice_ca_pg": 16.0741,
+      "onice_cf_pg": 16.2963
     },
     {
       "team_abbrev": "LAK",
@@ -8258,8 +8258,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25,
-      "onice_ca_pg": 17.2491,
-      "onice_cf_pg": 17.9712
+      "onice_ca_pg": 17.0385,
+      "onice_cf_pg": 17.6538
     },
     {
       "team_abbrev": "LAK",
@@ -8290,8 +8290,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.2,
-      "onice_ca_pg": 16.4382,
-      "onice_cf_pg": 15.4663
+      "onice_ca_pg": 15.3148,
+      "onice_cf_pg": 15.2222
     },
     {
       "team_abbrev": "LAK",
@@ -8322,8 +8322,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.3,
-      "onice_ca_pg": 8.9703,
-      "onice_cf_pg": 7.802
+      "onice_ca_pg": 8.96,
+      "onice_cf_pg": 7.76
     },
     {
       "team_abbrev": "LAK",
@@ -8354,8 +8354,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.4,
-      "onice_ca_pg": 17.6147,
-      "onice_cf_pg": 15.4748
+      "onice_ca_pg": 14.2182,
+      "onice_cf_pg": 14.5455
     },
     {
       "team_abbrev": "LAK",
@@ -8386,8 +8386,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 72.1,
-      "onice_ca_pg": 7.7183,
-      "onice_cf_pg": 6.9671
+      "onice_ca_pg": 7.55,
+      "onice_cf_pg": 6.825
     },
     {
       "team_abbrev": "MIN",
@@ -8418,8 +8418,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.4,
-      "onice_ca_pg": 16.2657,
-      "onice_cf_pg": 17.9215
+      "onice_ca_pg": 16.1579,
+      "onice_cf_pg": 17.8596
     },
     {
       "team_abbrev": "MIN",
@@ -8450,8 +8450,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 36.4,
-      "onice_ca_pg": 19.5903,
-      "onice_cf_pg": 22.9641
+      "onice_ca_pg": 21.5088,
+      "onice_cf_pg": 24.0175
     },
     {
       "team_abbrev": "MIN",
@@ -8482,8 +8482,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.3,
-      "onice_ca_pg": 14.4515,
-      "onice_cf_pg": 15.4677
+      "onice_ca_pg": 14,
+      "onice_cf_pg": 15.0175
     },
     {
       "team_abbrev": "MIN",
@@ -8514,8 +8514,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41.1,
-      "onice_ca_pg": 13.1006,
-      "onice_cf_pg": 14.2112
+      "onice_ca_pg": 13.0426,
+      "onice_cf_pg": 13.8936
     },
     {
       "team_abbrev": "MIN",
@@ -8546,8 +8546,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.4,
-      "onice_ca_pg": 20.8623,
-      "onice_cf_pg": 20.714
+      "onice_ca_pg": 20.5932,
+      "onice_cf_pg": 22.1695
     },
     {
       "team_abbrev": "MIN",
@@ -8578,8 +8578,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 65.3,
-      "onice_ca_pg": 14.9216,
-      "onice_cf_pg": 14.888
+      "onice_ca_pg": 15.322,
+      "onice_cf_pg": 15.8136
     },
     {
       "team_abbrev": "MIN",
@@ -8610,8 +8610,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.8,
-      "onice_ca_pg": 11.5392,
-      "onice_cf_pg": 11.2154
+      "onice_ca_pg": 11.4222,
+      "onice_cf_pg": 11.5333
     },
     {
       "team_abbrev": "MIN",
@@ -8674,8 +8674,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 15.6,
-      "onice_ca_pg": 16.3667,
-      "onice_cf_pg": 15.8374
+      "onice_ca_pg": 15.8621,
+      "onice_cf_pg": 14.8448
     },
     {
       "team_abbrev": "MIN",
@@ -8706,8 +8706,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.8,
-      "onice_ca_pg": 18.348,
-      "onice_cf_pg": 17.646
+      "onice_ca_pg": 17.186,
+      "onice_cf_pg": 16.4884
     },
     {
       "team_abbrev": "MIN",
@@ -8738,8 +8738,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 93.2,
-      "onice_ca_pg": 11.0592,
-      "onice_cf_pg": 10.978
+      "onice_ca_pg": 10.5897,
+      "onice_cf_pg": 9.8462
     },
     {
       "team_abbrev": "MIN",
@@ -8770,8 +8770,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.9,
-      "onice_ca_pg": 11.8135,
-      "onice_cf_pg": 10.0868
+      "onice_ca_pg": 11.9322,
+      "onice_cf_pg": 10.0678
     },
     {
       "team_abbrev": "MIN",
@@ -8802,8 +8802,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 75.6,
-      "onice_ca_pg": 17.6484,
-      "onice_cf_pg": 14.9749
+      "onice_ca_pg": 15.4286,
+      "onice_cf_pg": 13.1071
     },
     {
       "team_abbrev": "MIN",
@@ -8834,8 +8834,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.4,
-      "onice_ca_pg": 9.8799,
-      "onice_cf_pg": 8.1867
+      "onice_ca_pg": 9.35,
+      "onice_cf_pg": 7.65
     },
     {
       "team_abbrev": "MIN",
@@ -8898,8 +8898,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 104.9,
-      "onice_ca_pg": 11.0232,
-      "onice_cf_pg": 10.2199
+      "onice_ca_pg": 10.9836,
+      "onice_cf_pg": 10.0656
     },
     {
       "team_abbrev": "MIN",
@@ -8930,8 +8930,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.4,
-      "onice_ca_pg": 12.161,
-      "onice_cf_pg": 9.5659
+      "onice_ca_pg": 12.381,
+      "onice_cf_pg": 9.2857
     },
     {
       "team_abbrev": "MIN",
@@ -8962,8 +8962,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 0,
-      "onice_ca_pg": 14.7727,
-      "onice_cf_pg": 10.5455
+      "onice_ca_pg": 15.2,
+      "onice_cf_pg": 10.6
     },
     {
       "team_abbrev": "MIN",
@@ -9090,8 +9090,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.4,
-      "onice_ca_pg": 14.7918,
-      "onice_cf_pg": 15.5956
+      "onice_ca_pg": 14.7231,
+      "onice_cf_pg": 15.4462
     },
     {
       "team_abbrev": "MTL",
@@ -9122,8 +9122,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.6,
-      "onice_ca_pg": 13.9222,
-      "onice_cf_pg": 14.6747
+      "onice_ca_pg": 13.2031,
+      "onice_cf_pg": 14.25
     },
     {
       "team_abbrev": "MTL",
@@ -9154,8 +9154,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.8,
-      "onice_ca_pg": 17.3928,
-      "onice_cf_pg": 18.6779
+      "onice_ca_pg": 16.6769,
+      "onice_cf_pg": 18.0308
     },
     {
       "team_abbrev": "MTL",
@@ -9186,8 +9186,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 52,
-      "onice_ca_pg": 14.9585,
-      "onice_cf_pg": 14.6342
+      "onice_ca_pg": 14.9385,
+      "onice_cf_pg": 14.5692
     },
     {
       "team_abbrev": "MTL",
@@ -9218,8 +9218,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.8,
-      "onice_ca_pg": 12.1805,
-      "onice_cf_pg": 9.7218
+      "onice_ca_pg": 12.2154,
+      "onice_cf_pg": 9.7385
     },
     {
       "team_abbrev": "MTL",
@@ -9250,8 +9250,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.2,
-      "onice_ca_pg": 18.9347,
-      "onice_cf_pg": 18.6181
+      "onice_ca_pg": 19.1429,
+      "onice_cf_pg": 17.5079
     },
     {
       "team_abbrev": "MTL",
@@ -9282,8 +9282,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.5,
-      "onice_ca_pg": 13.5581,
-      "onice_cf_pg": 11.1328
+      "onice_ca_pg": 12.75,
+      "onice_cf_pg": 9.9773
     },
     {
       "team_abbrev": "MTL",
@@ -9314,8 +9314,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.2,
-      "onice_ca_pg": 20.5592,
-      "onice_cf_pg": 17.0754
+      "onice_ca_pg": 21,
+      "onice_cf_pg": 16.8033
     },
     {
       "team_abbrev": "MTL",
@@ -9346,8 +9346,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.8,
-      "onice_ca_pg": 12.8174,
-      "onice_cf_pg": 9.2739
+      "onice_ca_pg": 12.9464,
+      "onice_cf_pg": 9.3929
     },
     {
       "team_abbrev": "MTL",
@@ -9378,8 +9378,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.6,
-      "onice_ca_pg": 10.6644,
-      "onice_cf_pg": 10.3322
+      "onice_ca_pg": 11.0484,
+      "onice_cf_pg": 10.4194
     },
     {
       "team_abbrev": "MTL",
@@ -9410,8 +9410,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 67.2,
-      "onice_ca_pg": 12.3484,
-      "onice_cf_pg": 10.0144
+      "onice_ca_pg": 11.25,
+      "onice_cf_pg": 9.1389
     },
     {
       "team_abbrev": "MTL",
@@ -9442,8 +9442,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.6,
-      "onice_ca_pg": 12.3428,
-      "onice_cf_pg": 11.4958
+      "onice_ca_pg": 12.1163,
+      "onice_cf_pg": 11.5814
     },
     {
       "team_abbrev": "MTL",
@@ -9474,8 +9474,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26,
-      "onice_ca_pg": 12.3024,
-      "onice_cf_pg": 10.7415
+      "onice_ca_pg": 12.2759,
+      "onice_cf_pg": 10.3966
     },
     {
       "team_abbrev": "MTL",
@@ -9506,8 +9506,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.9,
-      "onice_ca_pg": 12.5201,
-      "onice_cf_pg": 13.3732
+      "onice_ca_pg": 12.375,
+      "onice_cf_pg": 11.2143
     },
     {
       "team_abbrev": "MTL",
@@ -9538,8 +9538,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 99.5,
-      "onice_ca_pg": 12.977,
-      "onice_cf_pg": 10.8963
+      "onice_ca_pg": 12.0164,
+      "onice_cf_pg": 10.2131
     },
     {
       "team_abbrev": "MTL",
@@ -9570,8 +9570,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41,
-      "onice_ca_pg": 17.2492,
-      "onice_cf_pg": 15.2846
+      "onice_ca_pg": 16.625,
+      "onice_cf_pg": 14.375
     },
     {
       "team_abbrev": "MTL",
@@ -9602,8 +9602,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 80.3,
-      "onice_ca_pg": 18.8763,
-      "onice_cf_pg": 15.4133
+      "onice_ca_pg": 18.6098,
+      "onice_cf_pg": 14.0488
     },
     {
       "team_abbrev": "MTL",
@@ -9634,8 +9634,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 81.5,
-      "onice_ca_pg": 13.2154,
-      "onice_cf_pg": 12.8692
+      "onice_ca_pg": 12.5238,
+      "onice_cf_pg": 11.7619
     },
     {
       "team_abbrev": "MTL",
@@ -9698,8 +9698,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 147.6,
-      "onice_ca_pg": 11.7956,
-      "onice_cf_pg": 10.349
+      "onice_ca_pg": 9.7083,
+      "onice_cf_pg": 8.8125
     },
     {
       "team_abbrev": "MTL",
@@ -9730,8 +9730,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28,
-      "onice_ca_pg": 9.125,
-      "onice_cf_pg": 10.25
+      "onice_ca_pg": 8.5714,
+      "onice_cf_pg": 10.2857
     },
     {
       "team_abbrev": "MTL",
@@ -9826,8 +9826,8 @@
       "proj_hits": null,
       "proj_blocks": null,
       "proj_pim": null,
-      "onice_ca_pg": 18,
-      "onice_cf_pg": 22
+      "onice_ca_pg": null,
+      "onice_cf_pg": null
     },
     {
       "team_abbrev": "NJD",
@@ -9858,8 +9858,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17,
-      "onice_ca_pg": 15.5024,
-      "onice_cf_pg": 18.6464
+      "onice_ca_pg": 16.1429,
+      "onice_cf_pg": 18.9143
     },
     {
       "team_abbrev": "NJD",
@@ -9890,8 +9890,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.1,
-      "onice_ca_pg": 13.5843,
-      "onice_cf_pg": 16.0368
+      "onice_ca_pg": 13.2708,
+      "onice_cf_pg": 16.3333
     },
     {
       "team_abbrev": "NJD",
@@ -9922,8 +9922,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.7,
-      "onice_ca_pg": 14.1289,
-      "onice_cf_pg": 16.6629
+      "onice_ca_pg": 14.2708,
+      "onice_cf_pg": 17.0833
     },
     {
       "team_abbrev": "NJD",
@@ -9954,8 +9954,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 36.9,
-      "onice_ca_pg": 15.3769,
-      "onice_cf_pg": 17.5167
+      "onice_ca_pg": 15.3488,
+      "onice_cf_pg": 18.093
     },
     {
       "team_abbrev": "NJD",
@@ -9986,8 +9986,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.6,
-      "onice_ca_pg": 17.4523,
-      "onice_cf_pg": 19.7082
+      "onice_ca_pg": 18,
+      "onice_cf_pg": 20.6585
     },
     {
       "team_abbrev": "NJD",
@@ -10018,8 +10018,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 51.1,
-      "onice_ca_pg": 16.6801,
-      "onice_cf_pg": 18.8053
+      "onice_ca_pg": 16.2979,
+      "onice_cf_pg": 18.8298
     },
     {
       "team_abbrev": "NJD",
@@ -10050,8 +10050,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.4,
-      "onice_ca_pg": 12.3484,
-      "onice_cf_pg": 12.451
+      "onice_ca_pg": 12.7333,
+      "onice_cf_pg": 14.2667
     },
     {
       "team_abbrev": "NJD",
@@ -10082,8 +10082,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.5,
-      "onice_ca_pg": 13.9775,
-      "onice_cf_pg": 14.7766
+      "onice_ca_pg": 13.8333,
+      "onice_cf_pg": 15.6875
     },
     {
       "team_abbrev": "NJD",
@@ -10146,8 +10146,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.1,
-      "onice_ca_pg": 11.2988,
-      "onice_cf_pg": 14.114
+      "onice_ca_pg": 11.1,
+      "onice_cf_pg": 12.825
     },
     {
       "team_abbrev": "NJD",
@@ -10178,8 +10178,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.2,
-      "onice_ca_pg": 11.2725,
-      "onice_cf_pg": 11.9929
+      "onice_ca_pg": 11.5227,
+      "onice_cf_pg": 11.8182
     },
     {
       "team_abbrev": "NJD",
@@ -10210,8 +10210,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 62.4,
-      "onice_ca_pg": 11.2909,
-      "onice_cf_pg": 12.0906
+      "onice_ca_pg": 11.3889,
+      "onice_cf_pg": 9.8889
     },
     {
       "team_abbrev": "NJD",
@@ -10242,8 +10242,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.7,
-      "onice_ca_pg": 11.1526,
-      "onice_cf_pg": 10.4207
+      "onice_ca_pg": 10.3077,
+      "onice_cf_pg": 8.7692
     },
     {
       "team_abbrev": "NJD",
@@ -10274,8 +10274,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.9,
-      "onice_ca_pg": 14.5599,
-      "onice_cf_pg": 14.6822
+      "onice_ca_pg": 14.2143,
+      "onice_cf_pg": 13.5714
     },
     {
       "team_abbrev": "NJD",
@@ -10306,8 +10306,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 81.6,
-      "onice_ca_pg": 15.0873,
-      "onice_cf_pg": 15.771
+      "onice_ca_pg": 15.32,
+      "onice_cf_pg": 15.96
     },
     {
       "team_abbrev": "NJD",
@@ -10338,8 +10338,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.2,
-      "onice_ca_pg": 10.0922,
-      "onice_cf_pg": 9.8028
+      "onice_ca_pg": 9.66,
+      "onice_cf_pg": 9.08
     },
     {
       "team_abbrev": "NJD",
@@ -10370,8 +10370,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.1,
-      "onice_ca_pg": 17.6132,
-      "onice_cf_pg": 18.6112
+      "onice_ca_pg": 18.0588,
+      "onice_cf_pg": 17.8824
     },
     {
       "team_abbrev": "NJD",
@@ -10402,8 +10402,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 85.3,
-      "onice_ca_pg": 15.9312,
-      "onice_cf_pg": 15.5688
+      "onice_ca_pg": 15.4375,
+      "onice_cf_pg": 14.6667
     },
     {
       "team_abbrev": "NJD",
@@ -10434,8 +10434,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 52,
-      "onice_ca_pg": 16.172,
-      "onice_cf_pg": 16.9279
+      "onice_ca_pg": 16.2292,
+      "onice_cf_pg": 17
     },
     {
       "team_abbrev": "NSH",
@@ -10466,8 +10466,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.4,
-      "onice_ca_pg": 14.9021,
-      "onice_cf_pg": 15.0691
+      "onice_ca_pg": 15.1346,
+      "onice_cf_pg": 14.8269
     },
     {
       "team_abbrev": "NSH",
@@ -10498,8 +10498,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.3,
-      "onice_ca_pg": 13.3353,
-      "onice_cf_pg": 14.229
+      "onice_ca_pg": 13.4706,
+      "onice_cf_pg": 13.6078
     },
     {
       "team_abbrev": "NSH",
@@ -10530,8 +10530,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.9,
-      "onice_ca_pg": 19.2773,
-      "onice_cf_pg": 19.409
+      "onice_ca_pg": 20.1087,
+      "onice_cf_pg": 17.9348
     },
     {
       "team_abbrev": "NSH",
@@ -10562,8 +10562,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.9,
-      "onice_ca_pg": 13.5903,
-      "onice_cf_pg": 13.5069
+      "onice_ca_pg": 12.8846,
+      "onice_cf_pg": 13.4615
     },
     {
       "team_abbrev": "NSH",
@@ -10594,8 +10594,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.8,
-      "onice_ca_pg": 11.8102,
-      "onice_cf_pg": 14.176
+      "onice_ca_pg": 12.6471,
+      "onice_cf_pg": 15.2353
     },
     {
       "team_abbrev": "NSH",
@@ -10626,8 +10626,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.4,
-      "onice_ca_pg": 14.5881,
-      "onice_cf_pg": 12.9858
+      "onice_ca_pg": 14.4186,
+      "onice_cf_pg": 11.9767
     },
     {
       "team_abbrev": "NSH",
@@ -10658,8 +10658,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.8,
-      "onice_ca_pg": 11.8495,
-      "onice_cf_pg": 10.9785
+      "onice_ca_pg": 11.8696,
+      "onice_cf_pg": 10.9783
     },
     {
       "team_abbrev": "NSH",
@@ -10690,8 +10690,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.4,
-      "onice_ca_pg": 10.9868,
-      "onice_cf_pg": 13.7338
+      "onice_ca_pg": 10.2727,
+      "onice_cf_pg": 13.7636
     },
     {
       "team_abbrev": "NSH",
@@ -10722,8 +10722,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41.6,
-      "onice_ca_pg": 17.4317,
-      "onice_cf_pg": 17.1378
+      "onice_ca_pg": 18.2115,
+      "onice_cf_pg": 16.3846
     },
     {
       "team_abbrev": "NSH",
@@ -10754,8 +10754,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.5,
-      "onice_ca_pg": 8.8256,
-      "onice_cf_pg": 12.562
+      "onice_ca_pg": 8.873,
+      "onice_cf_pg": 12.6825
     },
     {
       "team_abbrev": "NSH",
@@ -10786,8 +10786,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.2,
-      "onice_ca_pg": 15.2286,
-      "onice_cf_pg": 15.56
+      "onice_ca_pg": 15.3158,
+      "onice_cf_pg": 15.5263
     },
     {
       "team_abbrev": "NSH",
@@ -10818,8 +10818,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.7,
-      "onice_ca_pg": 10.614,
-      "onice_cf_pg": 10.493
+      "onice_ca_pg": 10.6957,
+      "onice_cf_pg": 9.7391
     },
     {
       "team_abbrev": "NSH",
@@ -10850,8 +10850,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 58.2,
-      "onice_ca_pg": 16.9789,
-      "onice_cf_pg": 15.5758
+      "onice_ca_pg": 17.1951,
+      "onice_cf_pg": 15.9756
     },
     {
       "team_abbrev": "NSH",
@@ -10882,8 +10882,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.9,
-      "onice_ca_pg": 15.2221,
-      "onice_cf_pg": 14.3519
+      "onice_ca_pg": 16.8163,
+      "onice_cf_pg": 14.5714
     },
     {
       "team_abbrev": "NSH",
@@ -10914,8 +10914,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.7,
-      "onice_ca_pg": 14.0953,
-      "onice_cf_pg": 14.9931
+      "onice_ca_pg": 13.4242,
+      "onice_cf_pg": 14.3333
     },
     {
       "team_abbrev": "NSH",
@@ -10946,8 +10946,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 52.6,
-      "onice_ca_pg": 14.6287,
-      "onice_cf_pg": 12.4621
+      "onice_ca_pg": 13.1515,
+      "onice_cf_pg": 10.6667
     },
     {
       "team_abbrev": "NSH",
@@ -10978,8 +10978,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.3,
-      "onice_ca_pg": 9.7351,
-      "onice_cf_pg": 8.5668
+      "onice_ca_pg": 10.0476,
+      "onice_cf_pg": 9.4762
     },
     {
       "team_abbrev": "NSH",
@@ -11010,8 +11010,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 77.4,
-      "onice_ca_pg": 8.9529,
-      "onice_cf_pg": 7.5412
+      "onice_ca_pg": 8.75,
+      "onice_cf_pg": 7.55
     },
     {
       "team_abbrev": "NSH",
@@ -11074,8 +11074,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.2,
-      "onice_ca_pg": 15.4413,
-      "onice_cf_pg": 17.2169
+      "onice_ca_pg": 15.2692,
+      "onice_cf_pg": 16.2692
     },
     {
       "team_abbrev": "NYI",
@@ -11106,8 +11106,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.2,
-      "onice_ca_pg": 15.238,
-      "onice_cf_pg": 15.6392
+      "onice_ca_pg": 14.6818,
+      "onice_cf_pg": 14.8409
     },
     {
       "team_abbrev": "NYI",
@@ -11170,8 +11170,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.5,
-      "onice_ca_pg": 15.1292,
-      "onice_cf_pg": 14.0021
+      "onice_ca_pg": 12.2222,
+      "onice_cf_pg": 12.2222
     },
     {
       "team_abbrev": "NYI",
@@ -11202,8 +11202,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.7,
-      "onice_ca_pg": 13.4482,
-      "onice_cf_pg": 12.5323
+      "onice_ca_pg": 13.1765,
+      "onice_cf_pg": 12.4314
     },
     {
       "team_abbrev": "NYI",
@@ -11234,8 +11234,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 67.8,
-      "onice_ca_pg": 14.1659,
-      "onice_cf_pg": 12.0104
+      "onice_ca_pg": 13.8125,
+      "onice_cf_pg": 11.1875
     },
     {
       "team_abbrev": "NYI",
@@ -11266,8 +11266,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.1,
-      "onice_ca_pg": 13.2298,
-      "onice_cf_pg": 12.7408
+      "onice_ca_pg": 13.0417,
+      "onice_cf_pg": 11.8125
     },
     {
       "team_abbrev": "NYI",
@@ -11298,8 +11298,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.3,
-      "onice_ca_pg": 16.9325,
-      "onice_cf_pg": 18.7266
+      "onice_ca_pg": 16.3478,
+      "onice_cf_pg": 18.1739
     },
     {
       "team_abbrev": "NYI",
@@ -11330,8 +11330,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.9,
-      "onice_ca_pg": 13.5729,
-      "onice_cf_pg": 11.6432
+      "onice_ca_pg": 12.6286,
+      "onice_cf_pg": 10.3714
     },
     {
       "team_abbrev": "NYI",
@@ -11362,8 +11362,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.8,
-      "onice_ca_pg": 12.7392,
-      "onice_cf_pg": 12.2851
+      "onice_ca_pg": 14.4423,
+      "onice_cf_pg": 14.0962
     },
     {
       "team_abbrev": "NYI",
@@ -11394,8 +11394,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.8,
-      "onice_ca_pg": 19.0594,
-      "onice_cf_pg": 16.1006
+      "onice_ca_pg": 18.6667,
+      "onice_cf_pg": 15.5833
     },
     {
       "team_abbrev": "NYI",
@@ -11426,8 +11426,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.1,
-      "onice_ca_pg": 12.4642,
-      "onice_cf_pg": 12.0577
+      "onice_ca_pg": 11.587,
+      "onice_cf_pg": 10.6304
     },
     {
       "team_abbrev": "NYI",
@@ -11458,8 +11458,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.1,
-      "onice_ca_pg": 16.8238,
-      "onice_cf_pg": 19.1444
+      "onice_ca_pg": 16.7115,
+      "onice_cf_pg": 18.4423
     },
     {
       "team_abbrev": "NYI",
@@ -11490,8 +11490,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.4,
-      "onice_ca_pg": 20.8543,
-      "onice_cf_pg": 19.0427
+      "onice_ca_pg": 19.125,
+      "onice_cf_pg": 15
     },
     {
       "team_abbrev": "NYI",
@@ -11522,8 +11522,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.3,
-      "onice_ca_pg": 10.3509,
-      "onice_cf_pg": 10.3906
+      "onice_ca_pg": 9.0385,
+      "onice_cf_pg": 9.6731
     },
     {
       "team_abbrev": "NYI",
@@ -11554,8 +11554,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 72.9,
-      "onice_ca_pg": 14.9567,
-      "onice_cf_pg": 13.157
+      "onice_ca_pg": 14.2,
+      "onice_cf_pg": 12.48
     },
     {
       "team_abbrev": "NYI",
@@ -11586,8 +11586,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.4,
-      "onice_ca_pg": 9.3595,
-      "onice_cf_pg": 8.3042
+      "onice_ca_pg": 9.1579,
+      "onice_cf_pg": 8.9211
     },
     {
       "team_abbrev": "NYR",
@@ -11618,8 +11618,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.5,
-      "onice_ca_pg": 16.125,
-      "onice_cf_pg": 19.5351
+      "onice_ca_pg": 16.2188,
+      "onice_cf_pg": 20.0312
     },
     {
       "team_abbrev": "NYR",
@@ -11650,8 +11650,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18,
-      "onice_ca_pg": 14.0291,
-      "onice_cf_pg": 13.4214
+      "onice_ca_pg": 14.3,
+      "onice_cf_pg": 13.76
     },
     {
       "team_abbrev": "NYR",
@@ -11682,8 +11682,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.2,
-      "onice_ca_pg": 13.3197,
-      "onice_cf_pg": 12.9633
+      "onice_ca_pg": 14.0976,
+      "onice_cf_pg": 12.9512
     },
     {
       "team_abbrev": "NYR",
@@ -11714,8 +11714,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 66.9,
-      "onice_ca_pg": 14.7965,
-      "onice_cf_pg": 15.0161
+      "onice_ca_pg": 14.2273,
+      "onice_cf_pg": 13.4545
     },
     {
       "team_abbrev": "NYR",
@@ -11746,8 +11746,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.3,
-      "onice_ca_pg": 11.9687,
-      "onice_cf_pg": 13.9763
+      "onice_ca_pg": 11.589,
+      "onice_cf_pg": 13.5753
     },
     {
       "team_abbrev": "NYR",
@@ -11778,8 +11778,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.2,
-      "onice_ca_pg": 13.9194,
-      "onice_cf_pg": 15.5593
+      "onice_ca_pg": 13.1961,
+      "onice_cf_pg": 14.6471
     },
     {
       "team_abbrev": "NYR",
@@ -11810,8 +11810,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.7,
-      "onice_ca_pg": 14.125,
-      "onice_cf_pg": 12.5368
+      "onice_ca_pg": 14.2121,
+      "onice_cf_pg": 12.6364
     },
     {
       "team_abbrev": "NYR",
@@ -11842,8 +11842,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 59.2,
-      "onice_ca_pg": 12.6198,
-      "onice_cf_pg": 12.1233
+      "onice_ca_pg": 12.5882,
+      "onice_cf_pg": 12.0784
     },
     {
       "team_abbrev": "NYR",
@@ -11874,8 +11874,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.4,
-      "onice_ca_pg": 17.9966,
-      "onice_cf_pg": 19.2917
+      "onice_ca_pg": 18.8824,
+      "onice_cf_pg": 18.6471
     },
     {
       "team_abbrev": "NYR",
@@ -11970,8 +11970,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 51.1,
-      "onice_ca_pg": 10.0932,
-      "onice_cf_pg": 9.7486
+      "onice_ca_pg": 10.2326,
+      "onice_cf_pg": 10.1163
     },
     {
       "team_abbrev": "NYR",
@@ -12002,8 +12002,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.9,
-      "onice_ca_pg": 11.2844,
-      "onice_cf_pg": 10.9124
+      "onice_ca_pg": 10.5135,
+      "onice_cf_pg": 9.8108
     },
     {
       "team_abbrev": "NYR",
@@ -12034,8 +12034,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.3,
-      "onice_ca_pg": 15.2011,
-      "onice_cf_pg": 14.709
+      "onice_ca_pg": 15.2128,
+      "onice_cf_pg": 14.7021
     },
     {
       "team_abbrev": "NYR",
@@ -12066,8 +12066,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.7,
-      "onice_ca_pg": 17.6855,
-      "onice_cf_pg": 15.1399
+      "onice_ca_pg": 18.0784,
+      "onice_cf_pg": 15.4314
     },
     {
       "team_abbrev": "NYR",
@@ -12098,8 +12098,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.6,
-      "onice_ca_pg": 14.0668,
-      "onice_cf_pg": 13.3987
+      "onice_ca_pg": 11.619,
+      "onice_cf_pg": 12.6667
     },
     {
       "team_abbrev": "NYR",
@@ -12194,8 +12194,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 46.3,
-      "onice_ca_pg": 15.8683,
-      "onice_cf_pg": 13.8849
+      "onice_ca_pg": 15.2245,
+      "onice_cf_pg": 13.1429
     },
     {
       "team_abbrev": "NYR",
@@ -12226,8 +12226,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.4,
-      "onice_ca_pg": 13.9254,
-      "onice_cf_pg": 11.6269
+      "onice_ca_pg": 14.5333,
+      "onice_cf_pg": 12.2667
     },
     {
       "team_abbrev": "NYR",
@@ -12258,8 +12258,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 87.8,
-      "onice_ca_pg": 7.6235,
-      "onice_cf_pg": 7.6852
+      "onice_ca_pg": 6.1875,
+      "onice_cf_pg": 8.8125
     },
     {
       "team_abbrev": "OTT",
@@ -12290,8 +12290,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.1,
-      "onice_ca_pg": 12.954,
-      "onice_cf_pg": 16.072
+      "onice_ca_pg": 12.0208,
+      "onice_cf_pg": 15.2917
     },
     {
       "team_abbrev": "OTT",
@@ -12322,8 +12322,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.4,
-      "onice_ca_pg": 12.9163,
-      "onice_cf_pg": 14.3684
+      "onice_ca_pg": 11.4565,
+      "onice_cf_pg": 14.2174
     },
     {
       "team_abbrev": "OTT",
@@ -12354,8 +12354,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12,
-      "onice_ca_pg": 15.8058,
-      "onice_cf_pg": 18.3871
+      "onice_ca_pg": 14.6857,
+      "onice_cf_pg": 19.4857
     },
     {
       "team_abbrev": "OTT",
@@ -12386,8 +12386,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.4,
-      "onice_ca_pg": 14.9127,
-      "onice_cf_pg": 14.1476
+      "onice_ca_pg": 14.4898,
+      "onice_cf_pg": 13.7143
     },
     {
       "team_abbrev": "OTT",
@@ -12418,8 +12418,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 62,
-      "onice_ca_pg": 12.2267,
-      "onice_cf_pg": 13.9012
+      "onice_ca_pg": 11.0204,
+      "onice_cf_pg": 14.1837
     },
     {
       "team_abbrev": "OTT",
@@ -12450,8 +12450,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43,
-      "onice_ca_pg": 13.152,
-      "onice_cf_pg": 13.0921
+      "onice_ca_pg": 12.5641,
+      "onice_cf_pg": 12.6667
     },
     {
       "team_abbrev": "OTT",
@@ -12482,8 +12482,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30,
-      "onice_ca_pg": 17.4366,
-      "onice_cf_pg": 19.7523
+      "onice_ca_pg": 16.3548,
+      "onice_cf_pg": 18.3226
     },
     {
       "team_abbrev": "OTT",
@@ -12514,8 +12514,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.6,
-      "onice_ca_pg": 14.1312,
-      "onice_cf_pg": 12.6318
+      "onice_ca_pg": 14.7083,
+      "onice_cf_pg": 12.8125
     },
     {
       "team_abbrev": "OTT",
@@ -12546,8 +12546,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 82.1,
-      "onice_ca_pg": 12.6326,
-      "onice_cf_pg": 12.9881
+      "onice_ca_pg": 11.9184,
+      "onice_cf_pg": 13.449
     },
     {
       "team_abbrev": "OTT",
@@ -12578,8 +12578,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.9,
-      "onice_ca_pg": 12.8477,
-      "onice_cf_pg": 12.5625
+      "onice_ca_pg": 9.92,
+      "onice_cf_pg": 12.1
     },
     {
       "team_abbrev": "OTT",
@@ -12610,8 +12610,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.3,
-      "onice_ca_pg": 13.2347,
-      "onice_cf_pg": 12.956
+      "onice_ca_pg": 13.551,
+      "onice_cf_pg": 13.5102
     },
     {
       "team_abbrev": "OTT",
@@ -12642,8 +12642,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22,
-      "onice_ca_pg": 12.7888,
-      "onice_cf_pg": 17.9441
+      "onice_ca_pg": 13.5111,
+      "onice_cf_pg": 20.6222
     },
     {
       "team_abbrev": "OTT",
@@ -12674,8 +12674,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.1,
-      "onice_ca_pg": 11.944,
-      "onice_cf_pg": 12.8236
+      "onice_ca_pg": 11.3571,
+      "onice_cf_pg": 10.7619
     },
     {
       "team_abbrev": "OTT",
@@ -12738,8 +12738,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 56,
-      "onice_ca_pg": 15.6961,
-      "onice_cf_pg": 16.8114
+      "onice_ca_pg": 15.2708,
+      "onice_cf_pg": 16.8125
     },
     {
       "team_abbrev": "OTT",
@@ -12770,8 +12770,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 88.9,
-      "onice_ca_pg": 10.3347,
-      "onice_cf_pg": 11.2154
+      "onice_ca_pg": 10.1224,
+      "onice_cf_pg": 10.8163
     },
     {
       "team_abbrev": "OTT",
@@ -12802,8 +12802,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 51.6,
-      "onice_ca_pg": 13.2754,
-      "onice_cf_pg": 14.3682
+      "onice_ca_pg": 12.9211,
+      "onice_cf_pg": 16.5
     },
     {
       "team_abbrev": "OTT",
@@ -12834,8 +12834,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 0,
-      "onice_ca_pg": 10.0952,
-      "onice_cf_pg": 9.9048
+      "onice_ca_pg": 10,
+      "onice_cf_pg": 10
     },
     {
       "team_abbrev": "OTT",
@@ -12866,8 +12866,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.3,
-      "onice_ca_pg": 13.2795,
-      "onice_cf_pg": 11.5984
+      "onice_ca_pg": 13.7222,
+      "onice_cf_pg": 11.4444
     },
     {
       "team_abbrev": "OTT",
@@ -12898,8 +12898,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 126,
-      "onice_ca_pg": 5.0709,
-      "onice_cf_pg": 2.8504
+      "onice_ca_pg": 4.6154,
+      "onice_cf_pg": 2.3077
     },
     {
       "team_abbrev": "OTT",
@@ -13090,8 +13090,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 62,
-      "onice_ca_pg": 15.1931,
-      "onice_cf_pg": 14.3996
+      "onice_ca_pg": 14.8214,
+      "onice_cf_pg": 13.3571
     },
     {
       "team_abbrev": "PHI",
@@ -13122,8 +13122,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 57.8,
-      "onice_ca_pg": 14.3524,
-      "onice_cf_pg": 13.8231
+      "onice_ca_pg": 13.8276,
+      "onice_cf_pg": 13.9655
     },
     {
       "team_abbrev": "PHI",
@@ -13154,8 +13154,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 68.6,
-      "onice_ca_pg": 11.7574,
-      "onice_cf_pg": 11.377
+      "onice_ca_pg": 11.0351,
+      "onice_cf_pg": 10.807
     },
     {
       "team_abbrev": "PHI",
@@ -13186,8 +13186,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.4,
-      "onice_ca_pg": 12.8988,
-      "onice_cf_pg": 13.1047
+      "onice_ca_pg": 12.2963,
+      "onice_cf_pg": 12.5556
     },
     {
       "team_abbrev": "PHI",
@@ -13218,8 +13218,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.2,
-      "onice_ca_pg": 13.9063,
-      "onice_cf_pg": 12.2149
+      "onice_ca_pg": 14.0175,
+      "onice_cf_pg": 12.5088
     },
     {
       "team_abbrev": "PHI",
@@ -13250,8 +13250,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.1,
-      "onice_ca_pg": 12.799,
-      "onice_cf_pg": 11.6917
+      "onice_ca_pg": 12.4545,
+      "onice_cf_pg": 10.2273
     },
     {
       "team_abbrev": "PHI",
@@ -13282,8 +13282,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.2,
-      "onice_ca_pg": 11.0344,
-      "onice_cf_pg": 10.7833
+      "onice_ca_pg": 10.386,
+      "onice_cf_pg": 10.0175
     },
     {
       "team_abbrev": "PHI",
@@ -13346,8 +13346,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.6,
-      "onice_ca_pg": 13.1042,
-      "onice_cf_pg": 13.0607
+      "onice_ca_pg": 11.9455,
+      "onice_cf_pg": 11.3091
     },
     {
       "team_abbrev": "PHI",
@@ -13378,8 +13378,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.6,
-      "onice_ca_pg": 18.4309,
-      "onice_cf_pg": 17.9445
+      "onice_ca_pg": 17.4138,
+      "onice_cf_pg": 16.8621
     },
     {
       "team_abbrev": "PHI",
@@ -13442,8 +13442,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.5,
-      "onice_ca_pg": 18.3131,
-      "onice_cf_pg": 15.4393
+      "onice_ca_pg": 18.1897,
+      "onice_cf_pg": 15.0862
     },
     {
       "team_abbrev": "PHI",
@@ -13474,8 +13474,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.2,
-      "onice_ca_pg": 17.1589,
-      "onice_cf_pg": 15.5347
+      "onice_ca_pg": 16.9216,
+      "onice_cf_pg": 14.3333
     },
     {
       "team_abbrev": "PHI",
@@ -13506,8 +13506,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.7,
-      "onice_ca_pg": 16.7918,
-      "onice_cf_pg": 15.9132
+      "onice_ca_pg": 17.0256,
+      "onice_cf_pg": 15.6667
     },
     {
       "team_abbrev": "PHI",
@@ -13538,8 +13538,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 68.8,
-      "onice_ca_pg": 10.7203,
-      "onice_cf_pg": 9.5245
+      "onice_ca_pg": 10.7941,
+      "onice_cf_pg": 9.7059
     },
     {
       "team_abbrev": "PHI",
@@ -13570,8 +13570,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28,
-      "onice_ca_pg": 16,
-      "onice_cf_pg": 12.1667
+      "onice_ca_pg": null,
+      "onice_cf_pg": null
     },
     {
       "team_abbrev": "PHI",
@@ -13602,8 +13602,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.1,
-      "onice_ca_pg": 15.275,
-      "onice_cf_pg": 13.7455
+      "onice_ca_pg": 14.0351,
+      "onice_cf_pg": 13.3333
     },
     {
       "team_abbrev": "PHI",
@@ -13634,8 +13634,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 53.8,
-      "onice_ca_pg": 16.7817,
-      "onice_cf_pg": 12.4015
+      "onice_ca_pg": 17.619,
+      "onice_cf_pg": 12
     },
     {
       "team_abbrev": "PHI",
@@ -13666,8 +13666,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.1,
-      "onice_ca_pg": 13.7067,
-      "onice_cf_pg": 10.9567
+      "onice_ca_pg": 13.6923,
+      "onice_cf_pg": 10.2308
     },
     {
       "team_abbrev": "PHI",
@@ -13698,8 +13698,8 @@
       "proj_hits": null,
       "proj_blocks": null,
       "proj_pim": null,
-      "onice_ca_pg": 6.75,
-      "onice_cf_pg": 7.45
+      "onice_ca_pg": 6.5,
+      "onice_cf_pg": 7.5
     },
     {
       "team_abbrev": "PHI",
@@ -13730,8 +13730,8 @@
       "proj_hits": null,
       "proj_blocks": null,
       "proj_pim": null,
-      "onice_ca_pg": 11.4375,
-      "onice_cf_pg": 5.6875
+      "onice_ca_pg": 10.6667,
+      "onice_cf_pg": 5
     },
     {
       "team_abbrev": "PHI",
@@ -13826,8 +13826,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 46.4,
-      "onice_ca_pg": 15.6969,
-      "onice_cf_pg": 16.9497
+      "onice_ca_pg": 15,
+      "onice_cf_pg": 15.3778
     },
     {
       "team_abbrev": "PIT",
@@ -13858,8 +13858,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 77,
-      "onice_ca_pg": 13.81,
-      "onice_cf_pg": 14.2866
+      "onice_ca_pg": 12.3871,
+      "onice_cf_pg": 13.1935
     },
     {
       "team_abbrev": "PIT",
@@ -13890,8 +13890,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27.5,
-      "onice_ca_pg": 14.9687,
-      "onice_cf_pg": 15.1789
+      "onice_ca_pg": 14.0833,
+      "onice_cf_pg": 14.25
     },
     {
       "team_abbrev": "PIT",
@@ -13922,8 +13922,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 13.5,
-      "onice_ca_pg": 14.6849,
-      "onice_cf_pg": 16.0686
+      "onice_ca_pg": 13.9333,
+      "onice_cf_pg": 14.8667
     },
     {
       "team_abbrev": "PIT",
@@ -13954,8 +13954,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.9,
-      "onice_ca_pg": 17.8632,
-      "onice_cf_pg": 20.1038
+      "onice_ca_pg": 16.14,
+      "onice_cf_pg": 18.88
     },
     {
       "team_abbrev": "PIT",
@@ -13986,8 +13986,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.5,
-      "onice_ca_pg": 12.7388,
-      "onice_cf_pg": 12.4083
+      "onice_ca_pg": 12.4444,
+      "onice_cf_pg": 11.6
     },
     {
       "team_abbrev": "PIT",
@@ -14018,8 +14018,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.7,
-      "onice_ca_pg": 12.1345,
-      "onice_cf_pg": 13.2005
+      "onice_ca_pg": 13.0182,
+      "onice_cf_pg": 13.3091
     },
     {
       "team_abbrev": "PIT",
@@ -14050,8 +14050,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.2,
-      "onice_ca_pg": 18.4684,
-      "onice_cf_pg": 18.1004
+      "onice_ca_pg": 17.5102,
+      "onice_cf_pg": 16.9796
     },
     {
       "team_abbrev": "PIT",
@@ -14114,8 +14114,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.7,
-      "onice_ca_pg": 10.8082,
-      "onice_cf_pg": 10.7469
+      "onice_ca_pg": 10.814,
+      "onice_cf_pg": 11.7907
     },
     {
       "team_abbrev": "PIT",
@@ -14146,8 +14146,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.1,
-      "onice_ca_pg": 10.4395,
-      "onice_cf_pg": 9.5605
+      "onice_ca_pg": 10.7647,
+      "onice_cf_pg": 10.1961
     },
     {
       "team_abbrev": "PIT",
@@ -14178,8 +14178,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 37,
-      "onice_ca_pg": 10.4787,
-      "onice_cf_pg": 10.2748
+      "onice_ca_pg": 10.3793,
+      "onice_cf_pg": 10.8276
     },
     {
       "team_abbrev": "PIT",
@@ -14210,8 +14210,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.7,
-      "onice_ca_pg": 15.8634,
-      "onice_cf_pg": 19.2745
+      "onice_ca_pg": 15.1429,
+      "onice_cf_pg": 18.9762
     },
     {
       "team_abbrev": "PIT",
@@ -14274,8 +14274,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.7,
-      "onice_ca_pg": 12.3904,
-      "onice_cf_pg": 12.7193
+      "onice_ca_pg": 11.9545,
+      "onice_cf_pg": 12.4545
     },
     {
       "team_abbrev": "PIT",
@@ -14306,8 +14306,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.4,
-      "onice_ca_pg": 8.5,
-      "onice_cf_pg": 9.2148
+      "onice_ca_pg": 8.1333,
+      "onice_cf_pg": 9.1778
     },
     {
       "team_abbrev": "PIT",
@@ -14338,8 +14338,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.4,
-      "onice_ca_pg": 11.3532,
-      "onice_cf_pg": 9.9751
+      "onice_ca_pg": 11.0682,
+      "onice_cf_pg": 9.5909
     },
     {
       "team_abbrev": "PIT",
@@ -14370,8 +14370,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.6,
-      "onice_ca_pg": 12.9464,
-      "onice_cf_pg": 13.9111
+      "onice_ca_pg": 12.4237,
+      "onice_cf_pg": 13.8814
     },
     {
       "team_abbrev": "PIT",
@@ -14402,8 +14402,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.5,
-      "onice_ca_pg": 10.5214,
-      "onice_cf_pg": 13.5299
+      "onice_ca_pg": 10.3929,
+      "onice_cf_pg": 13.2143
     },
     {
       "team_abbrev": "PIT",
@@ -14434,8 +14434,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12.9,
-      "onice_ca_pg": 7.4472,
-      "onice_cf_pg": 8.3166
+      "onice_ca_pg": null,
+      "onice_cf_pg": null
     },
     {
       "team_abbrev": "PIT",
@@ -14466,8 +14466,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.7,
-      "onice_ca_pg": 14,
-      "onice_cf_pg": 13.3951
+      "onice_ca_pg": 13.6667,
+      "onice_cf_pg": 12.6667
     },
     {
       "team_abbrev": "PIT",
@@ -14530,8 +14530,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.4,
-      "onice_ca_pg": 12.7939,
-      "onice_cf_pg": 12.4079
+      "onice_ca_pg": 12.5312,
+      "onice_cf_pg": 12.875
     },
     {
       "team_abbrev": "SEA",
@@ -14562,8 +14562,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.3,
-      "onice_ca_pg": 14.1807,
-      "onice_cf_pg": 13.7719
+      "onice_ca_pg": 14.4694,
+      "onice_cf_pg": 14.1224
     },
     {
       "team_abbrev": "SEA",
@@ -14594,8 +14594,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.7,
-      "onice_ca_pg": 16.5529,
-      "onice_cf_pg": 12.4666
+      "onice_ca_pg": 17.5306,
+      "onice_cf_pg": 11.898
     },
     {
       "team_abbrev": "SEA",
@@ -14626,8 +14626,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 26.4,
-      "onice_ca_pg": 13.4137,
-      "onice_cf_pg": 12.7693
+      "onice_ca_pg": 13.2727,
+      "onice_cf_pg": 12.2273
     },
     {
       "team_abbrev": "SEA",
@@ -14658,8 +14658,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 56.4,
-      "onice_ca_pg": 19.4374,
-      "onice_cf_pg": 18.2558
+      "onice_ca_pg": 19.5625,
+      "onice_cf_pg": 16.8958
     },
     {
       "team_abbrev": "SEA",
@@ -14690,8 +14690,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.8,
-      "onice_ca_pg": 15.1199,
-      "onice_cf_pg": 14.2422
+      "onice_ca_pg": 15.6122,
+      "onice_cf_pg": 13.9592
     },
     {
       "team_abbrev": "SEA",
@@ -14722,8 +14722,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.9,
-      "onice_ca_pg": 14.4111,
-      "onice_cf_pg": 13.2787
+      "onice_ca_pg": 15.4444,
+      "onice_cf_pg": 14.1333
     },
     {
       "team_abbrev": "SEA",
@@ -14754,8 +14754,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 63.6,
-      "onice_ca_pg": 19.607,
-      "onice_cf_pg": 19.0908
+      "onice_ca_pg": 19.6829,
+      "onice_cf_pg": 18.878
     },
     {
       "team_abbrev": "SEA",
@@ -14786,8 +14786,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 13.7,
-      "onice_ca_pg": 12.5712,
-      "onice_cf_pg": 11.5712
+      "onice_ca_pg": 12.0732,
+      "onice_cf_pg": 11.561
     },
     {
       "team_abbrev": "SEA",
@@ -14818,8 +14818,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 27,
-      "onice_ca_pg": 10.3061,
-      "onice_cf_pg": 12.7452
+      "onice_ca_pg": 10.234,
+      "onice_cf_pg": 13.2979
     },
     {
       "team_abbrev": "SEA",
@@ -14850,8 +14850,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.9,
-      "onice_ca_pg": 14.2254,
-      "onice_cf_pg": 11.2418
+      "onice_ca_pg": 15.5814,
+      "onice_cf_pg": 12.0698
     },
     {
       "team_abbrev": "SEA",
@@ -14882,8 +14882,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.8,
-      "onice_ca_pg": 19.6098,
-      "onice_cf_pg": 17.7136
+      "onice_ca_pg": 20.1633,
+      "onice_cf_pg": 17.102
     },
     {
       "team_abbrev": "SEA",
@@ -14914,8 +14914,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 45.1,
-      "onice_ca_pg": 16.8994,
-      "onice_cf_pg": 15.0311
+      "onice_ca_pg": 16.6,
+      "onice_cf_pg": 14.475
     },
     {
       "team_abbrev": "SEA",
@@ -14946,8 +14946,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.4,
-      "onice_ca_pg": 9.4723,
-      "onice_cf_pg": 8.5627
+      "onice_ca_pg": 9.5938,
+      "onice_cf_pg": 8.9062
     },
     {
       "team_abbrev": "SEA",
@@ -15010,8 +15010,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18,
-      "onice_ca_pg": 11.3862,
-      "onice_cf_pg": 10.5106
+      "onice_ca_pg": 11.4865,
+      "onice_cf_pg": 10.6486
     },
     {
       "team_abbrev": "SEA",
@@ -15042,8 +15042,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 59,
-      "onice_ca_pg": 16.7896,
-      "onice_cf_pg": 15.4631
+      "onice_ca_pg": 16.8511,
+      "onice_cf_pg": 14.2766
     },
     {
       "team_abbrev": "SEA",
@@ -15074,8 +15074,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 41.6,
-      "onice_ca_pg": 13.4743,
-      "onice_cf_pg": 11.6773
+      "onice_ca_pg": 14.3333,
+      "onice_cf_pg": 11.5333
     },
     {
       "team_abbrev": "SEA",
@@ -15106,8 +15106,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.2,
-      "onice_ca_pg": 13.2925,
-      "onice_cf_pg": 12.0476
+      "onice_ca_pg": 14,
+      "onice_cf_pg": 11.5
     },
     {
       "team_abbrev": "SJS",
@@ -15138,8 +15138,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.1,
-      "onice_ca_pg": 15.9672,
-      "onice_cf_pg": 15.1679
+      "onice_ca_pg": 15.9231,
+      "onice_cf_pg": 15.0769
     },
     {
       "team_abbrev": "SJS",
@@ -15170,8 +15170,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.7,
-      "onice_ca_pg": 13.9593,
-      "onice_cf_pg": 12.7114
+      "onice_ca_pg": 13.8636,
+      "onice_cf_pg": 12.7273
     },
     {
       "team_abbrev": "SJS",
@@ -15202,8 +15202,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 12.2,
-      "onice_ca_pg": 12.8928,
-      "onice_cf_pg": 12.1819
+      "onice_ca_pg": 12.5,
+      "onice_cf_pg": 10.44
     },
     {
       "team_abbrev": "SJS",
@@ -15234,8 +15234,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.6,
-      "onice_ca_pg": 13.7222,
-      "onice_cf_pg": 12.6407
+      "onice_ca_pg": 13.549,
+      "onice_cf_pg": 12.5882
     },
     {
       "team_abbrev": "SJS",
@@ -15266,8 +15266,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 13.5,
-      "onice_ca_pg": 13.3956,
-      "onice_cf_pg": 11.2479
+      "onice_ca_pg": 13.46,
+      "onice_cf_pg": 11.58
     },
     {
       "team_abbrev": "SJS",
@@ -15298,8 +15298,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 51.6,
-      "onice_ca_pg": 12.1639,
-      "onice_cf_pg": 12.9935
+      "onice_ca_pg": 12.4444,
+      "onice_cf_pg": 14.0889
     },
     {
       "team_abbrev": "SJS",
@@ -15362,8 +15362,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.1,
-      "onice_ca_pg": 15.3922,
-      "onice_cf_pg": 18.4178
+      "onice_ca_pg": 16.7451,
+      "onice_cf_pg": 17.0784
     },
     {
       "team_abbrev": "SJS",
@@ -15394,8 +15394,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.4,
-      "onice_ca_pg": 9.9324,
-      "onice_cf_pg": 8.7186
+      "onice_ca_pg": 11.0233,
+      "onice_cf_pg": 8.6512
     },
     {
       "team_abbrev": "SJS",
@@ -15426,8 +15426,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.1,
-      "onice_ca_pg": 15.4912,
-      "onice_cf_pg": 13.0921
+      "onice_ca_pg": 15.2973,
+      "onice_cf_pg": 12.5405
     },
     {
       "team_abbrev": "SJS",
@@ -15458,8 +15458,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 104.8,
-      "onice_ca_pg": 14.3799,
-      "onice_cf_pg": 15.7191
+      "onice_ca_pg": 12.6667,
+      "onice_cf_pg": 12.0952
     },
     {
       "team_abbrev": "SJS",
@@ -15522,8 +15522,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 52.7,
-      "onice_ca_pg": 12.6088,
-      "onice_cf_pg": 8.8958
+      "onice_ca_pg": 13.5556,
+      "onice_cf_pg": 8.6296
     },
     {
       "team_abbrev": "SJS",
@@ -15554,8 +15554,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 77.2,
-      "onice_ca_pg": 11.0678,
-      "onice_cf_pg": 8.0643
+      "onice_ca_pg": 9.5,
+      "onice_cf_pg": 6.8846
     },
     {
       "team_abbrev": "SJS",
@@ -15586,8 +15586,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 64.5,
-      "onice_ca_pg": 8.8342,
-      "onice_cf_pg": 7.1783
+      "onice_ca_pg": 8.5263,
+      "onice_cf_pg": 6.8421
     },
     {
       "team_abbrev": "STL",
@@ -15618,8 +15618,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.8,
-      "onice_ca_pg": 14.2487,
-      "onice_cf_pg": 14.7145
+      "onice_ca_pg": 13.5476,
+      "onice_cf_pg": 14.2619
     },
     {
       "team_abbrev": "STL",
@@ -15650,8 +15650,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.8,
-      "onice_ca_pg": 13.6094,
-      "onice_cf_pg": 14.0369
+      "onice_ca_pg": 14.6486,
+      "onice_cf_pg": 14.4865
     },
     {
       "team_abbrev": "STL",
@@ -15682,8 +15682,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.1,
-      "onice_ca_pg": 15.3415,
-      "onice_cf_pg": 13.2256
+      "onice_ca_pg": 15.4211,
+      "onice_cf_pg": 13.3947
     },
     {
       "team_abbrev": "STL",
@@ -15714,8 +15714,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.2,
-      "onice_ca_pg": 13.4474,
-      "onice_cf_pg": 13.2907
+      "onice_ca_pg": 12.5833,
+      "onice_cf_pg": 12.375
     },
     {
       "team_abbrev": "STL",
@@ -15746,8 +15746,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 37.8,
-      "onice_ca_pg": 14.5214,
-      "onice_cf_pg": 12.9664
+      "onice_ca_pg": 14.1064,
+      "onice_cf_pg": 12.1064
     },
     {
       "team_abbrev": "STL",
@@ -15778,8 +15778,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 49.6,
-      "onice_ca_pg": 13.6812,
-      "onice_cf_pg": 13.7779
+      "onice_ca_pg": 11.9474,
+      "onice_cf_pg": 14.1053
     },
     {
       "team_abbrev": "STL",
@@ -15810,8 +15810,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 51.7,
-      "onice_ca_pg": 12.7118,
-      "onice_cf_pg": 11.7365
+      "onice_ca_pg": 11.6279,
+      "onice_cf_pg": 11.5581
     },
     {
       "team_abbrev": "STL",
@@ -15842,8 +15842,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.7,
-      "onice_ca_pg": 12.9564,
-      "onice_cf_pg": 14.2781
+      "onice_ca_pg": 13.2857,
+      "onice_cf_pg": 12.3143
     },
     {
       "team_abbrev": "STL",
@@ -15874,8 +15874,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.3,
-      "onice_ca_pg": 11.9311,
-      "onice_cf_pg": 11.6365
+      "onice_ca_pg": 11.8409,
+      "onice_cf_pg": 11.1364
     },
     {
       "team_abbrev": "STL",
@@ -15906,8 +15906,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 15.9,
-      "onice_ca_pg": 17.629,
-      "onice_cf_pg": 17.0774
+      "onice_ca_pg": 17.8163,
+      "onice_cf_pg": 16.8163
     },
     {
       "team_abbrev": "STL",
@@ -15938,8 +15938,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.2,
-      "onice_ca_pg": 17.5929,
-      "onice_cf_pg": 15.9196
+      "onice_ca_pg": 17.551,
+      "onice_cf_pg": 15.6122
     },
     {
       "team_abbrev": "STL",
@@ -15970,8 +15970,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.3,
-      "onice_ca_pg": 19.0296,
-      "onice_cf_pg": 17.1147
+      "onice_ca_pg": 18.2609,
+      "onice_cf_pg": 16.3261
     },
     {
       "team_abbrev": "STL",
@@ -16002,8 +16002,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.8,
-      "onice_ca_pg": 11.6554,
-      "onice_cf_pg": 10.8644
+      "onice_ca_pg": 11.6591,
+      "onice_cf_pg": 10.8864
     },
     {
       "team_abbrev": "STL",
@@ -16034,8 +16034,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 58.4,
-      "onice_ca_pg": 10.6204,
-      "onice_cf_pg": 9.2428
+      "onice_ca_pg": 10.6667,
+      "onice_cf_pg": 9.2222
     },
     {
       "team_abbrev": "STL",
@@ -16066,8 +16066,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 104.2,
-      "onice_ca_pg": 12.6641,
-      "onice_cf_pg": 12.355
+      "onice_ca_pg": 12.7368,
+      "onice_cf_pg": 12.3684
     },
     {
       "team_abbrev": "STL",
@@ -16098,8 +16098,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 60.5,
-      "onice_ca_pg": 14.8682,
-      "onice_cf_pg": 13.7412
+      "onice_ca_pg": 14.5682,
+      "onice_cf_pg": 13.5682
     },
     {
       "team_abbrev": "STL",
@@ -16130,8 +16130,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32.5,
-      "onice_ca_pg": 11.1255,
-      "onice_cf_pg": 8.771
+      "onice_ca_pg": 10.8974,
+      "onice_cf_pg": 7.9487
     },
     {
       "team_abbrev": "STL",
@@ -16162,8 +16162,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48.7,
-      "onice_ca_pg": 18.1793,
-      "onice_cf_pg": 14.5272
+      "onice_ca_pg": 19.4194,
+      "onice_cf_pg": 15.1613
     },
     {
       "team_abbrev": "STL",
@@ -16194,8 +16194,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 72.5,
-      "onice_ca_pg": 8.2393,
-      "onice_cf_pg": 7.0342
+      "onice_ca_pg": 8.2759,
+      "onice_cf_pg": 7.0345
     },
     {
       "team_abbrev": "TBL",
@@ -16226,8 +16226,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 50.9,
-      "onice_ca_pg": 14.8305,
-      "onice_cf_pg": 17.4356
+      "onice_ca_pg": 13.5208,
+      "onice_cf_pg": 17
     },
     {
       "team_abbrev": "TBL",
@@ -16258,8 +16258,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 50.2,
-      "onice_ca_pg": 14.0581,
-      "onice_cf_pg": 15.6651
+      "onice_ca_pg": 12.8077,
+      "onice_cf_pg": 14.6154
     },
     {
       "team_abbrev": "TBL",
@@ -16290,8 +16290,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 66.7,
-      "onice_ca_pg": 13.3457,
-      "onice_cf_pg": 17.2258
+      "onice_ca_pg": 12.3902,
+      "onice_cf_pg": 18.122
     },
     {
       "team_abbrev": "TBL",
@@ -16322,8 +16322,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.8,
-      "onice_ca_pg": 14.6905,
-      "onice_cf_pg": 15.0313
+      "onice_ca_pg": 13.25,
+      "onice_cf_pg": 14.25
     },
     {
       "team_abbrev": "TBL",
@@ -16354,8 +16354,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 47.1,
-      "onice_ca_pg": 12.3535,
-      "onice_cf_pg": 15.0714
+      "onice_ca_pg": 11.5217,
+      "onice_cf_pg": 14.6522
     },
     {
       "team_abbrev": "TBL",
@@ -16386,8 +16386,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.8,
-      "onice_ca_pg": 16.0992,
-      "onice_cf_pg": 17.0744
+      "onice_ca_pg": 13.5,
+      "onice_cf_pg": 13.5909
     },
     {
       "team_abbrev": "TBL",
@@ -16418,8 +16418,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42,
-      "onice_ca_pg": 10.6533,
-      "onice_cf_pg": 11.6471
+      "onice_ca_pg": 10.2273,
+      "onice_cf_pg": 11.9773
     },
     {
       "team_abbrev": "TBL",
@@ -16482,8 +16482,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.4,
-      "onice_ca_pg": 15.5797,
-      "onice_cf_pg": 15.8784
+      "onice_ca_pg": 14.2778,
+      "onice_cf_pg": 15.0278
     },
     {
       "team_abbrev": "TBL",
@@ -16514,8 +16514,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.2,
-      "onice_ca_pg": 11.5106,
-      "onice_cf_pg": 11.9064
+      "onice_ca_pg": 9.5882,
+      "onice_cf_pg": 10.4118
     },
     {
       "team_abbrev": "TBL",
@@ -16546,8 +16546,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 69.4,
-      "onice_ca_pg": 12.1454,
-      "onice_cf_pg": 13.4911
+      "onice_ca_pg": 11.0962,
+      "onice_cf_pg": 12.6154
     },
     {
       "team_abbrev": "TBL",
@@ -16610,8 +16610,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 62.1,
-      "onice_ca_pg": 15.5212,
-      "onice_cf_pg": 18.6459
+      "onice_ca_pg": 15.36,
+      "onice_cf_pg": 20.5
     },
     {
       "team_abbrev": "TBL",
@@ -16642,8 +16642,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.6,
-      "onice_ca_pg": 11.0231,
-      "onice_cf_pg": 11.7279
+      "onice_ca_pg": 9.9348,
+      "onice_cf_pg": 12.2609
     },
     {
       "team_abbrev": "TBL",
@@ -16674,8 +16674,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 88.6,
-      "onice_ca_pg": 12.4643,
-      "onice_cf_pg": 13.623
+      "onice_ca_pg": 12.25,
+      "onice_cf_pg": 13.3333
     },
     {
       "team_abbrev": "TBL",
@@ -16706,8 +16706,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 37.3,
-      "onice_ca_pg": 10.5825,
-      "onice_cf_pg": 9.5825
+      "onice_ca_pg": 10.25,
+      "onice_cf_pg": 8.0833
     },
     {
       "team_abbrev": "TBL",
@@ -16738,8 +16738,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 104.6,
-      "onice_ca_pg": 13.5577,
-      "onice_cf_pg": 13.6935
+      "onice_ca_pg": 13.9677,
+      "onice_cf_pg": 14.5806
     },
     {
       "team_abbrev": "TBL",
@@ -16770,8 +16770,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 84.6,
-      "onice_ca_pg": 14.1697,
-      "onice_cf_pg": 13.6565
+      "onice_ca_pg": 12.7027,
+      "onice_cf_pg": 12.5946
     },
     {
       "team_abbrev": "TBL",
@@ -16802,8 +16802,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.8,
-      "onice_ca_pg": 9.802,
-      "onice_cf_pg": 10.1673
+      "onice_ca_pg": 10.587,
+      "onice_cf_pg": 11.2391
     },
     {
       "team_abbrev": "TBL",
@@ -16834,8 +16834,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 287.5,
-      "onice_ca_pg": 7.8878,
-      "onice_cf_pg": 6.5415
+      "onice_ca_pg": 7.6818,
+      "onice_cf_pg": 6.6364
     },
     {
       "team_abbrev": "TOR",
@@ -16866,8 +16866,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23,
-      "onice_ca_pg": 15.8605,
-      "onice_cf_pg": 14.805
+      "onice_ca_pg": 15.0909,
+      "onice_cf_pg": 14.1136
     },
     {
       "team_abbrev": "TOR",
@@ -16898,8 +16898,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.8,
-      "onice_ca_pg": 15.3785,
-      "onice_cf_pg": 15.1266
+      "onice_ca_pg": 16.5455,
+      "onice_cf_pg": 14.1818
     },
     {
       "team_abbrev": "TOR",
@@ -16930,8 +16930,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35,
-      "onice_ca_pg": 15.3299,
-      "onice_cf_pg": 13.5624
+      "onice_ca_pg": 15,
+      "onice_cf_pg": 13.48
     },
     {
       "team_abbrev": "TOR",
@@ -16962,8 +16962,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 59.1,
-      "onice_ca_pg": 14.9262,
-      "onice_cf_pg": 18.1654
+      "onice_ca_pg": 14.7111,
+      "onice_cf_pg": 20.3333
     },
     {
       "team_abbrev": "TOR",
@@ -16994,8 +16994,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 36.4,
-      "onice_ca_pg": 15.0938,
-      "onice_cf_pg": 12.3367
+      "onice_ca_pg": 16,
+      "onice_cf_pg": 10.98
     },
     {
       "team_abbrev": "TOR",
@@ -17026,8 +17026,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.4,
-      "onice_ca_pg": 18.979,
-      "onice_cf_pg": 17.7188
+      "onice_ca_pg": 17.8913,
+      "onice_cf_pg": 16.587
     },
     {
       "team_abbrev": "TOR",
@@ -17058,8 +17058,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 97.9,
-      "onice_ca_pg": 14.243,
-      "onice_cf_pg": 11.907
+      "onice_ca_pg": 14.9592,
+      "onice_cf_pg": 11.5102
     },
     {
       "team_abbrev": "TOR",
@@ -17090,8 +17090,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 70.4,
-      "onice_ca_pg": 17.5356,
-      "onice_cf_pg": 16.5161
+      "onice_ca_pg": 18.2609,
+      "onice_cf_pg": 16
     },
     {
       "team_abbrev": "TOR",
@@ -17122,8 +17122,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 62.9,
-      "onice_ca_pg": 18.896,
-      "onice_cf_pg": 16.5437
+      "onice_ca_pg": 19.32,
+      "onice_cf_pg": 15.84
     },
     {
       "team_abbrev": "TOR",
@@ -17154,8 +17154,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 69.8,
-      "onice_ca_pg": 12.3237,
-      "onice_cf_pg": 10.496
+      "onice_ca_pg": 12.5946,
+      "onice_cf_pg": 10.3514
     },
     {
       "team_abbrev": "TOR",
@@ -17186,8 +17186,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16,
-      "onice_ca_pg": 9.2868,
-      "onice_cf_pg": 7.8706
+      "onice_ca_pg": 9.6667,
+      "onice_cf_pg": 7.881
     },
     {
       "team_abbrev": "TOR",
@@ -17218,8 +17218,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.3,
-      "onice_ca_pg": 16.7072,
-      "onice_cf_pg": 15.5139
+      "onice_ca_pg": 16.75,
+      "onice_cf_pg": 13.875
     },
     {
       "team_abbrev": "TOR",
@@ -17250,8 +17250,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.1,
-      "onice_ca_pg": 13.9381,
-      "onice_cf_pg": 8.2062
+      "onice_ca_pg": 15.9231,
+      "onice_cf_pg": 8.0769
     },
     {
       "team_abbrev": "TOR",
@@ -17282,8 +17282,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.5,
-      "onice_ca_pg": 13.3513,
-      "onice_cf_pg": 13.2862
+      "onice_ca_pg": 13.1429,
+      "onice_cf_pg": 12.7381
     },
     {
       "team_abbrev": "TOR",
@@ -17314,8 +17314,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.1,
-      "onice_ca_pg": 16.1706,
-      "onice_cf_pg": 14.3088
+      "onice_ca_pg": 18.7895,
+      "onice_cf_pg": 16.0526
     },
     {
       "team_abbrev": "TOR",
@@ -17346,8 +17346,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.7,
-      "onice_ca_pg": 15.3401,
-      "onice_cf_pg": 12.3426
+      "onice_ca_pg": 15.5862,
+      "onice_cf_pg": 10.8276
     },
     {
       "team_abbrev": "TOR",
@@ -17410,8 +17410,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.8,
-      "onice_ca_pg": 13.0459,
-      "onice_cf_pg": 15.5596
+      "onice_ca_pg": 12.7593,
+      "onice_cf_pg": 16
     },
     {
       "team_abbrev": "UTA",
@@ -17442,8 +17442,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30,
-      "onice_ca_pg": 13.0377,
-      "onice_cf_pg": 14.3195
+      "onice_ca_pg": 13.3889,
+      "onice_cf_pg": 14.7037
     },
     {
       "team_abbrev": "UTA",
@@ -17474,8 +17474,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.3,
-      "onice_ca_pg": 12.7719,
-      "onice_cf_pg": 14.943
+      "onice_ca_pg": 12.2407,
+      "onice_cf_pg": 15.037
     },
     {
       "team_abbrev": "UTA",
@@ -17506,8 +17506,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.9,
-      "onice_ca_pg": 14.4592,
-      "onice_cf_pg": 13.9814
+      "onice_ca_pg": 15.1081,
+      "onice_cf_pg": 14.4865
     },
     {
       "team_abbrev": "UTA",
@@ -17538,8 +17538,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.4,
-      "onice_ca_pg": 17.054,
-      "onice_cf_pg": 18.6825
+      "onice_ca_pg": 17.02,
+      "onice_cf_pg": 18.24
     },
     {
       "team_abbrev": "UTA",
@@ -17570,8 +17570,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.9,
-      "onice_ca_pg": 12.2137,
-      "onice_cf_pg": 12.96
+      "onice_ca_pg": 12.7778,
+      "onice_cf_pg": 13.2778
     },
     {
       "team_abbrev": "UTA",
@@ -17602,8 +17602,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 67.2,
-      "onice_ca_pg": 16.4232,
-      "onice_cf_pg": 18.1732
+      "onice_ca_pg": 16.2917,
+      "onice_cf_pg": 18.2917
     },
     {
       "team_abbrev": "UTA",
@@ -17634,8 +17634,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 73.3,
-      "onice_ca_pg": 17.369,
-      "onice_cf_pg": 19.6535
+      "onice_ca_pg": 17.7091,
+      "onice_cf_pg": 19.1455
     },
     {
       "team_abbrev": "UTA",
@@ -17666,8 +17666,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 60.3,
-      "onice_ca_pg": 10.8341,
-      "onice_cf_pg": 13.8969
+      "onice_ca_pg": 10.3056,
+      "onice_cf_pg": 12.6667
     },
     {
       "team_abbrev": "UTA",
@@ -17698,8 +17698,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.3,
-      "onice_ca_pg": 16.4919,
-      "onice_cf_pg": 17.8858
+      "onice_ca_pg": 16.4423,
+      "onice_cf_pg": 17.5
     },
     {
       "team_abbrev": "UTA",
@@ -17730,8 +17730,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.8,
-      "onice_ca_pg": 10.7347,
-      "onice_cf_pg": 12.8053
+      "onice_ca_pg": 10.7308,
+      "onice_cf_pg": 13.4423
     },
     {
       "team_abbrev": "UTA",
@@ -17762,8 +17762,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20,
-      "onice_ca_pg": 9.8942,
-      "onice_cf_pg": 11.5809
+      "onice_ca_pg": 10.1395,
+      "onice_cf_pg": 11.6744
     },
     {
       "team_abbrev": "UTA",
@@ -17794,8 +17794,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 87.8,
-      "onice_ca_pg": 11.7471,
-      "onice_cf_pg": 12.2684
+      "onice_ca_pg": 11.9091,
+      "onice_cf_pg": 12.7273
     },
     {
       "team_abbrev": "UTA",
@@ -17826,8 +17826,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25,
-      "onice_ca_pg": 13.7025,
-      "onice_cf_pg": 16.1603
+      "onice_ca_pg": 15.4074,
+      "onice_cf_pg": 17.2593
     },
     {
       "team_abbrev": "UTA",
@@ -17890,8 +17890,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.7,
-      "onice_ca_pg": 12.3231,
-      "onice_cf_pg": 14.4038
+      "onice_ca_pg": 11.0556,
+      "onice_cf_pg": 14.2778
     },
     {
       "team_abbrev": "UTA",
@@ -17922,8 +17922,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 120,
-      "onice_ca_pg": 13.8857,
-      "onice_cf_pg": 14.5429
+      "onice_ca_pg": 15.6,
+      "onice_cf_pg": 13.6
     },
     {
       "team_abbrev": "UTA",
@@ -17954,8 +17954,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 53.6,
-      "onice_ca_pg": 10.505,
-      "onice_cf_pg": 8.9144
+      "onice_ca_pg": 8.6129,
+      "onice_cf_pg": 7.2258
     },
     {
       "team_abbrev": "UTA",
@@ -17986,8 +17986,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 117.5,
-      "onice_ca_pg": 8.9131,
-      "onice_cf_pg": 8.2934
+      "onice_ca_pg": 8.2963,
+      "onice_cf_pg": 7.8148
     },
     {
       "team_abbrev": "UTA",
@@ -18114,8 +18114,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.7,
-      "onice_ca_pg": 14.0139,
-      "onice_cf_pg": 12.3819
+      "onice_ca_pg": 14.878,
+      "onice_cf_pg": 11.8293
     },
     {
       "team_abbrev": "VAN",
@@ -18146,8 +18146,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 23.5,
-      "onice_ca_pg": 14.3406,
-      "onice_cf_pg": 13.441
+      "onice_ca_pg": 14,
+      "onice_cf_pg": 11.8571
     },
     {
       "team_abbrev": "VAN",
@@ -18178,8 +18178,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 11.9,
-      "onice_ca_pg": 14.5613,
-      "onice_cf_pg": 12.2212
+      "onice_ca_pg": 15.0217,
+      "onice_cf_pg": 11.0435
     },
     {
       "team_abbrev": "VAN",
@@ -18210,8 +18210,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.1,
-      "onice_ca_pg": 18.5858,
-      "onice_cf_pg": 18.675
+      "onice_ca_pg": 19.7551,
+      "onice_cf_pg": 18.1633
     },
     {
       "team_abbrev": "VAN",
@@ -18242,8 +18242,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.6,
-      "onice_ca_pg": 13.0502,
-      "onice_cf_pg": 11.4815
+      "onice_ca_pg": 12.75,
+      "onice_cf_pg": 10.8542
     },
     {
       "team_abbrev": "VAN",
@@ -18274,8 +18274,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 43.1,
-      "onice_ca_pg": 10.9032,
-      "onice_cf_pg": 10.3327
+      "onice_ca_pg": 11.1304,
+      "onice_cf_pg": 10.6522
     },
     {
       "team_abbrev": "VAN",
@@ -18306,8 +18306,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 31.9,
-      "onice_ca_pg": 13.2035,
-      "onice_cf_pg": 13.386
+      "onice_ca_pg": 13,
+      "onice_cf_pg": 12
     },
     {
       "team_abbrev": "VAN",
@@ -18338,8 +18338,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 44.4,
-      "onice_ca_pg": 11.3294,
-      "onice_cf_pg": 11.541
+      "onice_ca_pg": 9.6042,
+      "onice_cf_pg": 10.5208
     },
     {
       "team_abbrev": "VAN",
@@ -18370,8 +18370,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.2,
-      "onice_ca_pg": 13.1417,
-      "onice_cf_pg": 12.8167
+      "onice_ca_pg": 13.5714,
+      "onice_cf_pg": 12.2245
     },
     {
       "team_abbrev": "VAN",
@@ -18402,8 +18402,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 45.3,
-      "onice_ca_pg": 16.2717,
-      "onice_cf_pg": 14.6793
+      "onice_ca_pg": 16.2889,
+      "onice_cf_pg": 14.8
     },
     {
       "team_abbrev": "VAN",
@@ -18466,8 +18466,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29.8,
-      "onice_ca_pg": 10.5134,
-      "onice_cf_pg": 9.2513
+      "onice_ca_pg": 10.675,
+      "onice_cf_pg": 9.45
     },
     {
       "team_abbrev": "VAN",
@@ -18498,8 +18498,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 56.7,
-      "onice_ca_pg": 19.536,
-      "onice_cf_pg": 17.0244
+      "onice_ca_pg": 19.7551,
+      "onice_cf_pg": 14.3061
     },
     {
       "team_abbrev": "VAN",
@@ -18530,8 +18530,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 2.8,
-      "onice_ca_pg": 12.9805,
-      "onice_cf_pg": 9.4144
+      "onice_ca_pg": 13.3043,
+      "onice_cf_pg": 9.5217
     },
     {
       "team_abbrev": "VAN",
@@ -18562,8 +18562,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 28.8,
-      "onice_ca_pg": 11.3046,
-      "onice_cf_pg": 9.203
+      "onice_ca_pg": 11.6905,
+      "onice_cf_pg": 9.1667
     },
     {
       "team_abbrev": "VAN",
@@ -18594,8 +18594,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.1,
-      "onice_ca_pg": 16.8105,
-      "onice_cf_pg": 10.4632
+      "onice_ca_pg": 16.2353,
+      "onice_cf_pg": 9.7647
     },
     {
       "team_abbrev": "VAN",
@@ -18626,8 +18626,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 47.2,
-      "onice_ca_pg": 14.5104,
-      "onice_cf_pg": 11.3958
+      "onice_ca_pg": 14.881,
+      "onice_cf_pg": 11.3333
     },
     {
       "team_abbrev": "VGK",
@@ -18658,8 +18658,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.9,
-      "onice_ca_pg": 14.5472,
-      "onice_cf_pg": 15.7087
+      "onice_ca_pg": 14.0606,
+      "onice_cf_pg": 15.5152
     },
     {
       "team_abbrev": "VGK",
@@ -18690,8 +18690,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 15.5,
-      "onice_ca_pg": 13.2551,
-      "onice_cf_pg": 14.4345
+      "onice_ca_pg": 12.339,
+      "onice_cf_pg": 13.7966
     },
     {
       "team_abbrev": "VGK",
@@ -18722,8 +18722,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 21.7,
-      "onice_ca_pg": 13.369,
-      "onice_cf_pg": 14.6144
+      "onice_ca_pg": 12.2778,
+      "onice_cf_pg": 14.2917
     },
     {
       "team_abbrev": "VGK",
@@ -18754,8 +18754,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.1,
-      "onice_ca_pg": 11.3289,
-      "onice_cf_pg": 13.3384
+      "onice_ca_pg": 9.9863,
+      "onice_cf_pg": 12.2329
     },
     {
       "team_abbrev": "VGK",
@@ -18786,8 +18786,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 15.9,
-      "onice_ca_pg": 15.2021,
-      "onice_cf_pg": 15.7312
+      "onice_ca_pg": 14.5694,
+      "onice_cf_pg": 15.6528
     },
     {
       "team_abbrev": "VGK",
@@ -18818,8 +18818,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 29,
-      "onice_ca_pg": 17.0527,
-      "onice_cf_pg": 19.4947
+      "onice_ca_pg": 16.6667,
+      "onice_cf_pg": 19.5909
     },
     {
       "team_abbrev": "VGK",
@@ -18850,8 +18850,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 15.2,
-      "onice_ca_pg": 12.8529,
-      "onice_cf_pg": 13.5765
+      "onice_ca_pg": 13.5714,
+      "onice_cf_pg": 11.8095
     },
     {
       "team_abbrev": "VGK",
@@ -18914,8 +18914,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 16.7,
-      "onice_ca_pg": 18.0758,
-      "onice_cf_pg": 18.782
+      "onice_ca_pg": 18.0286,
+      "onice_cf_pg": 17.8857
     },
     {
       "team_abbrev": "VGK",
@@ -18946,8 +18946,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.4,
-      "onice_ca_pg": 12.5796,
-      "onice_cf_pg": 12.298
+      "onice_ca_pg": 12.0328,
+      "onice_cf_pg": 12.0164
     },
     {
       "team_abbrev": "VGK",
@@ -18978,8 +18978,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48.5,
-      "onice_ca_pg": 16.3347,
-      "onice_cf_pg": 16.7541
+      "onice_ca_pg": 16.4717,
+      "onice_cf_pg": 18
     },
     {
       "team_abbrev": "VGK",
@@ -19010,8 +19010,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 73.1,
-      "onice_ca_pg": 11.8666,
-      "onice_cf_pg": 10.8955
+      "onice_ca_pg": 11.3472,
+      "onice_cf_pg": 10.4306
     },
     {
       "team_abbrev": "VGK",
@@ -19042,8 +19042,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.2,
-      "onice_ca_pg": 11.2159,
-      "onice_cf_pg": 9.8859
+      "onice_ca_pg": 11.3077,
+      "onice_cf_pg": 8.7692
     },
     {
       "team_abbrev": "VGK",
@@ -19074,8 +19074,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 55.5,
-      "onice_ca_pg": 10.269,
-      "onice_cf_pg": 10.1638
+      "onice_ca_pg": 9.2083,
+      "onice_cf_pg": 8.8194
     },
     {
       "team_abbrev": "VGK",
@@ -19106,8 +19106,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 34.3,
-      "onice_ca_pg": 15.8254,
-      "onice_cf_pg": 17.3151
+      "onice_ca_pg": 14.8594,
+      "onice_cf_pg": 16.8281
     },
     {
       "team_abbrev": "VGK",
@@ -19138,8 +19138,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 33.2,
-      "onice_ca_pg": 14.3333,
-      "onice_cf_pg": 12.8551
+      "onice_ca_pg": 7,
+      "onice_cf_pg": 9
     },
     {
       "team_abbrev": "VGK",
@@ -19266,8 +19266,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 50.7,
-      "onice_ca_pg": 16.3352,
-      "onice_cf_pg": 16.6147
+      "onice_ca_pg": 15.5686,
+      "onice_cf_pg": 17.2549
     },
     {
       "team_abbrev": "WPG",
@@ -19298,8 +19298,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 18.6,
-      "onice_ca_pg": 15.7492,
-      "onice_cf_pg": 16.0111
+      "onice_ca_pg": 15.0784,
+      "onice_cf_pg": 16.4706
     },
     {
       "team_abbrev": "WPG",
@@ -19330,8 +19330,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.5,
-      "onice_ca_pg": 14.4585,
-      "onice_cf_pg": 14.4886
+      "onice_ca_pg": 13.7647,
+      "onice_cf_pg": 14.4118
     },
     {
       "team_abbrev": "WPG",
@@ -19362,8 +19362,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 30.9,
-      "onice_ca_pg": 18.5028,
-      "onice_cf_pg": 19.0101
+      "onice_ca_pg": 18.0816,
+      "onice_cf_pg": 17.9796
     },
     {
       "team_abbrev": "WPG",
@@ -19394,8 +19394,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 22.6,
-      "onice_ca_pg": 11.5036,
-      "onice_cf_pg": 12.7512
+      "onice_ca_pg": 11.5227,
+      "onice_cf_pg": 12.3409
     },
     {
       "team_abbrev": "WPG",
@@ -19426,8 +19426,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.7,
-      "onice_ca_pg": 11.5743,
-      "onice_cf_pg": 12.328
+      "onice_ca_pg": 9.7879,
+      "onice_cf_pg": 10.6061
     },
     {
       "team_abbrev": "WPG",
@@ -19458,8 +19458,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 14.4,
-      "onice_ca_pg": 10.6964,
-      "onice_cf_pg": 11.5368
+      "onice_ca_pg": 11.9184,
+      "onice_cf_pg": 13.2041
     },
     {
       "team_abbrev": "WPG",
@@ -19490,8 +19490,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 58.8,
-      "onice_ca_pg": 16.9888,
-      "onice_cf_pg": 18.0701
+      "onice_ca_pg": 16.4118,
+      "onice_cf_pg": 17.9412
     },
     {
       "team_abbrev": "WPG",
@@ -19522,8 +19522,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.3,
-      "onice_ca_pg": 11.8585,
-      "onice_cf_pg": 12.9976
+      "onice_ca_pg": 11.1333,
+      "onice_cf_pg": 12.1111
     },
     {
       "team_abbrev": "WPG",
@@ -19554,8 +19554,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 39.8,
-      "onice_ca_pg": 10.7992,
-      "onice_cf_pg": 11.7078
+      "onice_ca_pg": 9.625,
+      "onice_cf_pg": 10.2188
     },
     {
       "team_abbrev": "WPG",
@@ -19586,8 +19586,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 32,
-      "onice_ca_pg": 9.4331,
-      "onice_cf_pg": 9.228
+      "onice_ca_pg": 10.6341,
+      "onice_cf_pg": 9.9512
     },
     {
       "team_abbrev": "WPG",
@@ -19618,8 +19618,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 0,
-      "onice_ca_pg": 9.7735,
-      "onice_cf_pg": 8.0939
+      "onice_ca_pg": 9.8,
+      "onice_cf_pg": 7.8333
     },
     {
       "team_abbrev": "WPG",
@@ -19650,8 +19650,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 38.6,
-      "onice_ca_pg": 16.0606,
-      "onice_cf_pg": 13.6818
+      "onice_ca_pg": 17.4167,
+      "onice_cf_pg": 14.8333
     },
     {
       "team_abbrev": "WPG",
@@ -19682,8 +19682,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.9,
-      "onice_ca_pg": 9.5154,
-      "onice_cf_pg": 8.3774
+      "onice_ca_pg": 8.8864,
+      "onice_cf_pg": 8.5
     },
     {
       "team_abbrev": "WPG",
@@ -19714,8 +19714,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25.1,
-      "onice_ca_pg": 15.8827,
-      "onice_cf_pg": 18.3702
+      "onice_ca_pg": 15.6364,
+      "onice_cf_pg": 18.4091
     },
     {
       "team_abbrev": "WPG",
@@ -19746,8 +19746,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 40.1,
-      "onice_ca_pg": 17.3165,
-      "onice_cf_pg": 17.5736
+      "onice_ca_pg": 16.3137,
+      "onice_cf_pg": 16.6078
     },
     {
       "team_abbrev": "WPG",
@@ -19778,8 +19778,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.5,
-      "onice_ca_pg": 13.5407,
-      "onice_cf_pg": 11.2014
+      "onice_ca_pg": 12.8846,
+      "onice_cf_pg": 9.7308
     },
     {
       "team_abbrev": "WPG",
@@ -19810,8 +19810,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 106.9,
-      "onice_ca_pg": 10.2676,
-      "onice_cf_pg": 8.0423
+      "onice_ca_pg": 9.1667,
+      "onice_cf_pg": 7.6667
     },
     {
       "team_abbrev": "WSH",
@@ -19842,8 +19842,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.2,
-      "onice_ca_pg": 13.3058,
-      "onice_cf_pg": 12.8321
+      "onice_ca_pg": 12.5686,
+      "onice_cf_pg": 12.4314
     },
     {
       "team_abbrev": "WSH",
@@ -19874,8 +19874,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 56.9,
-      "onice_ca_pg": 13.9603,
-      "onice_cf_pg": 14.2744
+      "onice_ca_pg": 13.9455,
+      "onice_cf_pg": 14.5091
     },
     {
       "team_abbrev": "WSH",
@@ -19906,8 +19906,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 127.4,
-      "onice_ca_pg": 13.0727,
-      "onice_cf_pg": 13.66
+      "onice_ca_pg": 12.2128,
+      "onice_cf_pg": 13.6383
     },
     {
       "team_abbrev": "WSH",
@@ -19938,8 +19938,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 42.5,
-      "onice_ca_pg": 14.8557,
-      "onice_cf_pg": 13.909
+      "onice_ca_pg": 15.1961,
+      "onice_cf_pg": 13.902
     },
     {
       "team_abbrev": "WSH",
@@ -19970,8 +19970,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 13.8,
-      "onice_ca_pg": 12.3696,
-      "onice_cf_pg": 13.3861
+      "onice_ca_pg": 10.825,
+      "onice_cf_pg": 12.725
     },
     {
       "team_abbrev": "WSH",
@@ -20002,8 +20002,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 20.5,
-      "onice_ca_pg": 13.69,
-      "onice_cf_pg": 15.0249
+      "onice_ca_pg": 14.0833,
+      "onice_cf_pg": 15.8333
     },
     {
       "team_abbrev": "WSH",
@@ -20066,8 +20066,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 68.2,
-      "onice_ca_pg": 14.0462,
-      "onice_cf_pg": 13.6738
+      "onice_ca_pg": 14.3478,
+      "onice_cf_pg": 11.6957
     },
     {
       "team_abbrev": "WSH",
@@ -20098,8 +20098,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 63.2,
-      "onice_ca_pg": 18.3299,
-      "onice_cf_pg": 18.8694
+      "onice_ca_pg": 18.3529,
+      "onice_cf_pg": 18.9608
     },
     {
       "team_abbrev": "WSH",
@@ -20130,8 +20130,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 54.1,
-      "onice_ca_pg": 13.3474,
-      "onice_cf_pg": 10.7526
+      "onice_ca_pg": 13.5227,
+      "onice_cf_pg": 10.8182
     },
     {
       "team_abbrev": "WSH",
@@ -20162,8 +20162,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 37.7,
-      "onice_ca_pg": 13.0729,
-      "onice_cf_pg": 12.877
+      "onice_ca_pg": 13.1875,
+      "onice_cf_pg": 12.9792
     },
     {
       "team_abbrev": "WSH",
@@ -20194,8 +20194,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 17.9,
-      "onice_ca_pg": 17.7259,
-      "onice_cf_pg": 16.1859
+      "onice_ca_pg": 17.413,
+      "onice_cf_pg": 15.5217
     },
     {
       "team_abbrev": "WSH",
@@ -20226,8 +20226,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 24.1,
-      "onice_ca_pg": 11.5689,
-      "onice_cf_pg": 9.8563
+      "onice_ca_pg": 11.8889,
+      "onice_cf_pg": 9.8611
     },
     {
       "team_abbrev": "WSH",
@@ -20258,8 +20258,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 25,
-      "onice_ca_pg": 14.0251,
-      "onice_cf_pg": 12.9932
+      "onice_ca_pg": 15.2549,
+      "onice_cf_pg": 13.1961
     },
     {
       "team_abbrev": "WSH",
@@ -20290,8 +20290,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 35.7,
-      "onice_ca_pg": 16.3486,
-      "onice_cf_pg": 14.7043
+      "onice_ca_pg": 17,
+      "onice_cf_pg": 13.8
     },
     {
       "team_abbrev": "WSH",
@@ -20322,8 +20322,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 19.7,
-      "onice_ca_pg": 17.9726,
-      "onice_cf_pg": 16.6
+      "onice_ca_pg": 18.02,
+      "onice_cf_pg": 16.08
     },
     {
       "team_abbrev": "WSH",
@@ -20354,8 +20354,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 48,
-      "onice_ca_pg": 18.2214,
-      "onice_cf_pg": 14.5499
+      "onice_ca_pg": 18.0385,
+      "onice_cf_pg": 12
     },
     {
       "team_abbrev": "WSH",
@@ -20386,8 +20386,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 9.6,
-      "onice_ca_pg": 9.6825,
-      "onice_cf_pg": 8.8768
+      "onice_ca_pg": 10.1538,
+      "onice_cf_pg": 8.6923
     },
     {
       "team_abbrev": "WSH",
@@ -20418,8 +20418,8 @@
       "proj_hits": 0,
       "proj_blocks": 0,
       "proj_pim": 82.8,
-      "onice_ca_pg": 11.157,
-      "onice_cf_pg": 8.2149
+      "onice_ca_pg": 9.1667,
+      "onice_cf_pg": 6.3333
     },
     {
       "team_abbrev": "WSH",
