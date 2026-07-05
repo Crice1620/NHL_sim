@@ -722,9 +722,26 @@ team_offense <- skater_output %>%
   group_by(team_abbrev) %>%
   arrange(desc(proj_points), .by_group = TRUE) %>%
   slice_head(n = 18) %>%   # top 18 by projected points ~ approximate active lineup
+  mutate(
+    # EXPERIMENT: continuous "star power" boost proportional to each
+    # player's OWN shot volume, replacing an earlier binary top-3-forwards
+    # cutoff. A team's highest-volume shooter (usually its true star) gets
+    # close to the full boost; defensemen and low-volume depth players
+    # naturally get little to none, WITHOUT needing an explicit position
+    # check or an arbitrary rank threshold — shot volume itself already
+    # separates "real offensive driver" from "plays a lot but doesn't
+    # shoot much" (which is exactly where the earlier TOI-weighting
+    # attempt went wrong, rewarding heavy-minute low-scoring D-men).
+    # Reflects a real hockey-analytics idea: truly elite players contribute
+    # more to winning than their box-score rate alone suggests (extra
+    # defensive attention drawn, disproportionate PP1 usage, high-leverage
+    # deployment).
+    max_team_shots = max(coalesce(rate_shots, 0), na.rm = TRUE),
+    star_boost     = 1 + 0.15 * (coalesce(rate_shots, 0) / pmax(max_team_shots, 0.1))
+  ) %>%
   summarise(
-    shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
-    goals_for_pg      = sum(coalesce(rate_goals, 0), na.rm = TRUE),
+    shots_for_pg      = sum(coalesce(rate_shots, 0) * star_boost, na.rm = TRUE),
+    goals_for_pg      = sum(coalesce(rate_goals, 0) * star_boost, na.rm = TRUE),
     def_proxy         = sum(coalesce(rate_hits, 0) * 0.5 + coalesce(rate_blocks, 0), na.rm = TRUE),
     # On-ice CA/CF are SHARED stats — every skater on the ice for a shot
     # gets credited for that same event (~5 skaters at once during 5v5), so
