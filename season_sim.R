@@ -285,8 +285,8 @@ cat("  proj_goalie_vals rows:", nrow(proj_goalie_vals), "\n")
 # rates instead of the composite value score, so we can show real projected
 # goals/assists/points/etc, not just an abstract "value".
 NHL_GAMES <- 84L  # matches app.R's NHL_GAMES — the NHL expanded to an 84-game
-                  # regular season starting with 2026-27, which is exactly
-                  # the season this script projects.
+# regular season starting with 2026-27, which is exactly
+# the season this script projects.
 FULL_SEASON_GP <- NHL_GAMES
 GOALIE_GP_CAP  <- round(60L * NHL_GAMES / 82L)  # scaled proportionally from the old 82-game-season cap
 
@@ -781,6 +781,16 @@ team_offense <- team_offense %>%
     shots_against_pg          = ifelse(n_with_onice_def >= 15, shots_against_onice, shots_against_pg_fallback)
   )
 
+for (tm in c("VGK", "MIN", "NSH", "SEA")) {
+  tm_raw <- team_offense %>% filter(team_abbrev == tm)
+  if (nrow(tm_raw) > 0) {
+    cat("  ", tm, "raw on-ice: onice_ca_pg_wtd=", round(tm_raw$onice_ca_pg_wtd,2),
+        "onice_cf_pg_wtd=", round(tm_raw$onice_cf_pg_wtd,2),
+        "-> shots_for_pg=", round(tm_raw$shots_for_pg,2), "shooting_pct=", round(tm_raw$shooting_pct,4),
+        "final shots_against_pg=", round(tm_raw$shots_against_pg,2), "\n")
+  }
+}
+
 team_goaltending <- goalie_output %>%
   filter(has_history) %>%
   group_by(team_abbrev) %>%
@@ -810,7 +820,7 @@ cat("  Team shots/game range:", round(min(team_off_def$shots_for_pg),1), "-", ro
 # star's history not matching correctly) vs. the model accurately
 # reflecting a thin supporting cast that a reference tool weighs differently.
 cat("\n  ── Player-level diagnostic: EDM, VGK, MIN, NSH top-18 by proj_points ──\n")
-for (tm in c("EDM", "VGK", "MIN", "NSH")) {
+for (tm in c("EDM", "VGK", "MIN", "NSH", "SEA")) {
   cat("\n  --", tm, "--\n")
   tm_players <- skater_output %>%
     filter(team_abbrev == tm, has_history) %>%
@@ -827,7 +837,7 @@ for (tm in c("EDM", "VGK", "MIN", "NSH")) {
 cat("\n")
 
 cat("  ── Goalie-level diagnostic: EDM, VGK, MIN, NSH ──\n")
-for (tm in c("EDM", "VGK", "MIN", "NSH")) {
+for (tm in c("EDM", "VGK", "MIN", "NSH", "SEA")) {
   cat("\n  --", tm, "goalies --\n")
   tm_goalies <- goalie_output %>% filter(team_abbrev == tm) %>% arrange(desc(coalesce(proj_gp, -1)))
   for (i in seq_len(nrow(tm_goalies))) {
@@ -875,15 +885,15 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
   n <- length(home_abbrevs)
   home_shots <- pmax(1, round((shots_for_lu[home_abbrevs] + shots_against_lu[away_abbrevs]) / 2 + HOME_SHOT_BOOST))
   away_shots <- pmax(1, round((shots_for_lu[away_abbrevs] + shots_against_lu[home_abbrevs]) / 2))
-
+  
   home_goal_prob <- pmin(0.30, pmax(0.01,
-    shooting_pct_lu[home_abbrevs] * (1 - goalie_sv_lu[away_abbrevs]) / (1 - league_avg_sv_pct) + HOME_GOAL_BOOST))
+                                    shooting_pct_lu[home_abbrevs] * (1 - goalie_sv_lu[away_abbrevs]) / (1 - league_avg_sv_pct) + HOME_GOAL_BOOST))
   away_goal_prob <- pmin(0.30, pmax(0.01,
-    shooting_pct_lu[away_abbrevs] * (1 - goalie_sv_lu[home_abbrevs]) / (1 - league_avg_sv_pct)))
-
+                                    shooting_pct_lu[away_abbrevs] * (1 - goalie_sv_lu[home_abbrevs]) / (1 - league_avg_sv_pct)))
+  
   home_goals <- rbinom(n, home_shots, home_goal_prob)
   away_goals <- rbinom(n, away_shots, away_goal_prob)
-
+  
   tied <- home_goals == away_goals
   if (any(tied)) {
     nt <- sum(tied)
@@ -896,8 +906,8 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
     away_wins_ot <- ot_a_score & !ot_h_score
     needs_so <- !(home_wins_ot | away_wins_ot)
     so_edge <- 0.5 + pmin(0.15, pmax(-0.15,
-      (shooting_pct_lu[home_abbrevs[tied]] - shooting_pct_lu[away_abbrevs[tied]]) * 3 +
-      (goalie_sv_lu[away_abbrevs[tied]] - goalie_sv_lu[home_abbrevs[tied]]) * 3))
+                                     (shooting_pct_lu[home_abbrevs[tied]] - shooting_pct_lu[away_abbrevs[tied]]) * 3 +
+                                       (goalie_sv_lu[away_abbrevs[tied]] - goalie_sv_lu[home_abbrevs[tied]]) * 3))
     so_home_wins <- runif(nt) < so_edge
     home_wins_final <- home_wins_ot | (needs_so & so_home_wins)
     idx <- which(tied)
@@ -1002,10 +1012,10 @@ pts_sum      <- setNames(numeric(length(net_lookup)), names(net_lookup))
 for (i in seq_len(N_SIMS)) {
   pts_i <- simulate_one_season_pts()
   pts_sum <- pts_sum + pts_i[names(pts_sum)]
-
+  
   df <- data.frame(team_abbrev = names(pts_i), pts = as.numeric(pts_i), stringsAsFactors = FALSE) %>%
     left_join(cd_map, by = "team_abbrev")
-
+  
   conf_champs <- c()
   for (conf in unique(na.omit(df$conference))) {
     cdf <- df %>% filter(conference == conf)
