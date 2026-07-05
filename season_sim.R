@@ -792,11 +792,9 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
 }
 
 team_goaltending <- goalie_output %>%
-  filter(has_history) %>%
+  filter(has_history, coalesce(proj_gp, 0) > 0) %>%
   group_by(team_abbrev) %>%
-  arrange(desc(proj_gp), .by_group = TRUE) %>%
-  slice_head(n = 1) %>%
-  summarise(goalie_sv_pct = dplyr::first(proj_sv_pct), .groups = "drop")
+  summarise(goalie_sv_pct = sum(proj_sv_pct * proj_gp, na.rm = TRUE) / sum(proj_gp, na.rm = TRUE), .groups = "drop")
 
 team_off_def <- data.frame(team_abbrev = names(net_lookup), stringsAsFactors = FALSE) %>%
   left_join(team_offense, by = "team_abbrev") %>%
@@ -812,6 +810,16 @@ league_avg_sv_pct <- mean(team_off_def$goalie_sv_pct, na.rm = TRUE)
 cat("  Team shots/game range:", round(min(team_off_def$shots_for_pg),1), "-", round(max(team_off_def$shots_for_pg),1),
     "| shots-against range:", round(min(team_off_def$shots_against_pg),1), "-", round(max(team_off_def$shots_against_pg),1),
     "| Sv% range:", round(min(team_off_def$goalie_sv_pct),3), "-", round(max(team_off_def$goalie_sv_pct),3), "\n")
+
+# Checking for a SYSTEMATIC (league-wide) bias vs. this being specific to
+# one or two teams. Real league-average shots-against last season was
+# ~27.83 (2282 SA / 82 GP, from the hockey-reference tables we've been
+# comparing against). If the model's own league-wide average is notably
+# higher than that across ALL 32 teams, that's a general calibration issue
+# worth correcting for everyone — not something to special-case for one team.
+model_lg_avg_sa <- mean(team_off_def$shots_against_pg, na.rm = TRUE)
+cat("  Model league-avg shots_against_pg:", round(model_lg_avg_sa, 2), "vs. real league average ~27.83",
+    "(", ifelse(model_lg_avg_sa > 27.83, "model runs HIGH", "model runs LOW/on-target"), ")\n")
 
 # Player-level diagnostic for specific persistently-underprojected teams —
 # rather than continuing to guess at team-level formula changes, this shows
