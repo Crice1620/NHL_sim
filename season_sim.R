@@ -668,9 +668,75 @@ load_all_skater_onice <- function(seasons) {
   bind_rows(Filter(Negate(is.null), rows))
 }
 
+# ── WOWY (With Or Without You) — our own approximation of RAPM's context
+# adjustment, without needing a full ridge regression. Real RAPM controls
+# for every teammate/opponent simultaneously; WOWY is cruder — it just
+# compares "team's rate while this player is on the ice" against "team's
+# rate during the rest of their games/shifts, with this player NOT on the
+# ice" for the SAME team, SAME season. This isolates individual impact far
+# better than a flat box-score sum (which is all we had before), but it's
+# genuinely noisier for players who rarely sit — if someone plays nearly
+# every 5v5 shift, there's very little "without them" sample to compare
+# against, and the comparison becomes unreliable. MIN_WOWY_TOI_FRAC guards
+# against exactly that: if less than this fraction of the team's TOI at a
+# given strength happened without the player, WOWY for that component
+# comes back NA and callers should fall back to the plain rate instead.
+MIN_WOWY_TOI_FRAC <- 0.15
+
+compute_wowy_metrics <- function(skater_df, team_df) {
+  team_ref <- team_df %>%
+    select(team_abbrev, team_gf_5v5 = gf_5v5, team_ga_5v5 = ga_5v5, team_toi_5v5 = toi_5v5_sec,
+           team_pp_gf = pp_goals, team_toi_pp = toi_pp_sec,
+           team_pk_ga = pk_goals_against, team_toi_pk = toi_pk_sec)
+  df <- skater_df %>% left_join(team_ref, by = "team_abbrev")
+
+  df %>% mutate(
+    # EV Offense: player's own on-ice GF/60 minus the team's GF/60 during
+    # the ice time this player was NOT out there.
+    ev_without_toi   = team_toi_5v5 - coalesce(toi_5v5_sec, 0),
+    ev_toi_frac_wo   = ifelse(team_toi_5v5 > 0, ev_without_toi / team_toi_5v5, 0),
+    team_gf_wo_per60 = ifelse(ev_without_toi > 0, (team_gf_5v5 - coalesce(gf_5v5, 0)) / (ev_without_toi / 3600), NA_real_),
+    ev_offense_wowy  = ifelse(ev_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(gf_per60_5v5),
+                               gf_per60_5v5 - team_gf_wo_per60, NA_real_),
+    # EV Defense: team's GA/60 without this player minus their own on-ice
+    # GA/60 — positive means they suppress goals better than the team does
+    # without them.
+    team_ga_wo_per60 = ifelse(ev_without_toi > 0, (team_ga_5v5 - coalesce(ga_5v5, 0)) / (ev_without_toi / 3600), NA_real_),
+    ev_defense_wowy  = ifelse(ev_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(ga_per60_5v5),
+                               team_ga_wo_per60 - ga_per60_5v5, NA_real_),
+    # PP Offense: same idea, restricted to power-play ice time.
+    pp_without_toi   = team_toi_pp - coalesce(toi_pp_sec, 0),
+    pp_toi_frac_wo   = ifelse(team_toi_pp > 0, pp_without_toi / team_toi_pp, 0),
+    team_ppgf_wo_per60 = ifelse(pp_without_toi > 0, (team_pp_gf - coalesce(pp_gf_onice, 0)) / (pp_without_toi / 3600), NA_real_),
+    pp_offense_wowy  = ifelse(pp_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(pp_gf_onice_per60),
+                               pp_gf_onice_per60 - team_ppgf_wo_per60, NA_real_),
+    # PK Defense: same idea, restricted to penalty-kill ice time.
+    pk_without_toi   = team_toi_pk - coalesce(toi_pk_sec, 0),
+    pk_toi_frac_wo   = ifelse(team_toi_pk > 0, pk_without_toi / team_toi_pk, 0),
+    team_pkga_wo_per60 = ifelse(pk_without_toi > 0, (team_pk_ga - coalesce(pk_ga_onice, 0)) / (pk_without_toi / 3600), NA_real_),
+    pk_defense_wowy  = ifelse(pk_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(pk_ga_onice_per60),
+                               team_pkga_wo_per60 - pk_ga_onice_per60, NA_real_)
+  )
+}
+
+# Recency-weighted average that skips NA entries (renormalizing weights
+# among only the valid seasons) instead of either propagating NA outward
+# or silently treating a missing season as 0 — a season where WOWY came
+# back NA (too little "without them" ice time that year) should just drop
+# out of the average, not pull it toward zero.
+weighted_avg_skip_na <- function(vals, season, gp) {
+  keep <- !is.na(vals)
+  if (!any(keep)) return(NA_real_)
+  w <- recency_weights_gp(season[keep], gp[keep])
+  sum(w * vals[keep])
+}
+
 project_skater_onice <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"pk_shots_against" %in% names(hist_df)) hist_df$pk_shots_against <- NA_real_  # guard for pre-update on-ice CSVs
+  for (wc in c("ev_offense_wowy", "ev_defense_wowy", "pp_offense_wowy", "pk_defense_wowy")) {
+    if (!wc %in% names(hist_df)) hist_df[[wc]] <- NA_real_  # guard for pre-update on-ice CSVs or seasons where WOWY couldn't be computed
+  }
   rates <- hist_df %>%
     filter(coalesce(gp_onice, 0) > 0) %>%
     mutate(
@@ -686,21 +752,64 @@ project_skater_onice <- function(hist_df) {
       onice_ca_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * ca_pg) },
       onice_cf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * cf_pg) },
       onice_pk_sa_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * pk_sa_pg) },
+      ev_offense_wowy_3yr = weighted_avg_skip_na(ev_offense_wowy, season, gp_onice),
+      ev_defense_wowy_3yr = weighted_avg_skip_na(ev_defense_wowy, season, gp_onice),
+      pp_offense_wowy_3yr = weighted_avg_skip_na(pp_offense_wowy, season, gp_onice),
+      pk_defense_wowy_3yr = weighted_avg_skip_na(pk_defense_wowy, season, gp_onice),
       .groups = "drop"
     )
 }
 
+abbrev_fix <- c("ARI" = "UTA", "PHX" = "UTA")  # extend if another franchise relocates/renames
 cat("Computing skater on-ice defense projections...\n")
 skater_onice_hist <- load_all_skater_onice(recent3)
+
+# WOWY needs each season's team baseline computed SEPARATELY (not blended
+# across years first) — comparing a player's 2024 on-ice rate against a
+# blended 2024-2026 team average would mix seasons incorrectly. Fetch
+# team-level data per season, apply compute_wowy_metrics() once per
+# season, THEN recency-weight the resulting WOWY values the same way
+# everything else in this script gets weighted.
+if (!is.null(skater_onice_hist) && nrow(skater_onice_hist) > 0 && "team_abbrev" %in% names(skater_onice_hist)) {
+  team_onice_by_season <- lapply(recent3, function(s) {
+    t <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice/", s, "/team_onice.csv"))
+    if (is.null(t) || nrow(t) == 0) return(NULL)
+    if (nrow(t) > 0) t$team_abbrev <- ifelse(t$team_abbrev %in% names(abbrev_fix), abbrev_fix[t$team_abbrev], t$team_abbrev)
+    t$season <- s
+    t
+  })
+  team_onice_by_season <- Filter(Negate(is.null), team_onice_by_season)
+  if (length(team_onice_by_season) > 0) {
+    wowy_pieces <- lapply(team_onice_by_season, function(t_szn) {
+      s <- t_szn$season[1]
+      sk_szn <- skater_onice_hist[skater_onice_hist$season == s & !is.na(skater_onice_hist$team_abbrev), ]
+      if (nrow(sk_szn) == 0) return(NULL)
+      tryCatch(compute_wowy_metrics(sk_szn, t_szn), error = function(e) NULL)
+    })
+    wowy_pieces <- Filter(Negate(is.null), wowy_pieces)
+    if (length(wowy_pieces) > 0) {
+      wowy_all <- bind_rows(wowy_pieces)
+      cat("  WOWY computed for", length(unique(wowy_all$player_id)), "player-seasons across", length(wowy_pieces), "seasons.\n")
+      skater_onice_hist <- skater_onice_hist %>%
+        left_join(wowy_all %>% select(player_id, season, ev_offense_wowy, ev_defense_wowy, pp_offense_wowy, pk_defense_wowy),
+                   by = c("player_id", "season"))
+    }
+  }
+}
+if (!"ev_offense_wowy" %in% names(skater_onice_hist)) {
+  skater_onice_hist$ev_offense_wowy <- NA_real_; skater_onice_hist$ev_defense_wowy <- NA_real_
+  skater_onice_hist$pp_offense_wowy <- NA_real_; skater_onice_hist$pk_defense_wowy <- NA_real_
+}
+
 proj_skater_onice <- project_skater_onice(skater_onice_hist)
 cat("  proj_skater_onice rows:", if (is.null(proj_skater_onice)) 0 else nrow(proj_skater_onice), "\n")
 if (!is.null(proj_skater_onice)) {
   skater_output <- skater_output %>% left_join(proj_skater_onice, by = "player_id")
 } else {
   skater_output$onice_ca_pg <- NA_real_; skater_output$onice_cf_pg <- NA_real_; skater_output$onice_pk_sa_pg <- NA_real_
+  skater_output$ev_offense_wowy_3yr <- NA_real_; skater_output$ev_defense_wowy_3yr <- NA_real_
+  skater_output$pp_offense_wowy_3yr <- NA_real_; skater_output$pk_defense_wowy_3yr <- NA_real_
 }
-
-abbrev_fix <- c("ARI" = "UTA", "PHX" = "UTA")  # extend if another franchise relocates/renames
 
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
