@@ -171,6 +171,14 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
     X_new <- matrix(0, nrow = nrow(X_raw), ncol = length(train_cols), dimnames = list(NULL, train_cols))
     common_cols <- intersect(train_cols, colnames(X_raw))
     X_new[, common_cols] <- X_raw[, common_cols]
+    # Known xgboost R package issue: a matrix built via matrix()+indexed
+    # assignment can end up with a memory layout that fails XGBoost's C++
+    # "array interface" alignment check ("Input pointer misalignment"),
+    # even though it's a perfectly valid R matrix. Forcing a clean re-copy
+    # via as.numeric()+reshape allocates a genuinely fresh, standard
+    # buffer that satisfies the alignment requirement — this is the
+    # standard workaround for this exact, documented issue.
+    X_new <- matrix(as.numeric(X_new), nrow = nrow(X_new), ncol = ncol(X_new), dimnames = dimnames(X_new))
     xg_vals[valid] <- predict(xg_obj$model, xgb.DMatrix(data = X_new))
   }
   shots_df_scored <- s %>% select(-is_home_shooter, -target_side, -norm_x, -norm_y, -dist_to_net, -angle_to_net,
