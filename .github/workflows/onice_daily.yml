@@ -1,8 +1,6 @@
 name: On-Ice Stats (Daily)
-
 permissions:
   contents: write   # required so the default GITHUB_TOKEN can push commits
-
 on:
   schedule:
     # Runs once daily. Only checks the last 4 days for newly-completed
@@ -11,29 +9,24 @@ on:
     # for filling in history.
     - cron: '0 10 * * *'   # 10am UTC daily — adjust as you like
   workflow_dispatch: {}     # lets you trigger it manually from the Actions tab
-
 jobs:
   run-onice-daily:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: 'release'
-
       - name: Install system dependencies (needed to build httr/curl/openssl)
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
-
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","httr","jsonlite","xgboost"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
-
+          Rscript -e 'install.packages(c("dplyr","httr","jsonlite","remotes"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          Rscript -e 'remotes::install_version("xgboost", version = "1.7.8.1", repos = "https://cloud.r-project.org")'
       - name: Run daily on-ice stats update
         run: Rscript onice_stats.R --mode=daily
-
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
