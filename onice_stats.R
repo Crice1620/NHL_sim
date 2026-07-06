@@ -155,20 +155,23 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
            !is.na(s$shot_type_clean) & !is.na(s$shooter_strength) & !is.na(s$target_side) & !is.na(s$goalie_id)
   xg_vals <- rep(NA_real_, nrow(s))
   if (any(valid)) {
-    X_new <- model.matrix(~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1,
+    X_raw <- model.matrix(~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1,
                             data = s[valid, c("dist_to_net","angle_to_net","is_rebound","shot_type_clean","shooter_strength")] %>%
                               mutate(is_rebound = as.integer(is_rebound)))
-    # Defensive column alignment — a small batch (e.g. a daily 4-game run)
-    # might not contain every category the model was trained on, which
-    # could otherwise misalign predict() against the wrong columns.
+    # Pre-allocate ONE clean matrix with exactly the training columns and
+    # fill it via indexing, rather than cbind()-ing two separately
+    # allocated matrices together — cbind() on a model.matrix() output can
+    # produce a result with memory-alignment quirks that trip up XGBoost's
+    # C++ prediction backend ("Input pointer misalignment"), which is
+    # exactly the error this fixes. Always wrapping in xgb.DMatrix() before
+    # predict() (rather than passing a raw matrix directly) is also what
+    # train_xg_model.R itself does — this scoring function just wasn't
+    # doing the same thing consistently before.
     train_cols <- xg_obj$model$feature_names
-    missing_cols <- setdiff(train_cols, colnames(X_new))
-    if (length(missing_cols) > 0) {
-      pad <- matrix(0, nrow = nrow(X_new), ncol = length(missing_cols), dimnames = list(NULL, missing_cols))
-      X_new <- cbind(X_new, pad)
-    }
-    X_new <- X_new[, train_cols, drop = FALSE]
-    xg_vals[valid] <- predict(xg_obj$model, X_new)
+    X_new <- matrix(0, nrow = nrow(X_raw), ncol = length(train_cols), dimnames = list(NULL, train_cols))
+    common_cols <- intersect(train_cols, colnames(X_raw))
+    X_new[, common_cols] <- X_raw[, common_cols]
+    xg_vals[valid] <- predict(xg_obj$model, xgb.DMatrix(data = X_new))
   }
   shots_df_scored <- s %>% select(-is_home_shooter, -target_side, -norm_x, -norm_y, -dist_to_net, -angle_to_net,
                                     -shooter_strength, -shot_type_clean, -time_since_own_last_shot, -is_rebound)
