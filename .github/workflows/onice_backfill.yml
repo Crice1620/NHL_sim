@@ -1,8 +1,6 @@
 name: On-Ice Stats (Backfill)
-
 permissions:
   contents: write   # required so the default GITHUB_TOKEN can push commits
-
 # Manual-only — this is a deliberate bulk job, never scheduled. Run it from
 # the Actions tab and choose which season to backfill. Processes the ENTIRE
 # remaining backlog for that season in one run (no per-run cap) — a full
@@ -14,27 +12,23 @@ on:
         description: 'Season to backfill (the ending year, e.g. 2026 for the 2025-26 season). Leave blank for the current season.'
         required: false
         type: string
-
 jobs:
   run-onice-backfill:
     runs-on: ubuntu-latest
     timeout-minutes: 300   # generous headroom for a full-season backlog; GitHub's own default is 360
     steps:
       - uses: actions/checkout@v4
-
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: 'release'
-
       - name: Install system dependencies (needed to build httr/curl/openssl)
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
-
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","httr","jsonlite", "xgboost"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
-
+          Rscript -e 'install.packages(c("dplyr","httr","jsonlite","remotes"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          Rscript -e 'remotes::install_version("xgboost", version = "1.7.8.1", repos = "https://cloud.r-project.org")'
       - name: Run backfill
         run: |
           if [ -n "${{ inputs.season }}" ]; then
@@ -42,7 +36,6 @@ jobs:
           else
             Rscript onice_stats.R --mode=backfill
           fi
-
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
