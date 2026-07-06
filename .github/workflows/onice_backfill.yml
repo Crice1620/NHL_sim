@@ -43,7 +43,16 @@ jobs:
           if compgen -G "data/onice/*/skater_onice.csv" > /dev/null; then
             git add data/onice/
             git diff --cached --quiet || git commit -m "Backfill on-ice stats [skip ci]"
-            git push
+            # A full backfill can run for a long time — long enough for the
+            # daily cron (or another workflow) to push in the meantime,
+            # which would otherwise reject this push as out of date. Pull
+            # with rebase right before pushing, with a few retries in case
+            # of a transient race.
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep 5
+            done
           else
             echo "No on-ice output found — nothing to commit."
           fi
