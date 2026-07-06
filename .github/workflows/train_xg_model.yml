@@ -23,7 +23,8 @@ jobs:
 
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","xgboost"), repos="https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("dplyr","remotes"), repos="https://cloud.r-project.org")'
+          Rscript -e 'remotes::install_version("xgboost", version = "1.7.8.1", repos = "https://cloud.r-project.org")'
 
       - name: Train xG model
         run: Rscript train_xg_model.R
