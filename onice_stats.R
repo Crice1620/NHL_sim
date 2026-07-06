@@ -420,10 +420,16 @@ process_game <- function(game_id) {
     if (is_shot_evt && !is.na(owner_team)) {
       per <- tryCatch(as.integer(pl$periodDescriptor$number %||% NA), error = function(e) NA_integer_)
       tip <- tryCatch(parse_mmss(pl$timeInPeriod %||% NA), error = function(e) NA_real_)
+      t_abs_shot <- if (!is.na(per) && !is.na(tip)) (per - 1) * 1200 + tip else NA_real_
       shot_rows[[length(shot_rows) + 1]] <- data.frame(
-        game_id = game_id, period = per, time_in_period = tip,
+        game_id = game_id, period = per, time_in_period = tip, t_abs = t_abs_shot,
         situation_code = code, situation_label = sit$label,
-        event_type = typ, owner_team_id = owner_team,
+        event_type = typ, owner_team_id = owner_team, home_id = home_id,
+        # Which side the HOME team defends this period — needed to know
+        # which net (x=+89 or x=-89) a given shot was actually aimed at,
+        # since teams switch ends every period. Without this, x_coord/
+        # y_coord alone can't give a correct distance/angle to net.
+        home_defending_side = tryCatch(pl$homeTeamDefendingSide %||% NA_character_, error = function(e) NA_character_),
         shooter_id = tryCatch(as.character(det$shootingPlayerId %||% det$scoringPlayerId %||% NA), error = function(e) NA_character_),
         goalie_id = goalie_id,
         x_coord = tryCatch(suppressWarnings(as.numeric(det$xCoord %||% NA)), error = function(e) NA_real_),
