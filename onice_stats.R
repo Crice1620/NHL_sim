@@ -55,6 +55,7 @@ suppressMessages({
   library(dplyr)
   library(httr)
   library(jsonlite)
+  library(xgboost)
 })
 
 `%||%` <- function(a, b) {
@@ -89,6 +90,97 @@ SKATER_OUT  <- file.path(OUT_DIR, "skater_onice.csv")
 TEAM_OUT    <- file.path(OUT_DIR, "team_onice.csv")
 GOALIE_OUT  <- file.path(OUT_DIR, "goalie_onice.csv")
 SHOTS_RAW_OUT <- file.path(OUT_DIR, "shots_raw.csv")  # event-level shot data for future xG training — one row per shot attempt
+
+# ── xG model loading and scoring ────────────────────────────────────────────
+# Reads the model trained by train_xg_model.R (a local file read, not a
+# GitHub fetch, since this script runs with the repo already checked out
+# via GitHub Actions — same working directory both scripts write/read
+# relative to). If no model has been trained yet, shots simply get scored
+# as NA rather than erroring — everything downstream (goalie GSAx) treats
+# NA gracefully rather than breaking.
+XG_MODEL_PATH <- file.path("data", "xg_model", "xg_model.rds")
+xg_model_obj <- if (file.exists(XG_MODEL_PATH)) tryCatch(readRDS(XG_MODEL_PATH), error = function(e) NULL) else NULL
+if (is.null(xg_model_obj)) {
+  cat("No trained xG model found at", XG_MODEL_PATH, "— shots will be written without xg scores, goalie GSAx will be NA.\n")
+} else {
+  cat("Loaded xG model (trained", as.character(xg_model_obj$trained_at), "| seasons:", paste(xg_model_obj$seasons, collapse=", "), ")\n")
+}
+
+# Replicates train_xg_model.R's feature engineering EXACTLY — any drift
+# between this and the training script would silently produce wrong scores,
+# so if the training script's feature engineering ever changes, this needs
+# to change with it.
+score_shots_with_xg <- function(shots_df, xg_obj) {
+  if (is.null(xg_obj) || is.null(shots_df) || nrow(shots_df) == 0) {
+    if (!is.null(shots_df)) shots_df$xg <- NA_real_
+    return(shots_df)
+  }
+  s <- shots_df %>%
+    mutate(
+      is_home_shooter = (owner_team_id == home_id),
+      target_side = case_when(
+        is_home_shooter  & home_defending_side == "left"  ~ "right",
+        is_home_shooter  & home_defending_side == "right" ~ "left",
+        !is_home_shooter & home_defending_side == "left"  ~ "left",
+        !is_home_shooter & home_defending_side == "right" ~ "right",
+        TRUE ~ NA_character_
+      ),
+      norm_x = ifelse(target_side == "right", x_coord, -x_coord),
+      norm_y = ifelse(target_side == "right", y_coord, -y_coord),
+      dist_to_net  = sqrt((89 - norm_x)^2 + norm_y^2),
+      angle_to_net = abs(atan2(norm_y, pmax(89 - norm_x, 0.1)) * 180 / pi),
+      shooter_strength = case_when(
+        situation_label == "5v5" ~ "even",
+        situation_label == "home_pp" & is_home_shooter  ~ "pp",
+        situation_label == "home_pp" & !is_home_shooter ~ "pk",
+        situation_label == "away_pp" & !is_home_shooter ~ "pp",
+        situation_label == "away_pp" & is_home_shooter  ~ "pk",
+        TRUE ~ "other"
+      ),
+      shot_type_clean = ifelse(is.na(shot_type) | shot_type == "", "unknown", shot_type)
+    ) %>%
+    arrange(game_id, t_abs) %>%
+    group_by(game_id, owner_team_id) %>%
+    mutate(time_since_own_last_shot = t_abs - lag(t_abs),
+           is_rebound = !is.na(time_since_own_last_shot) & time_since_own_last_shot <= 3) %>%
+    ungroup()
+
+  # Match training's exact factor levels — an unseen category (e.g. a shot
+  # type that never appeared in training data) maps to NA rather than
+  # silently shifting every other column's meaning.
+  s$shot_type_clean  <- factor(s$shot_type_clean,  levels = xg_obj$shot_type_levels)
+  s$shooter_strength <- factor(s$shooter_strength, levels = xg_obj$shooter_strength_levels)
+
+  valid <- !is.na(s$dist_to_net) & !is.na(s$angle_to_net) & !is.na(s$is_rebound) &
+           !is.na(s$shot_type_clean) & !is.na(s$shooter_strength) & !is.na(s$target_side) & !is.na(s$goalie_id)
+  xg_vals <- rep(NA_real_, nrow(s))
+  if (any(valid)) {
+    X_new <- model.matrix(~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1,
+                            data = s[valid, c("dist_to_net","angle_to_net","is_rebound","shot_type_clean","shooter_strength")] %>%
+                              mutate(is_rebound = as.integer(is_rebound)))
+    # Defensive column alignment — a small batch (e.g. a daily 4-game run)
+    # might not contain every category the model was trained on, which
+    # could otherwise misalign predict() against the wrong columns.
+    train_cols <- xg_obj$model$feature_names
+    missing_cols <- setdiff(train_cols, colnames(X_new))
+    if (length(missing_cols) > 0) {
+      pad <- matrix(0, nrow = nrow(X_new), ncol = length(missing_cols), dimnames = list(NULL, missing_cols))
+      X_new <- cbind(X_new, pad)
+    }
+    X_new <- X_new[, train_cols, drop = FALSE]
+    xg_vals[valid] <- predict(xg_obj$model, X_new)
+  }
+  shots_df_scored <- s %>% select(-is_home_shooter, -target_side, -norm_x, -norm_y, -dist_to_net, -angle_to_net,
+                                    -shooter_strength, -shot_type_clean, -time_since_own_last_shot, -is_rebound)
+  shots_df_scored$xg <- xg_vals
+  # Also worth keeping is_rebound and shooter_strength on the output row
+  # for anyone inspecting shots_raw.csv later — re-attach from s directly
+  # since select() above dropped them from the returned frame.
+  shots_df_scored$is_rebound_at_scoring <- s$is_rebound
+  shots_df_scored
+}
+
+
 
 # Caps how many NEW games get processed in a single run.
 # - daily mode: small safety-net cap (a normal day only has ~5-15 new games).
@@ -540,10 +632,12 @@ team_totals <- if (is.null(existing_team) || nrow(existing_team) == 0) blank_tea
   toi_pk = to_named_list(existing_team$team_abbrev, existing_team$toi_pk_sec), gp = to_named_list(existing_team$team_abbrev, existing_team$gp_onice)
 )
 
-blank_goalie <- function() list(shots_5v5=list(),ga_5v5=list(),shots_pk=list(),ga_pk=list(),gp=list())
+blank_goalie <- function() list(shots_5v5=list(),ga_5v5=list(),shots_pk=list(),ga_pk=list(),xg_faced=list(),gp=list())
+if (!is.null(existing_goalie) && nrow(existing_goalie) > 0 && !"xg_faced" %in% names(existing_goalie)) existing_goalie$xg_faced <- 0  # guard for pre-xG-model CSVs
 goalie_totals <- if (is.null(existing_goalie) || nrow(existing_goalie) == 0) blank_goalie() else list(
   shots_5v5 = to_named_list(existing_goalie$player_id, existing_goalie$shots_5v5), ga_5v5 = to_named_list(existing_goalie$player_id, existing_goalie$ga_5v5),
   shots_pk = to_named_list(existing_goalie$player_id, existing_goalie$shots_pk), ga_pk = to_named_list(existing_goalie$player_id, existing_goalie$ga_pk),
+  xg_faced = to_named_list(existing_goalie$player_id, existing_goalie$xg_faced),
   gp = to_named_list(existing_goalie$player_id, existing_goalie$gp_onice)
 )
 
@@ -597,7 +691,28 @@ for (gid in new_games) {
   goalie_game_players <- unique(c(names(gr$shots_5v5), names(gr$shots_pk)))
   goalie_totals$gp <- merge_add(goalie_totals$gp, to_named_list(goalie_game_players, rep(1, length(goalie_game_players))))
 
-  if (!is.null(res$shots_raw) && nrow(res$shots_raw) > 0) shots_raw_new[[length(shots_raw_new) + 1]] <- res$shots_raw
+  if (!is.null(res$shots_raw) && nrow(res$shots_raw) > 0) {
+    scored_shots <- score_shots_with_xg(res$shots_raw, xg_model_obj)
+    shots_raw_new[[length(shots_raw_new) + 1]] <- scored_shots
+    # Goalie xG-faced — matches the SAME scope as the existing goalie
+    # shots_5v5/shots_pk tracking above (5v5 shots faced + shots faced
+    # while this goalie's team is shorthanded). The rarer "shorthanded
+    # goal against a power-play team" situation isn't tracked for goalies
+    # anywhere in this pipeline yet (a pre-existing scope limitation, not
+    # something newly introduced here), so it's excluded here too for
+    # consistency rather than partially covering it.
+    if (!is.null(scored_shots) && "xg" %in% names(scored_shots)) {
+      xg_tracked <- scored_shots %>%
+        filter(!is.na(goalie_id), !is.na(xg),
+               situation_label == "5v5" | (situation_label %in% c("home_pp","away_pp") &
+                 ((situation_label == "home_pp" & owner_team_id != home_id) |
+                  (situation_label == "away_pp" & owner_team_id == home_id))))
+      if (nrow(xg_tracked) > 0) {
+        xg_by_goalie <- xg_tracked %>% group_by(goalie_id) %>% summarise(xg = sum(xg), .groups = "drop")
+        goalie_totals$xg_faced <- merge_add(goalie_totals$xg_faced, to_named_list(xg_by_goalie$goalie_id, xg_by_goalie$xg))
+      }
+    }
+  }
 
   # Penalties taken/drawn come from play-by-play parsing alone (same as
   # team/goalie stats) — NOT gated behind shift-data availability the way
@@ -677,10 +792,18 @@ goalie_df <- data.frame(
   ga_5v5    = sapply(all_goalies, gv, lst = goalie_totals$ga_5v5),
   shots_pk  = sapply(all_goalies, gv, lst = goalie_totals$shots_pk),
   ga_pk     = sapply(all_goalies, gv, lst = goalie_totals$ga_pk),
+  xg_faced  = sapply(all_goalies, gv, lst = goalie_totals$xg_faced),
   stringsAsFactors = FALSE
 ) %>% mutate(
   sv_pct_5v5 = ifelse(shots_5v5 > 0, round(1 - ga_5v5 / shots_5v5, 4), NA_real_),
-  sv_pct_pk  = ifelse(shots_pk  > 0, round(1 - ga_pk  / shots_pk,  4), NA_real_)
+  sv_pct_pk  = ifelse(shots_pk  > 0, round(1 - ga_pk  / shots_pk,  4), NA_real_),
+  # Goals Saved Above Expected — real goaltending skill independent of shot
+  # quality, using the same 5v5+PK-against scope as sv_pct_5v5/sv_pct_pk
+  # above (see the scope note where xg_faced gets accumulated). Positive
+  # GSAx = allowed fewer goals than the shots they faced would suggest an
+  # average goalie allows; negative = allowed more.
+  actual_ga_tracked = ga_5v5 + ga_pk,
+  gsax = ifelse(xg_faced > 0, round(xg_faced - actual_ga_tracked, 2), NA_real_)
 )
 write.csv(goalie_df, GOALIE_OUT, row.names = FALSE)
 
