@@ -34,7 +34,11 @@ jobs:
           if compgen -G "data/onice/*/skater_onice.csv" > /dev/null; then
             git add data/onice/
             git diff --cached --quiet || git commit -m "Daily on-ice stats update [skip ci]"
-            git push
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep 5
+            done
           else
             echo "No on-ice output found yet — nothing to commit."
           fi
