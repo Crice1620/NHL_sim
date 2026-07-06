@@ -20,7 +20,7 @@ suppressPackageStartupMessages({
 # seasons balances having enough volume to fit a stable model against the
 # risk of pulling in older, less consistent shot-tracking data or outdated
 # scoring-rate context from a very different NHL era.
-SEASONS <- c(2021, 2022, 2023, 2024, 2025)
+SEASONS <- c(2021, 2022, 2023, 2024, 2025, 2026)
 
 OUT_DIR      <- file.path("data", "xg_model")
 MODEL_OUT    <- file.path(OUT_DIR, "xg_model.rds")
