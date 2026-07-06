@@ -1,7 +1,7 @@
-Trained: 2026-07-06 21:54:47.003385
-Seasons: 2021, 2022, 2023, 2024, 2025
-Training rows: 565968
-Test log loss: 0.2226
-Test AUC: 0.7541
-Mean predicted xG: 0.0685
-Actual goal rate: 0.0687
+Trained: 2026-07-06 23:11:25.505982
+Seasons: 2021, 2022, 2023, 2024, 2025, 2026
+Training rows: 685054
+Test log loss: 0.2234
+Test AUC: 0.7598
+Mean predicted xG: 0.0683
+Actual goal rate: 0.0697
