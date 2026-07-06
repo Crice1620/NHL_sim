@@ -47,11 +47,23 @@ cat("Total shot events loaded:", nrow(shots), "\n\n")
 # become a goal" isn't a meaningful outcome for them the way it is for
 # shots-on-goal/missed-shots/goals, which is consistent with how public xG
 # models (e.g. MoneyPuck) typically scope their training data.
+#
+# Empty-net shots are ALSO excluded — goalie_id is NA exactly when there's
+# no goalie in net, and an empty net is essentially guaranteed to score
+# regardless of distance/angle. Left in, this would flatten (or invert) the
+# expected distance-vs-goal-rate relationship for far-away shots and
+# inflate conversion rates for whatever situational bucket empty-net shots
+# happen to fall into — which is exactly what the first training run's
+# sanity checks showed (the two farthest distance buckets came back nearly
+# identical instead of continuing to drop, and "other" situations converted
+# unusually high). This isn't measuring shot quality, it's measuring
+# "no goalie," so it doesn't belong in an xG model the same way.
 before_n <- nrow(shots)
 shots <- shots %>%
   filter(event_type %in% c("shot-on-goal", "missed-shot", "goal")) %>%
-  filter(!is.na(x_coord), !is.na(y_coord), !is.na(home_defending_side), !is.na(home_id))
-cat("After filtering to shot-on-goal/missed/goal events with valid coordinates:", nrow(shots), "of", before_n, "\n\n")
+  filter(!is.na(x_coord), !is.na(y_coord), !is.na(home_defending_side), !is.na(home_id)) %>%
+  filter(!is.na(goalie_id))
+cat("After filtering to shot-on-goal/missed/goal events with valid coordinates and a goalie in net:", nrow(shots), "of", before_n, "\n\n")
 if (nrow(shots) < 5000) {
   cat("WARNING: fewer than 5,000 usable shot events — this is not enough volume to train a stable model.\n")
   cat("Back off and backfill more seasons before trusting anything this script produces.\n")
