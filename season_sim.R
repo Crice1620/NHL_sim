@@ -755,6 +755,7 @@ weighted_avg_skip_na <- function(vals, season, gp) {
 project_skater_onice <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"pk_shots_against" %in% names(hist_df)) hist_df$pk_shots_against <- NA_real_  # guard for pre-update on-ice CSVs
+  if (!"pp_shots" %in% names(hist_df)) hist_df$pp_shots <- NA_real_  # guard for pre-update on-ice CSVs
   for (wc in c("ev_offense_wowy", "ev_defense_wowy", "pp_offense_wowy", "pk_defense_wowy", "ev_offense_xgwowy", "ev_defense_xgwowy")) {
     if (!wc %in% names(hist_df)) hist_df[[wc]] <- NA_real_  # guard for pre-update on-ice CSVs or seasons where WOWY couldn't be computed
   }
@@ -763,7 +764,8 @@ project_skater_onice <- function(hist_df) {
     mutate(
       ca_pg = coalesce(ca_5v5, 0) / gp_onice,   # on-ice Corsi-against per game while this player is on the ice
       cf_pg = coalesce(cf_5v5, 0) / gp_onice,   # on-ice Corsi-for per game — used only to self-calibrate the SOG/Corsi ratio below
-      pk_sa_pg = coalesce(pk_shots_against, 0) / gp_onice   # real individual on-ice PK shots-against per game (now tracked at the source)
+      pk_sa_pg = coalesce(pk_shots_against, 0) / gp_onice,   # real individual on-ice PK shots-against per game (now tracked at the source)
+      pp_sf_pg = coalesce(pp_shots, 0) / gp_onice   # real individual on-ice PP shots-for per game — same purpose as pk_sa_pg above, but for offense: needed to properly scope-match the SOG/Corsi ratio's denominator (roster-aggregated, not team full-game totals)
     )
   if (nrow(rates) == 0) return(NULL)
   rates %>%
@@ -773,6 +775,7 @@ project_skater_onice <- function(hist_df) {
       onice_ca_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * ca_pg) },
       onice_cf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * cf_pg) },
       onice_pk_sa_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * pk_sa_pg) },
+      onice_pp_sf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * pp_sf_pg) },
       ev_offense_wowy_3yr = weighted_avg_skip_na(ev_offense_wowy, season, gp_onice),
       ev_defense_wowy_3yr = weighted_avg_skip_na(ev_defense_wowy, season, gp_onice),
       pp_offense_wowy_3yr = weighted_avg_skip_na(pp_offense_wowy, season, gp_onice),
@@ -837,7 +840,7 @@ cat("  proj_skater_onice rows:", if (is.null(proj_skater_onice)) 0 else nrow(pro
 if (!is.null(proj_skater_onice)) {
   skater_output <- skater_output %>% left_join(proj_skater_onice, by = "player_id")
 } else {
-  skater_output$onice_ca_pg <- NA_real_; skater_output$onice_cf_pg <- NA_real_; skater_output$onice_pk_sa_pg <- NA_real_
+  skater_output$onice_ca_pg <- NA_real_; skater_output$onice_cf_pg <- NA_real_; skater_output$onice_pk_sa_pg <- NA_real_; skater_output$onice_pp_sf_pg <- NA_real_
   skater_output$ev_offense_wowy_3yr <- NA_real_; skater_output$ev_defense_wowy_3yr <- NA_real_
   skater_output$pp_offense_wowy_3yr <- NA_real_; skater_output$pk_defense_wowy_3yr <- NA_real_
 }
@@ -914,6 +917,14 @@ team_offense <- skater_output %>%
     # earlier team-level PK compromise, now that real per-skater PK shot
     # volume is tracked at the source (onice_stats.R).
     onice_pk_sa_pg_wtd = sum(onice_pk_sa_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_pk_sa_pg)], na.rm = TRUE),
+    # Same shared-stat reasoning, mirrored for offense — needed so the
+    # SOG-to-Corsi ratio's denominator (onice_cf_pg_wtd + this) is scoped
+    # the same way as what it gets APPLIED to (onice_ca_pg_wtd + PK-SA,
+    # both roster-aggregated player-shift rates) rather than comparing
+    # against team-level full-game totals, which are a different scale
+    # entirely (a team's full-game Corsi is much bigger than any one
+    # player's on-ice rate during just their own shifts).
+    onice_pp_sf_pg_wtd = sum(onice_pp_sf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_pp_sf_pg)], na.rm = TRUE),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
     # WOWY is also a shared/context stat (it represents team-level effects
     # attributable to a player, not an individually-authored event like a
@@ -954,35 +965,30 @@ MIN_WOWY_ROSTER_COVERAGE <- 15
 # the same roster-aggregated way) so both sides of the formula land on the
 # same shots-on-goal scale — no guessed constant.
 #
-# IMPORTANT: must compare MATCHED SCOPES on both sides. shots_for_pg is
-# ALL-SITUATION (box-score total, includes PP/PK) — comparing it against
-# 5v5-ONLY Corsi (onice_cf_pg_wtd) leaves PP volume missing from the
-# denominator, forcing the ratio to inflate to compensate (this actually
-# happened: an early version of this ratio came out above 2.0, when a
-# genuine Corsi->SOG ratio should be well under 1.0 — Corsi is always a
-# bigger number than real shots). That inflated ratio then got applied to
-# (5v5 CA + PK SA) below, double-counting the "expand beyond 5v5" effect
-# for the PK portion, which was already beyond 5v5 and didn't need it.
-# Fix: build an all-situation Corsi-for (5v5 CF + PP shots-for, both
-# already tracked in team_onice.csv) as the denominator instead — same
-# scope-matching already validated in the live app's sog_to_corsi_ratio_live.
-team_onice_all <- bind_rows(team_onice_by_season)
-cf_all_situation_pg <- if (nrow(team_onice_all) > 0 && "pp_shots" %in% names(team_onice_all)) {
-  (coalesce(team_onice_all$cf_5v5, 0) + coalesce(team_onice_all$pp_shots, 0)) / pmax(coalesce(team_onice_all$gp_onice, 1), 1)
-} else team_offense$onice_cf_pg_wtd  # fall back to the old (scope-mismatched) behavior if pp_shots isn't available, rather than erroring
-
-sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) / mean(cf_all_situation_pg[cf_all_situation_pg > 0], na.rm = TRUE)
+# IMPORTANT: must compare MATCHED SCOPES on both sides, and "matched scope"
+# means TWO things, not one:
+#   1. All-situation vs 5v5-only (PP/PK shot volume must be included on
+#      both sides) — this was the first bug found: comparing all-situation
+#      shots_for_pg against 5v5-only onice_cf_pg_wtd left PP volume out of
+#      the denominator, forcing the ratio to inflate to compensate (it hit
+#      2.069, when a genuine Corsi->SOG ratio should be well under 1.0).
+#   2. Roster-aggregated (per-player, during just THEIR shifts) vs
+#      team-level (full 60 minutes) — this is the second, bigger bug found
+#      right after "fixing" the first one: switching the denominator to
+#      team-level full-game Corsi (~55-60/game) made it wildly mismatched
+#      against what the ratio actually gets APPLIED to below
+#      (onice_ca_pg_wtd, which is roster-aggregated — each player's own
+#      on-ice rate during their own ~15-20 min of shifts, not the team's
+#      full 60 minutes). That mismatch drove the ratio down to 0.539,
+#      clamping every team's shots-against to the floor.
+# Fix: keep the denominator roster-aggregated (matching onice_ca_pg_wtd's
+# scope exactly), and add a roster-aggregated PP-shots-for rate
+# (onice_pp_sf_pg_wtd, mirroring the existing onice_pk_sa_pg_wtd) to bring
+# PP volume in — solving bug 1 without reintroducing bug 2.
+sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) /
+  mean((team_offense$onice_cf_pg_wtd + coalesce(team_offense$onice_pp_sf_pg_wtd, 0))[team_offense$onice_cf_pg_wtd > 0], na.rm = TRUE)
 cat("  SOG-to-Corsi conversion ratio (self-calibrated, scope-matched):", round(sog_to_corsi_ratio, 3), "\n")
-cat("  mean(shots_for_pg)=", round(mean(team_offense$shots_for_pg, na.rm=TRUE),2),
-    "| mean(cf_all_situation_pg)=", round(mean(cf_all_situation_pg[cf_all_situation_pg>0], na.rm=TRUE),2), "\n")
-edm_onice_rows <- team_onice_all[team_onice_all$team_abbrev == "EDM", ]
-if (nrow(edm_onice_rows) > 0) {
-  for (i in seq_len(nrow(edm_onice_rows))) {
-    r <- edm_onice_rows[i,]
-    cat("  EDM team_onice_all row", i, ": season=", r$season, "cf_5v5=", r$cf_5v5, "pp_shots=", r$pp_shots,
-        "gp_onice=", r$gp_onice, "-> cf_all_situation_pg=", round((coalesce(r$cf_5v5,0)+coalesce(r$pp_shots,0))/pmax(coalesce(r$gp_onice,1),1),2), "\n")
-  }
-}
+
 # Testing a specific hypothesis: our on-ice data is 5v5-ONLY, but real
 # box-score shots-against is ALL SITUATIONS combined (5v5+PP+PK+etc). A
 # single league-wide conversion ratio assumes every team's PP/PK shot
