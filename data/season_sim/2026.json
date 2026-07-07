@@ -1,173 +1,173 @@
 {
   "season": 2027,
-  "generated_at": "2026-07-07 16:43:12 UTC",
+  "generated_at": "2026-07-07 17:31:14 UTC",
   "n_sims": 10000,
   "results": [
     {
       "team_abbrev": "WSH",
-      "proj_points": 112.8,
-      "playoff_pct": 98,
-      "cup_pct": 12.2,
+      "proj_points": 112.9,
+      "playoff_pct": 97.9,
+      "cup_pct": 12.3,
       "_row": "WSH"
     },
     {
       "team_abbrev": "CAR",
-      "proj_points": 106.2,
-      "playoff_pct": 92.1,
-      "cup_pct": 7.9,
+      "proj_points": 106.3,
+      "playoff_pct": 92.2,
+      "cup_pct": 8,
       "_row": "CAR"
     },
     {
       "team_abbrev": "DAL",
       "proj_points": 104.7,
-      "playoff_pct": 97.3,
-      "cup_pct": 10,
+      "playoff_pct": 97.4,
+      "cup_pct": 10.1,
       "_row": "DAL"
     },
     {
       "team_abbrev": "EDM",
-      "proj_points": 101.2,
-      "playoff_pct": 96.8,
-      "cup_pct": 8,
+      "proj_points": 101.3,
+      "playoff_pct": 96.6,
+      "cup_pct": 8.6,
       "_row": "EDM"
     },
     {
       "team_abbrev": "MTL",
       "proj_points": 100.9,
-      "playoff_pct": 77.4,
-      "cup_pct": 4.9,
+      "playoff_pct": 77.2,
+      "cup_pct": 4.8,
       "_row": "MTL"
     },
     {
       "team_abbrev": "TBL",
       "proj_points": 100.3,
-      "playoff_pct": 73.7,
-      "cup_pct": 5,
+      "playoff_pct": 73.4,
+      "cup_pct": 4.5,
       "_row": "TBL"
     },
     {
       "team_abbrev": "BOS",
-      "proj_points": 99.7,
-      "playoff_pct": 74.5,
-      "cup_pct": 4.7,
+      "proj_points": 99.9,
+      "playoff_pct": 75,
+      "cup_pct": 4.9,
       "_row": "BOS"
     },
     {
       "team_abbrev": "COL",
-      "proj_points": 99.3,
-      "playoff_pct": 91.4,
-      "cup_pct": 7,
+      "proj_points": 99.4,
+      "playoff_pct": 91.3,
+      "cup_pct": 7.4,
       "_row": "COL"
     },
     {
       "team_abbrev": "BUF",
       "proj_points": 99,
-      "playoff_pct": 72,
-      "cup_pct": 4.4,
+      "playoff_pct": 71,
+      "cup_pct": 4,
       "_row": "BUF"
     },
     {
       "team_abbrev": "PIT",
-      "proj_points": 98.5,
-      "playoff_pct": 67.6,
-      "cup_pct": 3.7,
+      "proj_points": 98.4,
+      "playoff_pct": 67.4,
+      "cup_pct": 3.5,
       "_row": "PIT"
     },
     {
       "team_abbrev": "TOR",
-      "proj_points": 96.3,
-      "playoff_pct": 55.8,
-      "cup_pct": 2.7,
+      "proj_points": 96.4,
+      "playoff_pct": 56.2,
+      "cup_pct": 2.9,
       "_row": "TOR"
     },
     {
       "team_abbrev": "STL",
-      "proj_points": 95.3,
-      "playoff_pct": 80.4,
-      "cup_pct": 5.2,
+      "proj_points": 95.1,
+      "playoff_pct": 80.9,
+      "cup_pct": 4.8,
       "_row": "STL"
     },
     {
-      "team_abbrev": "UTA",
+      "team_abbrev": "FLA",
       "proj_points": 95,
-      "playoff_pct": 79.4,
-      "cup_pct": 4.7,
-      "_row": "UTA"
+      "playoff_pct": 53.1,
+      "cup_pct": 2.5,
+      "_row": "FLA"
     },
     {
-      "team_abbrev": "FLA",
-      "proj_points": 94.9,
-      "playoff_pct": 52.9,
-      "cup_pct": 2.6,
-      "_row": "FLA"
+      "team_abbrev": "UTA",
+      "proj_points": 94.8,
+      "playoff_pct": 79.4,
+      "cup_pct": 5.1,
+      "_row": "UTA"
     },
     {
       "team_abbrev": "PHI",
       "proj_points": 93.9,
-      "playoff_pct": 46.3,
+      "playoff_pct": 47.3,
       "cup_pct": 2.1,
       "_row": "PHI"
     },
     {
       "team_abbrev": "NYR",
       "proj_points": 91.4,
-      "playoff_pct": 37,
-      "cup_pct": 1.3,
+      "playoff_pct": 36.5,
+      "cup_pct": 1.2,
       "_row": "NYR"
     },
     {
       "team_abbrev": "CBJ",
       "proj_points": 90.7,
-      "playoff_pct": 34.8,
-      "cup_pct": 1.4,
+      "playoff_pct": 34.6,
+      "cup_pct": 1.3,
       "_row": "CBJ"
     },
     {
       "team_abbrev": "MIN",
-      "proj_points": 90.1,
-      "playoff_pct": 62.2,
-      "cup_pct": 2.7,
+      "proj_points": 90,
+      "playoff_pct": 61.6,
+      "cup_pct": 2.6,
       "_row": "MIN"
     },
     {
       "team_abbrev": "LAK",
-      "proj_points": 89.4,
-      "playoff_pct": 70,
-      "cup_pct": 2.7,
+      "proj_points": 89.8,
+      "playoff_pct": 71.4,
+      "cup_pct": 2.9,
       "_row": "LAK"
     },
     {
       "team_abbrev": "ANA",
-      "proj_points": 85.4,
-      "playoff_pct": 52.7,
-      "cup_pct": 1.5,
+      "proj_points": 85.3,
+      "playoff_pct": 52.2,
+      "cup_pct": 1.6,
       "_row": "ANA"
     },
     {
       "team_abbrev": "WPG",
-      "proj_points": 85,
-      "playoff_pct": 35,
-      "cup_pct": 1.3,
+      "proj_points": 84.7,
+      "playoff_pct": 33.7,
+      "cup_pct": 1.1,
       "_row": "WPG"
     },
     {
       "team_abbrev": "SEA",
       "proj_points": 82.7,
-      "playoff_pct": 37.1,
-      "cup_pct": 1.1,
+      "playoff_pct": 38.6,
+      "cup_pct": 1.2,
       "_row": "SEA"
     },
     {
       "team_abbrev": "OTT",
       "proj_points": 82.1,
-      "playoff_pct": 7.9,
-      "cup_pct": 0.1,
+      "playoff_pct": 8,
+      "cup_pct": 0.2,
       "_row": "OTT"
     },
     {
       "team_abbrev": "VGK",
-      "proj_points": 81.5,
-      "playoff_pct": 30.9,
+      "proj_points": 81.4,
+      "playoff_pct": 30.6,
       "cup_pct": 0.8,
       "_row": "VGK"
     },
@@ -175,55 +175,55 @@
       "team_abbrev": "NJD",
       "proj_points": 81.3,
       "playoff_pct": 7,
-      "cup_pct": 0.1,
+      "cup_pct": 0.2,
       "_row": "NJD"
     },
     {
       "team_abbrev": "NSH",
-      "proj_points": 81.1,
-      "playoff_pct": 21.5,
-      "cup_pct": 0.6,
+      "proj_points": 81.2,
+      "playoff_pct": 22.2,
+      "cup_pct": 0.5,
       "_row": "NSH"
-    },
-    {
-      "team_abbrev": "VAN",
-      "proj_points": 77.5,
-      "playoff_pct": 17.7,
-      "cup_pct": 0.4,
-      "_row": "VAN"
     },
     {
       "team_abbrev": "SJS",
       "proj_points": 77.3,
-      "playoff_pct": 17.5,
-      "cup_pct": 0.5,
+      "playoff_pct": 17.3,
+      "cup_pct": 0.4,
       "_row": "SJS"
     },
     {
+      "team_abbrev": "VAN",
+      "proj_points": 77.3,
+      "playoff_pct": 16.8,
+      "cup_pct": 0.4,
+      "_row": "VAN"
+    },
+    {
       "team_abbrev": "NYI",
-      "proj_points": 75.8,
-      "playoff_pct": 2.1,
+      "proj_points": 75.7,
+      "playoff_pct": 1.9,
       "cup_pct": 0,
       "_row": "NYI"
     },
     {
       "team_abbrev": "CHI",
-      "proj_points": 74.2,
-      "playoff_pct": 6.6,
+      "proj_points": 74.1,
+      "playoff_pct": 6.4,
       "cup_pct": 0.1,
       "_row": "CHI"
     },
     {
       "team_abbrev": "DET",
-      "proj_points": 73.1,
-      "playoff_pct": 0.9,
+      "proj_points": 73,
+      "playoff_pct": 1.1,
       "cup_pct": 0,
       "_row": "DET"
     },
     {
       "team_abbrev": "CGY",
-      "proj_points": 68.9,
-      "playoff_pct": 3.3,
+      "proj_points": 69.1,
+      "playoff_pct": 3.6,
       "cup_pct": 0,
       "_row": "CGY"
     }
@@ -11187,6 +11187,45 @@
       "pk_defense_wowy_3yr": -5.1696,
       "ev_offense_xgwowy_3yr": 0.0078,
       "ev_defense_xgwowy_3yr": -0.3033
+    },
+    {
+      "team_abbrev": "LAK",
+      "player_id": "8476979",
+      "position_group": "defensemen",
+      "roster_name": "Erik Gustafsson",
+      "birth_date": "1992-03-14",
+      "birth_date_parsed": "1992-03-14",
+      "age_at_season_start": 34.5489,
+      "years_in_nhl": null,
+      "player_name": "Erik Gustafsson",
+      "position": "D",
+      "n_seasons": 2,
+      "proj_gp": 84,
+      "rate_goals": 0.0443,
+      "rate_assists": 0.2816,
+      "rate_shots": 1.1424,
+      "rate_hits": 0,
+      "rate_blocks": 0,
+      "rate_pim": 0.3639,
+      "rate_toi_min": 16.5736,
+      "has_history": true,
+      "age_mult": 1,
+      "proj_goals": 3.7,
+      "proj_assists": 23.7,
+      "proj_points": 27.4,
+      "proj_shots": 96,
+      "proj_hits": 0,
+      "proj_blocks": 0,
+      "proj_pim": 30.6,
+      "onice_ca_pg": 13.7331,
+      "onice_cf_pg": 14.7302,
+      "onice_pk_sa_pg": 0.393,
+      "ev_offense_wowy_3yr": 0.7194,
+      "ev_defense_wowy_3yr": -2.7808,
+      "pp_offense_wowy_3yr": 2.9664,
+      "pk_defense_wowy_3yr": -78.8084,
+      "ev_offense_xgwowy_3yr": 0.3259,
+      "ev_defense_xgwowy_3yr": -0.1023
     },
     {
       "team_abbrev": "LAK",
@@ -22546,7 +22585,7 @@
       "birth_date_parsed": "1997-01-28",
       "age_at_season_start": 29.6728,
       "years_in_nhl": null,
-      "player_name": "Jeffrey Viel",
+      "player_name": "Jeffrey Truchon-Viel",
       "position": "L",
       "n_seasons": 2,
       "proj_gp": 84,
