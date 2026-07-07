@@ -684,10 +684,18 @@ load_all_skater_onice <- function(seasons) {
 MIN_WOWY_TOI_FRAC <- 0.15
 
 compute_wowy_metrics <- function(skater_df, team_df) {
+  if (!"xg_for" %in% names(team_df)) team_df$xg_for <- NA_real_        # guard for pre-xG-model team_onice.csv
+  if (!"xg_against" %in% names(team_df)) team_df$xg_against <- NA_real_
+  if (!"xg_for_per60_5v5" %in% names(skater_df)) skater_df$xg_for_per60_5v5 <- NA_real_        # guard for pre-xG-model skater_onice.csv
+  if (!"xg_against_per60_5v5" %in% names(skater_df)) skater_df$xg_against_per60_5v5 <- NA_real_
+  if (!"xg_for_5v5" %in% names(skater_df)) skater_df$xg_for_5v5 <- NA_real_
+  if (!"xg_against_5v5" %in% names(skater_df)) skater_df$xg_against_5v5 <- NA_real_
+
   team_ref <- team_df %>%
     select(team_abbrev, team_gf_5v5 = gf_5v5, team_ga_5v5 = ga_5v5, team_toi_5v5 = toi_5v5_sec,
            team_pp_gf = pp_goals, team_toi_pp = toi_pp_sec,
-           team_pk_ga = pk_goals_against, team_toi_pk = toi_pk_sec)
+           team_pk_ga = pk_goals_against, team_toi_pk = toi_pk_sec,
+           team_xg_for = xg_for, team_xg_against = xg_against)
   df <- skater_df %>% left_join(team_ref, by = "team_abbrev")
 
   df %>% mutate(
@@ -704,6 +712,19 @@ compute_wowy_metrics <- function(skater_df, team_df) {
     team_ga_wo_per60 = ifelse(ev_without_toi > 0, (team_ga_5v5 - coalesce(ga_5v5, 0)) / (ev_without_toi / 3600), NA_real_),
     ev_defense_wowy  = ifelse(ev_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(ga_per60_5v5),
                                team_ga_wo_per60 - ga_per60_5v5, NA_real_),
+    # xG-based EV Offense/Defense — same WOWY logic, same 5v5 TOI scope,
+    # but using xG instead of actual goals. Less noisy: isolates shot-
+    # generation/shot-suppression skill from shooting/goaltending luck,
+    # which matters more for a FORWARD-LOOKING projection than an exact
+    # accounting of what literally happened. Falls back to NA (and the
+    # caller falls back to goals-based WOWY) for seasons before the xG
+    # model existed.
+    team_xgf_wo_per60 = ifelse(ev_without_toi > 0, (team_xg_for - coalesce(xg_for_5v5, 0)) / (ev_without_toi / 3600), NA_real_),
+    ev_offense_xgwowy = ifelse(ev_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(xg_for_per60_5v5),
+                                xg_for_per60_5v5 - team_xgf_wo_per60, NA_real_),
+    team_xga_wo_per60 = ifelse(ev_without_toi > 0, (team_xg_against - coalesce(xg_against_5v5, 0)) / (ev_without_toi / 3600), NA_real_),
+    ev_defense_xgwowy = ifelse(ev_toi_frac_wo >= MIN_WOWY_TOI_FRAC & !is.na(xg_against_per60_5v5),
+                                team_xga_wo_per60 - xg_against_per60_5v5, NA_real_),
     # PP Offense: same idea, restricted to power-play ice time.
     pp_without_toi   = team_toi_pp - coalesce(toi_pp_sec, 0),
     pp_toi_frac_wo   = ifelse(team_toi_pp > 0, pp_without_toi / team_toi_pp, 0),
@@ -734,7 +755,7 @@ weighted_avg_skip_na <- function(vals, season, gp) {
 project_skater_onice <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"pk_shots_against" %in% names(hist_df)) hist_df$pk_shots_against <- NA_real_  # guard for pre-update on-ice CSVs
-  for (wc in c("ev_offense_wowy", "ev_defense_wowy", "pp_offense_wowy", "pk_defense_wowy")) {
+  for (wc in c("ev_offense_wowy", "ev_defense_wowy", "pp_offense_wowy", "pk_defense_wowy", "ev_offense_xgwowy", "ev_defense_xgwowy")) {
     if (!wc %in% names(hist_df)) hist_df[[wc]] <- NA_real_  # guard for pre-update on-ice CSVs or seasons where WOWY couldn't be computed
   }
   rates <- hist_df %>%
@@ -756,6 +777,11 @@ project_skater_onice <- function(hist_df) {
       ev_defense_wowy_3yr = weighted_avg_skip_na(ev_defense_wowy, season, gp_onice),
       pp_offense_wowy_3yr = weighted_avg_skip_na(pp_offense_wowy, season, gp_onice),
       pk_defense_wowy_3yr = weighted_avg_skip_na(pk_defense_wowy, season, gp_onice),
+      # xG-based versions — preferred over goals-based when available (see
+      # team_offense below), since they isolate shot-generation/suppression
+      # skill from shooting/goaltending luck.
+      ev_offense_xgwowy_3yr = weighted_avg_skip_na(ev_offense_xgwowy, season, gp_onice),
+      ev_defense_xgwowy_3yr = weighted_avg_skip_na(ev_defense_xgwowy, season, gp_onice),
       .groups = "drop"
     )
 }
@@ -791,7 +817,8 @@ if (!is.null(skater_onice_hist) && nrow(skater_onice_hist) > 0 && "team_abbrev" 
       wowy_all <- bind_rows(wowy_pieces)
       cat("  WOWY computed for", length(unique(wowy_all$player_id)), "player-seasons across", length(wowy_pieces), "seasons.\n")
       skater_onice_hist <- skater_onice_hist %>%
-        left_join(wowy_all %>% select(player_id, season, ev_offense_wowy, ev_defense_wowy, pp_offense_wowy, pk_defense_wowy),
+        left_join(wowy_all %>% select(player_id, season, ev_offense_wowy, ev_defense_wowy, pp_offense_wowy, pk_defense_wowy,
+                                       ev_offense_xgwowy, ev_defense_xgwowy),
                    by = c("player_id", "season"))
     }
   }
@@ -799,6 +826,9 @@ if (!is.null(skater_onice_hist) && nrow(skater_onice_hist) > 0 && "team_abbrev" 
 if (!"ev_offense_wowy" %in% names(skater_onice_hist)) {
   skater_onice_hist$ev_offense_wowy <- NA_real_; skater_onice_hist$ev_defense_wowy <- NA_real_
   skater_onice_hist$pp_offense_wowy <- NA_real_; skater_onice_hist$pk_defense_wowy <- NA_real_
+}
+if (!"ev_offense_xgwowy" %in% names(skater_onice_hist)) {
+  skater_onice_hist$ev_offense_xgwowy <- NA_real_; skater_onice_hist$ev_defense_xgwowy <- NA_real_
 }
 
 proj_skater_onice <- project_skater_onice(skater_onice_hist)
@@ -809,6 +839,9 @@ if (!is.null(proj_skater_onice)) {
   skater_output$onice_ca_pg <- NA_real_; skater_output$onice_cf_pg <- NA_real_; skater_output$onice_pk_sa_pg <- NA_real_
   skater_output$ev_offense_wowy_3yr <- NA_real_; skater_output$ev_defense_wowy_3yr <- NA_real_
   skater_output$pp_offense_wowy_3yr <- NA_real_; skater_output$pk_defense_wowy_3yr <- NA_real_
+}
+if (!"ev_offense_xgwowy_3yr" %in% names(skater_output)) {
+  skater_output$ev_offense_xgwowy_3yr <- NA_real_; skater_output$ev_defense_xgwowy_3yr <- NA_real_
 }
 
 # ── Shot-based team offense/defense profile ──────────────────────────────────
@@ -835,6 +868,15 @@ team_offense <- skater_output %>%
   group_by(team_abbrev) %>%
   arrange(desc(proj_points), .by_group = TRUE) %>%
   slice_head(n = 18) %>%   # top 18 by projected points ~ approximate active lineup
+  mutate(
+    # Prefer xG-based WOWY (less noisy — isolates shot quality from
+    # shooting/goaltending luck) when available; fall back to goals-based
+    # WOWY for seasons before the xG model existed. Per-player, before
+    # aggregation, so the team-level number reflects whichever signal each
+    # individual player actually has rather than an all-or-nothing switch.
+    ev_off_wowy_effective = coalesce(ev_offense_xgwowy_3yr, ev_offense_wowy_3yr),
+    ev_def_wowy_effective = coalesce(ev_defense_xgwowy_3yr, ev_defense_wowy_3yr)
+  ) %>%
   summarise(
     shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
     goals_for_pg      = sum(coalesce(rate_goals, 0), na.rm = TRUE),
@@ -859,10 +901,12 @@ team_offense <- skater_output %>%
     # attributable to a player, not an individually-authored event like a
     # shot), so this gets the same TOI-weighted-average treatment as CA/CF
     # above, not a sum.
-    wowy_ev_off_wtd = sum(coalesce(ev_offense_wowy_3yr, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_offense_wowy_3yr)], na.rm = TRUE),
-    wowy_ev_def_wtd = sum(coalesce(ev_defense_wowy_3yr, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_defense_wowy_3yr)], na.rm = TRUE),
-    n_with_wowy_off = sum(!is.na(ev_offense_wowy_3yr)),
-    n_with_wowy_def = sum(!is.na(ev_defense_wowy_3yr)),
+    wowy_ev_off_wtd = sum(coalesce(ev_off_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_off_wowy_effective)], na.rm = TRUE),
+    wowy_ev_def_wtd = sum(coalesce(ev_def_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_def_wowy_effective)], na.rm = TRUE),
+    n_with_wowy_off = sum(!is.na(ev_off_wowy_effective)),
+    n_with_wowy_def = sum(!is.na(ev_def_wowy_effective)),
+    n_with_xgwowy_off = sum(!is.na(ev_offense_xgwowy_3yr)),
+    n_with_xgwowy_def = sum(!is.na(ev_defense_xgwowy_3yr)),
     .groups = "drop"
   )
 
@@ -911,6 +955,9 @@ cat("  Teams with a full top-18 of on-ice defense data:", sum(team_offense$n_wit
     "(partial coverage falls back to the blocks/hits proxy for those teams)\n")
 cat("  Teams with enough WOWY coverage — offense:", sum(team_offense$n_with_wowy_off >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE),
     "defense:", sum(team_offense$n_with_wowy_def >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE), "of", nrow(team_offense), "\n")
+cat("  Of which using real xG-based WOWY (vs. goals-based fallback) — offense:",
+    sum(team_offense$n_with_xgwowy_off >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE),
+    "defense:", sum(team_offense$n_with_xgwowy_def >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE), "of", nrow(team_offense), "\n")
 
 team_offense <- team_offense %>%
   mutate(
@@ -954,10 +1001,55 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
   }
 }
 
+# ── GSAx-based goaltending adjustment ────────────────────────────────────────
+# Real box-score sv_pct conflates a goalie's own skill with the shot
+# quality their team allows in front of them — a goalie behind a weak
+# defense faces harder shots and looks worse than their true talent;
+# behind a great defense, the reverse. GSAx (Goals Saved Above Expected,
+# from onice_stats.R's xG scoring) isolates the goalie's own performance
+# relative to shot quality faced. Converted here into an adjusted save
+# rate: league-average sv_pct + (this goalie's GSAx per shot faced) — "how
+# this goalie would compare to average if facing average-quality shots."
+MIN_GSAX_SHOTS_TRACKED <- 200  # minimum pooled shots faced (5v5+PK) before trusting GSAx over box-score sv_pct
+
+goalie_onice_hist <- lapply(recent3, function(s) {
+  g <- tryCatch(gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice/", s, "/goalie_onice.csv")), error = function(e) NULL)
+  if (is.null(g) || nrow(g) == 0) return(NULL)
+  if (!"xg_faced" %in% names(g)) g$xg_faced <- NA_real_  # guard for pre-xG-model on-ice CSVs
+  g$player_id <- as.character(g$player_id)
+  g
+})
+goalie_onice_hist <- bind_rows(Filter(Negate(is.null), goalie_onice_hist))
+
+if (nrow(goalie_onice_hist) > 0) {
+  goalie_gsax_pooled <- goalie_onice_hist %>%
+    group_by(player_id) %>%
+    summarise(
+      shots_tracked = sum(coalesce(shots_5v5, 0)) + sum(coalesce(shots_pk, 0)),
+      ga_tracked    = sum(coalesce(ga_5v5, 0)) + sum(coalesce(ga_pk, 0)),
+      xg_tracked    = sum(coalesce(xg_faced, 0)),
+      .groups = "drop"
+    ) %>%
+    mutate(gsax_pooled = xg_tracked - ga_tracked)
+  lg_avg_sv_pct_tracked <- 1 - sum(goalie_gsax_pooled$ga_tracked, na.rm = TRUE) / sum(goalie_gsax_pooled$shots_tracked, na.rm = TRUE)
+  cat("  GSAx goaltending: league-avg tracked sv% =", round(lg_avg_sv_pct_tracked, 4),
+      "| goalies with enough sample:", sum(goalie_gsax_pooled$shots_tracked >= MIN_GSAX_SHOTS_TRACKED, na.rm = TRUE), "\n")
+  goalie_gsax_pooled <- goalie_gsax_pooled %>%
+    mutate(gsax_adj_sv_pct = ifelse(shots_tracked >= MIN_GSAX_SHOTS_TRACKED,
+                                     lg_avg_sv_pct_tracked + gsax_pooled / shots_tracked, NA_real_))
+} else {
+  goalie_gsax_pooled <- NULL
+  cat("  No goalie on-ice/xG data found for GSAx — goaltending stays box-score sv_pct only.\n")
+}
+
+if (!is.null(goalie_gsax_pooled)) goalie_output <- goalie_output %>% left_join(goalie_gsax_pooled %>% select(player_id, gsax_adj_sv_pct), by = "player_id")
+if (!"gsax_adj_sv_pct" %in% names(goalie_output)) goalie_output$gsax_adj_sv_pct <- NA_real_
+
 team_goaltending <- goalie_output %>%
   filter(has_history, coalesce(proj_gp, 0) > 0) %>%
+  mutate(sv_pct_for_sim = coalesce(gsax_adj_sv_pct, proj_sv_pct)) %>%
   group_by(team_abbrev) %>%
-  summarise(goalie_sv_pct = sum(proj_sv_pct * proj_gp, na.rm = TRUE) / sum(proj_gp, na.rm = TRUE), .groups = "drop")
+  summarise(goalie_sv_pct = sum(sv_pct_for_sim * proj_gp, na.rm = TRUE) / sum(proj_gp, na.rm = TRUE), .groups = "drop")
 
 team_off_def <- data.frame(team_abbrev = names(net_lookup), stringsAsFactors = FALSE) %>%
   left_join(team_offense, by = "team_abbrev") %>%
