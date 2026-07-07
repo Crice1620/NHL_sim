@@ -790,6 +790,7 @@ abbrev_fix <- c("ARI" = "UTA", "PHX" = "UTA")  # extend if another franchise rel
 cat("Computing skater on-ice defense projections...\n")
 skater_onice_hist <- load_all_skater_onice(recent3)
 
+team_onice_by_season <- list()  # always defined, even if the condition below is false — the SOG-to-Corsi ratio fix later needs this to exist regardless
 # WOWY needs each season's team baseline computed SEPARATELY (not blended
 # across years first) — comparing a player's 2024 on-ice rate against a
 # blended 2024-2026 team average would mix seasons incorrectly. Fetch
@@ -952,8 +953,26 @@ MIN_WOWY_ROSTER_COVERAGE <- 15
 # (real league-wide shots_for_pg vs the league-wide Corsi-for sum computed
 # the same roster-aggregated way) so both sides of the formula land on the
 # same shots-on-goal scale — no guessed constant.
-sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) / mean(team_offense$onice_cf_pg_wtd[team_offense$onice_cf_pg_wtd > 0], na.rm = TRUE)
-cat("  SOG-to-Corsi conversion ratio (self-calibrated):", round(sog_to_corsi_ratio, 3), "\n")
+#
+# IMPORTANT: must compare MATCHED SCOPES on both sides. shots_for_pg is
+# ALL-SITUATION (box-score total, includes PP/PK) — comparing it against
+# 5v5-ONLY Corsi (onice_cf_pg_wtd) leaves PP volume missing from the
+# denominator, forcing the ratio to inflate to compensate (this actually
+# happened: an early version of this ratio came out above 2.0, when a
+# genuine Corsi->SOG ratio should be well under 1.0 — Corsi is always a
+# bigger number than real shots). That inflated ratio then got applied to
+# (5v5 CA + PK SA) below, double-counting the "expand beyond 5v5" effect
+# for the PK portion, which was already beyond 5v5 and didn't need it.
+# Fix: build an all-situation Corsi-for (5v5 CF + PP shots-for, both
+# already tracked in team_onice.csv) as the denominator instead — same
+# scope-matching already validated in the live app's sog_to_corsi_ratio_live.
+team_onice_all <- bind_rows(team_onice_by_season)
+cf_all_situation_pg <- if (nrow(team_onice_all) > 0 && "pp_shots" %in% names(team_onice_all)) {
+  (coalesce(team_onice_all$cf_5v5, 0) + coalesce(team_onice_all$pp_shots, 0)) / pmax(coalesce(team_onice_all$gp_onice, 1), 1)
+} else team_offense$onice_cf_pg_wtd  # fall back to the old (scope-mismatched) behavior if pp_shots isn't available, rather than erroring
+
+sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) / mean(cf_all_situation_pg[cf_all_situation_pg > 0], na.rm = TRUE)
+cat("  SOG-to-Corsi conversion ratio (self-calibrated, scope-matched):", round(sog_to_corsi_ratio, 3), "\n")
 
 # Testing a specific hypothesis: our on-ice data is 5v5-ONLY, but real
 # box-score shots-against is ALL SITUATIONS combined (5v5+PP+PK+etc). A
