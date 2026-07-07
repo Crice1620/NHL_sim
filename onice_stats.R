@@ -603,9 +603,15 @@ process_game <- function(game_id) {
   # Team-level xG-for/against — aggregated from the already-scored shots
   # (can't be done inline during the main loop above, since scoring itself
   # needs the FULL shot sequence first for rebound detection).
+  # MUST be filtered to 5v5-only, matching gf_5v5/ga_5v5's scope and the
+  # player-level xg_for_5v5/xg_against_5v5 — without this filter, the team
+  # baseline included PP/PK shots while the player-level number was
+  # 5v5-only, a scope mismatch that produced a systematic bias (every
+  # player looking like they contribute far less than their "fair share"
+  # of an inflated all-situation team total).
   t_xg_for <- list(); t_xg_against <- list()
   if (!is.null(shots_raw_df) && "xg" %in% names(shots_raw_df)) {
-    valid_xg <- shots_raw_df[!is.na(shots_raw_df$xg), ]
+    valid_xg <- shots_raw_df[!is.na(shots_raw_df$xg) & shots_raw_df$situation_label == "5v5", ]
     if (nrow(valid_xg) > 0) {
       valid_xg$against_team_id <- ifelse(valid_xg$owner_team_id == home_id, away_id, home_id)
       xg_for_agg <- valid_xg %>% group_by(owner_team_id) %>% summarise(xg = sum(xg), .groups = "drop")
@@ -839,6 +845,12 @@ team_df <- data.frame(
   pp_shots    = sapply(all_teams, gv, lst = team_totals$pp_shots),
   pk_goals_against = sapply(all_teams, gv, lst = team_totals$pk_ga),
   pk_shots_against = sapply(all_teams, gv, lst = team_totals$pk_shots),
+  # NOTE: despite the name not saying "5v5" the way gf_5v5/ga_5v5 does,
+  # these ARE 5v5-only (filtered at the aggregation step above) — that
+  # ambiguous naming is exactly what let a real scope-mismatch bug slip
+  # through once already (team-level was all-situation while player-level
+  # xg_for_5v5 was 5v5-only). Keep these two scoped together if this ever
+  # gets extended to also track an all-situation version.
   xg_for     = sapply(all_teams, gv, lst = team_totals$xg_for),
   xg_against = sapply(all_teams, gv, lst = team_totals$xg_against),
   toi_5v5_sec = sapply(all_teams, gv, lst = team_totals$toi_5v5),
