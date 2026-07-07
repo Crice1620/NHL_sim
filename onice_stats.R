@@ -504,7 +504,8 @@ process_game <- function(game_id) {
   # needed a real-data check at some point.
   pen_taken <- list(); pen_drawn <- list()
 
-  for (pl in pbp$plays) {
+  for (play_i in seq_along(pbp$plays)) {
+    pl <- pbp$plays[[play_i]]
     typ  <- tryCatch(pl$typeDescKey %||% "", error = function(e) "")
     code <- tryCatch(as.character(pl$situationCode %||% NA), error = function(e) NA_character_)
     sit  <- parse_situation(code)
