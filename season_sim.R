@@ -855,12 +855,35 @@ team_offense <- skater_output %>%
     # volume is tracked at the source (onice_stats.R).
     onice_pk_sa_pg_wtd = sum(onice_pk_sa_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_pk_sa_pg)], na.rm = TRUE),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
+    # WOWY is also a shared/context stat (it represents team-level effects
+    # attributable to a player, not an individually-authored event like a
+    # shot), so this gets the same TOI-weighted-average treatment as CA/CF
+    # above, not a sum.
+    wowy_ev_off_wtd = sum(coalesce(ev_offense_wowy_3yr, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_offense_wowy_3yr)], na.rm = TRUE),
+    wowy_ev_def_wtd = sum(coalesce(ev_defense_wowy_3yr, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_defense_wowy_3yr)], na.rm = TRUE),
+    n_with_wowy_off = sum(!is.na(ev_offense_wowy_3yr)),
+    n_with_wowy_def = sum(!is.na(ev_defense_wowy_3yr)),
     .groups = "drop"
   )
 
 def_mean <- mean(team_offense$def_proxy, na.rm = TRUE)
 def_sd   <- sd(team_offense$def_proxy, na.rm = TRUE); if (is.na(def_sd) || def_sd == 0) def_sd <- 1
 lg_avg_shooting_pct <- sum(team_offense$goals_for_pg, na.rm=TRUE) / sum(team_offense$shots_for_pg, na.rm=TRUE)
+
+# ── WOWY adjustment to shooting quality and defensive shot suppression ──────
+# Converts each team's TOI-weighted average WOWY (a per-60 goal
+# differential) into a per-game GOALS adjustment, using roughly how much
+# of a 60-minute game is played at 5v5 (the rest is special teams/other
+# situations). This is added to real box-score goals (offense) or
+# converted into an equivalent shots adjustment via league-average
+# conversion rate (defense) — shot VOLUME itself is never touched, only
+# the quality/effectiveness layered on top of it. Only applied once at
+# least 15 of the top-18 roster have a real (non-NA) WOWY value, same
+# coverage bar used for the on-ice defense fix, so a roster full of
+# rookies/no-history players doesn't get a distorted adjustment from a
+# tiny, unreliable sample.
+AVG_5V5_MIN_PER_GAME <- 48  # rough share of a 60-min game played at 5v5
+MIN_WOWY_ROSTER_COVERAGE <- 15
 
 # Self-calibrating SOG-to-Corsi conversion: onice_ca_pg/onice_cf_pg are
 # CORSI (shots-on-goal + missed + blocked combined), a bigger number than
@@ -886,10 +909,23 @@ if (nrow(edm_raw) > 0) {
 
 cat("  Teams with a full top-18 of on-ice defense data:", sum(team_offense$n_with_onice_def >= 15), "of", nrow(team_offense),
     "(partial coverage falls back to the blocks/hits proxy for those teams)\n")
+cat("  Teams with enough WOWY coverage — offense:", sum(team_offense$n_with_wowy_off >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE),
+    "defense:", sum(team_offense$n_with_wowy_def >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE), "of", nrow(team_offense), "\n")
 
 team_offense <- team_offense %>%
   mutate(
-    shooting_pct              = ifelse(shots_for_pg > 0, goals_for_pg / shots_for_pg, lg_avg_shooting_pct),
+    # WOWY adjustment — converts each team's average context-adjusted
+    # on-ice impact into a per-game goals shift, added to real box-score
+    # goals for offense, and converted to an equivalent shots adjustment
+    # (via league-average conversion rate) for defense. Clamped to keep
+    # an unusually extreme roster from producing an implausible result —
+    # same kind of safety margin as the shots_against floor below.
+    wowy_off_adj_per_game = ifelse(n_with_wowy_off >= MIN_WOWY_ROSTER_COVERAGE,
+                                    pmax(-1.5, pmin(1.5, wowy_ev_off_wtd * (AVG_5V5_MIN_PER_GAME / 60))), 0),
+    wowy_def_adj_per_game = ifelse(n_with_wowy_def >= MIN_WOWY_ROSTER_COVERAGE,
+                                    pmax(-1.5, pmin(1.5, wowy_ev_def_wtd * (AVG_5V5_MIN_PER_GAME / 60))), 0),
+    goals_for_pg_wowy_adj     = goals_for_pg + wowy_off_adj_per_game,
+    shooting_pct              = ifelse(shots_for_pg > 0, pmax(0.05, pmin(0.20, goals_for_pg_wowy_adj / shots_for_pg)), lg_avg_shooting_pct),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
     # 5v5-only on-ice shots-against PLUS real roster-driven PK shots-against
@@ -902,7 +938,10 @@ team_offense <- team_offense %>%
     # on-ice history (e.g. 15+ of 18) — otherwise a roster with several
     # rookies/no-history skaters would understate shots-against just from
     # missing data, not real defensive quality.
-    shots_against_pg          = ifelse(n_with_onice_def >= 15, shots_against_onice, shots_against_pg_fallback)
+    shots_against_pg_preWowy  = ifelse(n_with_onice_def >= 15, shots_against_onice, shots_against_pg_fallback),
+    # Positive wowy_def_adj_per_game = fewer goals against than the team's
+    # baseline, i.e. better defense = FEWER shots-against equivalent.
+    shots_against_pg          = pmax(15, shots_against_pg_preWowy - (wowy_def_adj_per_game / lg_avg_shooting_pct))
   )
 
 for (tm in c("VGK", "MIN", "NSH", "SEA")) {
@@ -994,8 +1033,9 @@ diag_tbl <- team_off_def %>%
 for (i in seq_len(nrow(diag_tbl))) {
   r <- diag_tbl[i, ]
   def_src <- if (!is.na(r$n_with_onice_def) && r$n_with_onice_def >= 15) "onice" else "proxy"
-  cat(sprintf("  %-4s | shots_for=%.1f shooting_pct=%.4f shots_against=%.1f (%s) goalie_sv=%.4f | approx_quality=%.3f\n",
-              r$team_abbrev, r$shots_for_pg, r$shooting_pct, r$shots_against_pg, def_src, r$goalie_sv_pct, r$approx_quality))
+  cat(sprintf("  %-4s | shots_for=%.1f shooting_pct=%.4f shots_against=%.1f (%s) goalie_sv=%.4f | wowy_off=%+.3f wowy_def=%+.3f | approx_quality=%.3f\n",
+              r$team_abbrev, r$shots_for_pg, r$shooting_pct, r$shots_against_pg, def_src, r$goalie_sv_pct,
+              coalesce(r$wowy_off_adj_per_game, 0), coalesce(r$wowy_def_adj_per_game, 0), r$approx_quality))
 }
 cat("\n")
 
