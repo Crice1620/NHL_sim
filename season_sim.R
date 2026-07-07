@@ -973,7 +973,16 @@ cf_all_situation_pg <- if (nrow(team_onice_all) > 0 && "pp_shots" %in% names(tea
 
 sog_to_corsi_ratio <- mean(team_offense$shots_for_pg, na.rm = TRUE) / mean(cf_all_situation_pg[cf_all_situation_pg > 0], na.rm = TRUE)
 cat("  SOG-to-Corsi conversion ratio (self-calibrated, scope-matched):", round(sog_to_corsi_ratio, 3), "\n")
-
+cat("  mean(shots_for_pg)=", round(mean(team_offense$shots_for_pg, na.rm=TRUE),2),
+    "| mean(cf_all_situation_pg)=", round(mean(cf_all_situation_pg[cf_all_situation_pg>0], na.rm=TRUE),2), "\n")
+edm_onice_rows <- team_onice_all[team_onice_all$team_abbrev == "EDM", ]
+if (nrow(edm_onice_rows) > 0) {
+  for (i in seq_len(nrow(edm_onice_rows))) {
+    r <- edm_onice_rows[i,]
+    cat("  EDM team_onice_all row", i, ": season=", r$season, "cf_5v5=", r$cf_5v5, "pp_shots=", r$pp_shots,
+        "gp_onice=", r$gp_onice, "-> cf_all_situation_pg=", round((coalesce(r$cf_5v5,0)+coalesce(r$pp_shots,0))/pmax(coalesce(r$gp_onice,1),1),2), "\n")
+  }
+}
 # Testing a specific hypothesis: our on-ice data is 5v5-ONLY, but real
 # box-score shots-against is ALL SITUATIONS combined (5v5+PP+PK+etc). A
 # single league-wide conversion ratio assumes every team's PP/PK shot
