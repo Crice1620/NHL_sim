@@ -863,6 +863,22 @@ DEF_PROXY_SCALE <- 3         # max approx +/- shots/game swing from the blocks/h
 HOME_SHOT_BOOST <- 0.4       # extra shots/game for the home team (was 1.0 — too strong, same issue found and fixed in the live app)
 HOME_GOAL_BOOST <- 0.003     # small additive bump to the home team's per-shot goal probability (was 0.01 — a huge relative swing on a ~0.09 base probability)
 
+# League-wide average WOWY (xG-preferred, same fallback chain used
+# everywhere else), computed across the FULL population before restricting
+# to each team's top-18 — used to RECENTER below. Crude single-player WOWY
+# (team-minus-one-player, not full RAPM) carries a systematic bias where
+# almost every player — stars and depth alike, good teams and bad — shows
+# positive offense-WOWY and negative defense-WOWY relative to a naive zero.
+# Subtracting the league average (not a full z-score — deliberately NOT
+# dividing by SD, to keep this in real goals/60 units for the additive
+# adjustment below) removes that constant bias while leaving real relative
+# differences between players intact.
+league_avg_off_wowy <- mean(coalesce(skater_output$ev_offense_xgwowy_3yr, skater_output$ev_offense_wowy_3yr), na.rm = TRUE)
+league_avg_def_wowy <- mean(coalesce(skater_output$ev_defense_xgwowy_3yr, skater_output$ev_defense_wowy_3yr), na.rm = TRUE)
+if (is.na(league_avg_off_wowy)) league_avg_off_wowy <- 0
+if (is.na(league_avg_def_wowy)) league_avg_def_wowy <- 0
+cat("  League-average WOWY (recentering baseline) — offense:", round(league_avg_off_wowy, 3), "| defense:", round(league_avg_def_wowy, 3), "\n")
+
 team_offense <- skater_output %>%
   filter(has_history) %>%
   group_by(team_abbrev) %>%
@@ -874,8 +890,9 @@ team_offense <- skater_output %>%
     # WOWY for seasons before the xG model existed. Per-player, before
     # aggregation, so the team-level number reflects whichever signal each
     # individual player actually has rather than an all-or-nothing switch.
-    ev_off_wowy_effective = coalesce(ev_offense_xgwowy_3yr, ev_offense_wowy_3yr),
-    ev_def_wowy_effective = coalesce(ev_defense_xgwowy_3yr, ev_defense_wowy_3yr)
+    # Recentered against the league average — see note above.
+    ev_off_wowy_effective = coalesce(ev_offense_xgwowy_3yr, ev_offense_wowy_3yr) - league_avg_off_wowy,
+    ev_def_wowy_effective = coalesce(ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy
   ) %>%
   summarise(
     shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
