@@ -328,15 +328,6 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
   shifts_df <- bind_rows(Filter(Negate(is.null), shifts))
   if (nrow(shifts_df) == 0) return(NULL)
 
-  # How much buffer (seconds) a shift must have on BOTH sides of an event's
-  # exact timestamp before it's trusted for that event. Shift-chart data
-  # and play-by-play data come from separate NHL sources with their own
-  # independent clocks; a shift ending or starting within a couple seconds
-  # of an event is exactly the case most exposed to that misalignment.
-  # Chosen as a starting value, not independently validated — worth
-  # revisiting if a real, well-tracked player's card still looks off.
-  ON_ICE_EVENT_MARGIN_SEC <- 3
-
   on_ice_at <- function(t_abs, team_id) {
     if (is.na(t_abs) || is.na(team_id)) return(character(0))
     # end_abs > t_abs (not >=) is deliberate: every event's own timestamp
@@ -350,19 +341,16 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
     # Making the end boundary exclusive keeps only the line that has
     # actually taken the ice at this instant, not the one just leaving it.
     #
-    # On top of that: require the shift to genuinely SPAN the event with
-    # a margin on both sides, not just barely touch it. A player whose
-    # shift starts or ends within ON_ICE_EVENT_MARGIN_SEC of the event's
-    # exact timestamp is disproportionately likely to be a clock-alignment
-    # artifact rather than a real, meaningful on-ice presence — especially
-    # for low-PP-time players where a couple of these artifacts can
-    # dominate an otherwise tiny sample (confirmed directly: every
-    # spuriously-credited PP event for a flagged low-usage player landed
-    # exactly at the start of a very short situation segment, with his
-    # shift only barely covering it).
-    rows <- shifts_df[shifts_df$team_id == team_id &
-                       shifts_df$start_abs <= (t_abs - ON_ICE_EVENT_MARGIN_SEC) &
-                       shifts_df$end_abs   >  (t_abs + ON_ICE_EVENT_MARGIN_SEC), ]
+    # NOTE: a margin requirement (shift must start/end a few seconds clear
+    # of the event) was tried here and reverted — it was too blunt. A
+    # dedicated PP-unit player's shift typically starts right when the
+    # power play begins and ends right when it's over, so their shift
+    # boundaries NORMALLY sit close to the segment boundaries — the margin
+    # treated that completely normal, legitimate pattern as suspicious and
+    # ended up excluding real PP production from the league's best players
+    # (confirmed directly: McDavid/Kucherov/MacKinnon all dropped to
+    # near-zero PP percentile with the margin in place).
+    rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs <= t_abs & shifts_df$end_abs > t_abs, ]
     unique(rows$player_id)
   }
 
