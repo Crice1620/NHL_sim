@@ -310,6 +310,12 @@ merge_add <- function(base, add) { for (k in names(add)) base[[k]] <- (base[[k]]
 process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shots_xg_lookup = numeric(0)) {
   shifts <- lapply(shifts_raw$data, function(s) {
     tryCatch({
+      # The shift-chart API mixes actual shifts (typeCode 517) with
+      # non-shift event markers sharing the same feed (e.g. typeCode 505
+      # goal markers, shiftNumber 0, duration null) — these are NOT ice
+      # time intervals and must never be treated as one.
+      tc <- suppressWarnings(as.integer(s$typeCode %||% NA))
+      if (is.na(tc) || tc != 517) return(NULL)
       per <- suppressWarnings(as.integer(s$period %||% NA))
       st  <- parse_mmss(s$startTime %||% NA)
       en  <- parse_mmss(s$endTime %||% NA)
