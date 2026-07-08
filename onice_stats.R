@@ -281,14 +281,16 @@ parse_situation <- function(code) {
   if (is.null(code) || is.na(code) || nchar(as.character(code)) != 4)
     return(list(label = "other"))
   ch <- strsplit(as.character(code), "")[[1]]
-  # CONFIRMED format (NHL API community reference): [Home Goalie][Home
-  # Skaters][Away Skaters][Away Goalie] — this was previously read in the
-  # OPPOSITE order (away first), which silently swapped every home_pp/
-  # away_pp label throughout the whole pipeline. The 5v5/4v4/3v3 checks
-  # below are symmetric (5==5 regardless of which side is which) so those
-  # were never affected — only the PP/PK determination was ever wrong.
-  home_g <- suppressWarnings(as.integer(ch[1])); home_sk <- suppressWarnings(as.integer(ch[2]))
-  away_sk <- suppressWarnings(as.integer(ch[3])); away_g <- suppressWarnings(as.integer(ch[4]))
+  # VERIFIED directly against real NHL API play-by-play data (not just a
+  # community reference, which turned out to be wrong/unverified on this
+  # specific point): situationCode reads as [Away Goalie][Away Skaters]
+  # [Home Skaters][Home Goalie]. Confirmed using two real penalty events
+  # from an actual game — a team that just took a penalty correctly shows
+  # up shorthanded under THIS byte order, and backwards under the other
+  # one. This is the original order this function used before an earlier,
+  # incorrect "fix" reversed it based on an unverified external source.
+  away_g <- suppressWarnings(as.integer(ch[1])); away_sk <- suppressWarnings(as.integer(ch[2]))
+  home_sk <- suppressWarnings(as.integer(ch[3])); home_g <- suppressWarnings(as.integer(ch[4]))
   if (any(is.na(c(away_g, away_sk, home_sk, home_g)))) return(list(label = "other"))
   label <- if (away_g == 1 && home_g == 1 && away_sk == 5 && home_sk == 5) "5v5"
     else if (away_g == 1 && home_g == 1 && away_sk == 4 && home_sk == 4) "4v4"
