@@ -443,18 +443,19 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
         pk_defenders_on <- on_ice_at(t_abs, against_team)
         pp_shots_ind <- bump(pp_shots_ind, pp_shooters_on)
         pk_shots_against_ind <- bump(pk_shots_against_ind, pk_defenders_on)
+        # TEMPORARY targeted diagnostic — log EVERY PP shot-type event
+        # (goal or not) where Cole Smith (8482062) is credited, using the
+        # exact same on_ice_at() call either way, to see whether non-goal
+        # shots are being credited at a normal rate alongside goals or
+        # whether they're mysteriously rare/absent for him specifically.
+        if ("8482062" %in% pp_shooters_on) {
+          cat("  ** PP", toupper(typ), "CREDITED to Cole Smith ** play_i=", play_i, "t_abs=", t_abs,
+              "owner_team=", owner_team, "home_id=", home_id, "away_id=", away_id,
+              "sit_label=", sit$label, "| pp_shooters_on=", paste(pp_shooters_on, collapse=","), "\n")
+        }
         if (typ == "goal") {
           pp_gf_onice_ind <- bump(pp_gf_onice_ind, pp_shooters_on)
           pk_ga_onice_ind <- bump(pk_ga_onice_ind, pk_defenders_on)
-          # TEMPORARY targeted diagnostic — print every specific goal event
-          # where Cole Smith (8482062) is credited with on-ice PP presence,
-          # so we can check an actual goal directly instead of reasoning
-          # about whether his TOI totals look plausible.
-          if ("8482062" %in% pp_shooters_on) {
-            cat("  ** PP GOAL CREDITED to Cole Smith ** play_i=", play_i, "t_abs=", t_abs,
-                "owner_team=", owner_team, "home_id=", home_id, "away_id=", away_id,
-                "sit_label=", sit$label, "| pp_shooters_on=", paste(pp_shooters_on, collapse=","), "\n")
-          }
         }
       }
       # Shorthanded shot BY the penalty-killing team (rare) isn't tracked
