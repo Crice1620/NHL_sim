@@ -330,27 +330,29 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
 
   on_ice_at <- function(t_abs, team_id) {
     if (is.na(t_abs) || is.na(team_id)) return(character(0))
-    # end_abs > t_abs (not >=) is deliberate: every event's own timestamp
-    # becomes a segment boundary in sit_df, so an event's t_abs will
-    # always land exactly on a boundary. At that exact instant, a
-    # departing shift satisfies end_abs >= t_abs at the same moment an
-    # arriving shift satisfies start_abs <= t_abs — with both ends
-    # inclusive, BOTH the outgoing and incoming line get counted as
-    # "on ice" simultaneously (confirmed directly: a PP goal credited 10
-    # players instead of ~5, exactly matching 5 departing + 5 arriving).
-    # Making the end boundary exclusive keeps only the line that has
-    # actually taken the ice at this instant, not the one just leaving it.
+    # Every event's own timestamp becomes a segment boundary in sit_df, so
+    # an event's t_abs always lands exactly on a boundary — meaning a
+    # shift that's ending AND a shift that's starting can both technically
+    # satisfy a naive inclusive-both-ends match at that exact instant
+    # (confirmed directly: a PP goal originally credited 10 players
+    # instead of ~5, matching 5 departing + 5 arriving simultaneously).
     #
-    # NOTE: a margin requirement (shift must start/end a few seconds clear
-    # of the event) was tried here and reverted — it was too blunt. A
-    # dedicated PP-unit player's shift typically starts right when the
-    # power play begins and ends right when it's over, so their shift
-    # boundaries NORMALLY sit close to the segment boundaries — the margin
-    # treated that completely normal, legitimate pattern as suspicious and
-    # ended up excluding real PP production from the league's best players
-    # (confirmed directly: McDavid/Kucherov/MacKinnon all dropped to
-    # near-zero PP percentile with the margin in place).
-    rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs <= t_abs & shifts_df$end_abs > t_abs, ]
+    # Which side should be excluded is NOT symmetric, though. When a goal
+    # is scored, the players who were actually on the ice for it are the
+    # ones whose shift concludes right around that moment (they get
+    # changed off right after, since a goal stops play) — while a
+    # DIFFERENT line often starts fresh for the ensuing faceoff, having
+    # nothing to do with the goal itself. An earlier version of this fix
+    # excluded the departing shift and kept the arriving one — backwards.
+    # Confirmed directly: under that version, a team's clear #1 power-play
+    # player (46% of the team's total PP ice time) was only credited with
+    # ~10% of the team's PP goals, while the "team without him" rate came
+    # out to an impossible ~19 goals/60 — i.e. goals he was actually part
+    # of were being misattributed to the arriving, uninvolved line.
+    #
+    # Fix: include the shift already underway at the event (even if it
+    # ends exactly then), exclude the shift that's only just starting.
+    rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs < t_abs & shifts_df$end_abs >= t_abs, ]
     unique(rows$player_id)
   }
 
