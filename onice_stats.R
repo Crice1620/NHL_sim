@@ -328,23 +328,6 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
   shifts_df <- bind_rows(Filter(Negate(is.null), shifts))
   if (nrow(shifts_df) == 0) return(NULL)
 
-  # TEMPORARY targeted diagnostic — print Cole Smith's (8482062) raw shift
-  # records whenever he appears in a processed game, to see his actual
-  # start/end times directly rather than continuing to infer from
-  # aggregate symptoms (his on-ice PP TOI/goals have been inflated in a
-  # way no other hypothesis so far has explained). Safe to remove once
-  # this is resolved.
-  cs_shifts <- shifts_df[shifts_df$player_id == "8482062", ]
-  if (nrow(cs_shifts) > 0) {
-    cat("── Cole Smith shift diagnostic — game with home_id=", home_id, "away_id=", away_id, "──\n")
-    for (i in seq_len(nrow(cs_shifts))) {
-      dur <- cs_shifts$end_abs[i] - cs_shifts$start_abs[i]
-      cat("  shift", i, ": team_id=", cs_shifts$team_id[i], "start_abs=", cs_shifts$start_abs[i],
-          "end_abs=", cs_shifts$end_abs[i], "duration_sec=", dur, "\n")
-    }
-    cat("  Total shifts this game:", nrow(cs_shifts), "| sum of durations:", sum(cs_shifts$end_abs - cs_shifts$start_abs), "\n")
-  }
-
   on_ice_at <- function(t_abs, team_id) {
     if (is.na(t_abs) || is.na(team_id)) return(character(0))
     rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs <= t_abs & shifts_df$end_abs >= t_abs, ]
@@ -384,16 +367,31 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
       pteam <- psh$team_id[1]
       player_team_id[[pid]] <- pteam
       t5 <- 0; tpp <- 0; tpk <- 0
+      cs_pp_segs <- list()  # TEMPORARY diagnostic accumulator for Cole Smith
       for (i in seq_along(seg_start)) {
         ov <- pmin(psh$end_abs, seg_end[i]) - pmax(psh$start_abs, seg_start[i])
         ov <- sum(ov[ov > 0])
         if (ov <= 0) next
         lbl <- seg_label[i]
         if (lbl == "5v5") t5 <- t5 + ov
-        else if ((lbl == "home_pp" && pteam == home_id) || (lbl == "away_pp" && pteam == away_id)) tpp <- tpp + ov
+        else if ((lbl == "home_pp" && pteam == home_id) || (lbl == "away_pp" && pteam == away_id)) {
+          tpp <- tpp + ov
+          if (pid == "8482062") cs_pp_segs[[length(cs_pp_segs) + 1]] <- list(seg_i = i, lbl = lbl, seg_start = seg_start[i], seg_end = seg_end[i], ov = ov)
+        }
         else if ((lbl == "home_pp" && pteam == away_id) || (lbl == "away_pp" && pteam == home_id)) tpk <- tpk + ov
       }
       toi_5v5[[pid]] <- t5; toi_pp[[pid]] <- tpp; toi_pk[[pid]] <- tpk
+      # TEMPORARY targeted diagnostic — see which specific situation
+      # segments are being counted as Cole Smith's PP time, since his raw
+      # shifts look completely normal but his computed tpp is still wrong.
+      if (pid == "8482062") {
+        cat("  [computed] pteam=", pteam, "home_id=", home_id, "away_id=", away_id,
+            "| t5=", t5, "tpp=", tpp, "tpk=", tpk, "| # PP segments matched:", length(cs_pp_segs), "\n")
+        for (seg in cs_pp_segs) {
+          cat("    PP segment i=", seg$seg_i, "label=", seg$lbl, "seg_start=", seg$seg_start,
+              "seg_end=", seg$seg_end, "seg_duration=", seg$seg_end - seg$seg_start, "overlap_with_his_shifts=", seg$ov, "\n")
+        }
+      }
     }
   }
 
