@@ -330,7 +330,17 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
 
   on_ice_at <- function(t_abs, team_id) {
     if (is.na(t_abs) || is.na(team_id)) return(character(0))
-    rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs <= t_abs & shifts_df$end_abs >= t_abs, ]
+    # end_abs > t_abs (not >=) is deliberate: every event's own timestamp
+    # becomes a segment boundary in sit_df, so an event's t_abs will
+    # always land exactly on a boundary. At that exact instant, a
+    # departing shift satisfies end_abs >= t_abs at the same moment an
+    # arriving shift satisfies start_abs <= t_abs — with both ends
+    # inclusive, BOTH the outgoing and incoming line get counted as
+    # "on ice" simultaneously (confirmed directly: a PP goal credited 10
+    # players instead of ~5, exactly matching 5 departing + 5 arriving).
+    # Making the end boundary exclusive keeps only the line that has
+    # actually taken the ice at this instant, not the one just leaving it.
+    rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs <= t_abs & shifts_df$end_abs > t_abs, ]
     unique(rows$player_id)
   }
 
