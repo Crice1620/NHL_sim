@@ -881,7 +881,18 @@ league_avg_off_wowy <- mean(coalesce(skater_output$ev_offense_xgwowy_3yr, skater
 league_avg_def_wowy <- mean(coalesce(skater_output$ev_defense_xgwowy_3yr, skater_output$ev_defense_wowy_3yr), na.rm = TRUE)
 if (is.na(league_avg_off_wowy)) league_avg_off_wowy <- 0
 if (is.na(league_avg_def_wowy)) league_avg_def_wowy <- 0
+# Same recentering treatment, for special teams — until now, PP/PK WOWY
+# was computed and available (it's what powers Player Cards' Power
+# Play/Penalty Kill percentiles) but never actually fed into the
+# simulation's roster-quality adjustment, which only looked at EV WOWY. A
+# team that added a genuine PP weapon or PK specialist in the offseason
+# got zero credit for it here — this closes that gap.
+league_avg_pp_wowy <- mean(skater_output$pp_offense_wowy_3yr, na.rm = TRUE)
+league_avg_pk_wowy <- mean(skater_output$pk_defense_wowy_3yr, na.rm = TRUE)
+if (is.na(league_avg_pp_wowy)) league_avg_pp_wowy <- 0
+if (is.na(league_avg_pk_wowy)) league_avg_pk_wowy <- 0
 cat("  League-average WOWY (recentering baseline) — offense:", round(league_avg_off_wowy, 3), "| defense:", round(league_avg_def_wowy, 3), "\n")
+cat("  League-average special-teams WOWY (recentering baseline) — PP offense:", round(league_avg_pp_wowy, 3), "| PK defense:", round(league_avg_pk_wowy, 3), "\n")
 
 team_offense <- skater_output %>%
   filter(has_history) %>%
@@ -896,7 +907,11 @@ team_offense <- skater_output %>%
     # individual player actually has rather than an all-or-nothing switch.
     # Recentered against the league average — see note above.
     ev_off_wowy_effective = coalesce(ev_offense_xgwowy_3yr, ev_offense_wowy_3yr) - league_avg_off_wowy,
-    ev_def_wowy_effective = coalesce(ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy
+    ev_def_wowy_effective = coalesce(ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy,
+    # No xG-based version exists yet for special teams (only EV has that),
+    # so this is always the goals-based PP/PK WOWY, recentered the same way.
+    pp_off_wowy_effective = pp_offense_wowy_3yr - league_avg_pp_wowy,
+    pk_def_wowy_effective = pk_defense_wowy_3yr - league_avg_pk_wowy
   ) %>%
   summarise(
     shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
@@ -932,8 +947,16 @@ team_offense <- skater_output %>%
     # above, not a sum.
     wowy_ev_off_wtd = sum(coalesce(ev_off_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_off_wowy_effective)], na.rm = TRUE),
     wowy_ev_def_wtd = sum(coalesce(ev_def_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_def_wowy_effective)], na.rm = TRUE),
+    # Same TOI-weighted-average treatment, for special teams. Weighted by
+    # general rate_toi_min rather than PP/PK-specific ice time, since that
+    # isn't available at this stage — same weighting basis already used
+    # elsewhere in this file (onice_pp_sf_pg_wtd above).
+    wowy_pp_off_wtd = sum(coalesce(pp_off_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(pp_off_wowy_effective)], na.rm = TRUE),
+    wowy_pk_def_wtd = sum(coalesce(pk_def_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(pk_def_wowy_effective)], na.rm = TRUE),
     n_with_wowy_off = sum(!is.na(ev_off_wowy_effective)),
     n_with_wowy_def = sum(!is.na(ev_def_wowy_effective)),
+    n_with_wowy_pp = sum(!is.na(pp_off_wowy_effective)),
+    n_with_wowy_pk = sum(!is.na(pk_def_wowy_effective)),
     n_with_xgwowy_off = sum(!is.na(ev_offense_xgwowy_3yr)),
     n_with_xgwowy_def = sum(!is.na(ev_defense_xgwowy_3yr)),
     .groups = "drop"
@@ -956,6 +979,7 @@ lg_avg_shooting_pct <- sum(team_offense$goals_for_pg, na.rm=TRUE) / sum(team_off
 # rookies/no-history players doesn't get a distorted adjustment from a
 # tiny, unreliable sample.
 AVG_5V5_MIN_PER_GAME <- 48  # rough share of a 60-min game played at 5v5
+AVG_PP_MIN_PER_GAME <- 5    # rough share of a 60-min game a team spends on the power play
 MIN_WOWY_ROSTER_COVERAGE <- 15
 
 # Self-calibrating SOG-to-Corsi conversion: onice_ca_pg/onice_cf_pg are
@@ -1006,6 +1030,8 @@ cat("  Teams with a full top-18 of on-ice defense data:", sum(team_offense$n_wit
     "(partial coverage falls back to the blocks/hits proxy for those teams)\n")
 cat("  Teams with enough WOWY coverage — offense:", sum(team_offense$n_with_wowy_off >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE),
     "defense:", sum(team_offense$n_with_wowy_def >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE), "of", nrow(team_offense), "\n")
+cat("  Teams with enough special-teams WOWY coverage — PP offense:", sum(team_offense$n_with_wowy_pp >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE),
+    "PK defense:", sum(team_offense$n_with_wowy_pk >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE), "of", nrow(team_offense), "\n")
 cat("  Of which using real xG-based WOWY (vs. goals-based fallback) — offense:",
     sum(team_offense$n_with_xgwowy_off >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE),
     "defense:", sum(team_offense$n_with_xgwowy_def >= MIN_WOWY_ROSTER_COVERAGE, na.rm=TRUE), "of", nrow(team_offense), "\n")
@@ -1022,7 +1048,17 @@ team_offense <- team_offense %>%
                                     pmax(-1.5, pmin(1.5, wowy_ev_off_wtd * (AVG_5V5_MIN_PER_GAME / 60))), 0),
     wowy_def_adj_per_game = ifelse(n_with_wowy_def >= MIN_WOWY_ROSTER_COVERAGE,
                                     pmax(-1.5, pmin(1.5, wowy_ev_def_wtd * (AVG_5V5_MIN_PER_GAME / 60))), 0),
-    goals_for_pg_wowy_adj     = goals_for_pg + wowy_off_adj_per_game,
+    # Same idea, for special teams — until now PP/PK roster quality never
+    # reached the actual simulation at all (see note near the recentering
+    # baselines above). AVG_PP_MIN_PER_GAME is much smaller than 5v5's ~48
+    # min/game (team PP time is typically ~5 min/game), so the clamp range
+    # is tighter too — special teams are a real but smaller share of a
+    # game than 5v5 play, and the adjustment should reflect that scale.
+    wowy_pp_off_adj_per_game = ifelse(n_with_wowy_pp >= MIN_WOWY_ROSTER_COVERAGE,
+                                    pmax(-0.5, pmin(0.5, wowy_pp_off_wtd * (AVG_PP_MIN_PER_GAME / 60))), 0),
+    wowy_pk_def_adj_per_game = ifelse(n_with_wowy_pk >= MIN_WOWY_ROSTER_COVERAGE,
+                                    pmax(-0.5, pmin(0.5, wowy_pk_def_wtd * (AVG_PP_MIN_PER_GAME / 60))), 0),
+    goals_for_pg_wowy_adj     = goals_for_pg + wowy_off_adj_per_game + wowy_pp_off_adj_per_game,
     shooting_pct              = ifelse(shots_for_pg > 0, pmax(0.05, pmin(0.20, goals_for_pg_wowy_adj / shots_for_pg)), lg_avg_shooting_pct),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
@@ -1039,7 +1075,8 @@ team_offense <- team_offense %>%
     shots_against_pg_preWowy  = ifelse(n_with_onice_def >= 15, shots_against_onice, shots_against_pg_fallback),
     # Positive wowy_def_adj_per_game = fewer goals against than the team's
     # baseline, i.e. better defense = FEWER shots-against equivalent.
-    shots_against_pg          = pmax(15, shots_against_pg_preWowy - (wowy_def_adj_per_game / lg_avg_shooting_pct))
+    # PK's contribution is folded in the same way, same units.
+    shots_against_pg          = pmax(15, shots_against_pg_preWowy - (wowy_def_adj_per_game / lg_avg_shooting_pct) - (wowy_pk_def_adj_per_game / lg_avg_shooting_pct))
   )
 
 for (tm in c("VGK", "MIN", "NSH", "SEA")) {
@@ -1176,9 +1213,10 @@ diag_tbl <- team_off_def %>%
 for (i in seq_len(nrow(diag_tbl))) {
   r <- diag_tbl[i, ]
   def_src <- if (!is.na(r$n_with_onice_def) && r$n_with_onice_def >= 15) "onice" else "proxy"
-  cat(sprintf("  %-4s | shots_for=%.1f shooting_pct=%.4f shots_against=%.1f (%s) goalie_sv=%.4f | wowy_off=%+.3f wowy_def=%+.3f | approx_quality=%.3f\n",
+  cat(sprintf("  %-4s | shots_for=%.1f shooting_pct=%.4f shots_against=%.1f (%s) goalie_sv=%.4f | wowy_off=%+.3f wowy_def=%+.3f wowy_pp=%+.3f wowy_pk=%+.3f | approx_quality=%.3f\n",
               r$team_abbrev, r$shots_for_pg, r$shooting_pct, r$shots_against_pg, def_src, r$goalie_sv_pct,
-              coalesce(r$wowy_off_adj_per_game, 0), coalesce(r$wowy_def_adj_per_game, 0), r$approx_quality))
+              coalesce(r$wowy_off_adj_per_game, 0), coalesce(r$wowy_def_adj_per_game, 0),
+              coalesce(r$wowy_pp_off_adj_per_game, 0), coalesce(r$wowy_pk_def_adj_per_game, 0), r$approx_quality))
 }
 cat("\n")
 
