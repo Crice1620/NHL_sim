@@ -887,12 +887,30 @@ if (is.na(league_avg_def_wowy)) league_avg_def_wowy <- 0
 # simulation's roster-quality adjustment, which only looked at EV WOWY. A
 # team that added a genuine PP weapon or PK specialist in the offseason
 # got zero credit for it here — this closes that gap.
-league_avg_pp_wowy <- mean(skater_output$pp_offense_wowy_3yr, na.rm = TRUE)
-league_avg_pk_wowy <- mean(skater_output$pk_defense_wowy_3yr, na.rm = TRUE)
+#
+# MEDIAN, not mean — PP/PK time is roughly 10x smaller per game than EV
+# time, making this "crude WOWY" metric inherently noisier for special
+# teams (confirmed directly: one player's PP-WOWY came out at -19.45
+# before a separate fix). A mean is exactly the statistic a handful of
+# remaining extreme values can drag far from zero; a well-behaved
+# baseline should sit close to zero the same way EV's does above (a
+# "player's own rate minus team-without-them rate" should roughly cancel
+# out across the whole league by construction) — median is far more
+# robust to outliers still lurking in a small-sample metric like this.
+league_avg_pp_wowy <- median(skater_output$pp_offense_wowy_3yr, na.rm = TRUE)
+league_avg_pk_wowy <- median(skater_output$pk_defense_wowy_3yr, na.rm = TRUE)
 if (is.na(league_avg_pp_wowy)) league_avg_pp_wowy <- 0
 if (is.na(league_avg_pk_wowy)) league_avg_pk_wowy <- 0
 cat("  League-average WOWY (recentering baseline) — offense:", round(league_avg_off_wowy, 3), "| defense:", round(league_avg_def_wowy, 3), "\n")
-cat("  League-average special-teams WOWY (recentering baseline) — PP offense:", round(league_avg_pp_wowy, 3), "| PK defense:", round(league_avg_pk_wowy, 3), "\n")
+cat("  League-average special-teams WOWY (recentering baseline, median) — PP offense:", round(league_avg_pp_wowy, 3), "| PK defense:", round(league_avg_pk_wowy, 3), "\n")
+# Directly confirms whether outliers are actually present — if the mean is
+# far from the median here, that's the outlier-sensitivity problem showing
+# up concretely, not just a theoretical concern.
+pp_mean_check <- mean(skater_output$pp_offense_wowy_3yr, na.rm = TRUE)
+pk_mean_check <- mean(skater_output$pk_defense_wowy_3yr, na.rm = TRUE)
+cat("    (for comparison, the MEAN was PP:", round(pp_mean_check, 3), "PK:", round(pk_mean_check, 3),
+    "| raw range PP:", round(min(skater_output$pp_offense_wowy_3yr, na.rm=TRUE),2), "to", round(max(skater_output$pp_offense_wowy_3yr, na.rm=TRUE),2),
+    "| PK:", round(min(skater_output$pk_defense_wowy_3yr, na.rm=TRUE),2), "to", round(max(skater_output$pk_defense_wowy_3yr, na.rm=TRUE),2), ")\n")
 
 team_offense <- skater_output %>%
   filter(has_history) %>%
