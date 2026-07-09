@@ -1089,6 +1089,34 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
   }
 }
 
+# ── Comprehensive single-team check ──────────────────────────────────────────
+# VGK's projection is showing well below an external reference (a mature,
+# established WAR-based model) despite last season's Cup Final run. Rather
+# than check pieces one at a time, this traces every stage of the pipeline
+# for one team so a problem (if there is one) is visible directly rather
+# than inferred from the final number.
+DEEP_CHECK_TEAM <- "VGK"
+dc <- team_offense %>% filter(team_abbrev == DEEP_CHECK_TEAM)
+if (nrow(dc) > 0) {
+  cat("\n── Deep check:", DEEP_CHECK_TEAM, "— every stage of the offense/defense pipeline ──\n")
+  cat("  OFFENSE\n")
+  cat("    goals_for_pg (raw, pre-WOWY)      =", round(dc$goals_for_pg, 3), "\n")
+  cat("    wowy_off_adj_per_game (EV)        =", round(dc$wowy_off_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_off, "/ 18\n")
+  cat("    wowy_pp_off_adj_per_game          =", round(dc$wowy_pp_off_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_pp, "/ 18\n")
+  cat("    goals_for_pg_wowy_adj (final)     =", round(dc$goals_for_pg_wowy_adj, 3), "\n")
+  cat("    shots_for_pg                      =", round(dc$shots_for_pg, 3), "\n")
+  cat("    shooting_pct (final)              =", round(dc$shooting_pct, 4), "| league avg was", round(lg_avg_shooting_pct, 4), "\n")
+  cat("  DEFENSE\n")
+  cat("    onice_ca_pg_wtd (5v5, pre-convert)=", round(dc$onice_ca_pg_wtd, 3), "\n")
+  cat("    onice_pk_sa_pg_wtd                =", round(dc$onice_pk_sa_pg_wtd, 3), "\n")
+  cat("    shots_against_onice (pre-WOWY)    =", round(dc$shots_against_onice, 3), "| source:", ifelse(dc$n_with_onice_def >= 15, "onice", "proxy fallback"), "(", dc$n_with_onice_def, "/ 18 with on-ice history)\n")
+  cat("    wowy_def_adj_per_game (EV)        =", round(dc$wowy_def_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_def, "/ 18\n")
+  cat("    wowy_pk_def_adj_per_game          =", round(dc$wowy_pk_def_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_pk, "/ 18\n")
+  cat("    shots_against_pg (final)          =", round(dc$shots_against_pg, 3), "| league avg range was ~15-35\n")
+} else {
+  cat("\n── Deep check:", DEEP_CHECK_TEAM, "— no row found in team_offense ──\n")
+}
+
 # ── GSAx-based goaltending adjustment ────────────────────────────────────────
 # Real box-score sv_pct conflates a goalie's own skill with the shot
 # quality their team allows in front of them — a goalie behind a weak
@@ -1138,6 +1166,25 @@ team_goaltending <- goalie_output %>%
   mutate(sv_pct_for_sim = coalesce(gsax_adj_sv_pct, proj_sv_pct)) %>%
   group_by(team_abbrev) %>%
   summarise(goalie_sv_pct = sum(sv_pct_for_sim * proj_gp, na.rm = TRUE) / sum(proj_gp, na.rm = TRUE), .groups = "drop")
+
+# Goaltending piece of the same deep check — each of this team's actual
+# rostered goalies, box-score vs GSAx-adjusted save rate side by side.
+dc_goalies <- goalie_output %>% filter(team_abbrev == DEEP_CHECK_TEAM, has_history, coalesce(proj_gp, 0) > 0)
+if (nrow(dc_goalies) > 0) {
+  cat("  GOALTENDING (", DEEP_CHECK_TEAM, ")\n")
+  for (i in seq_len(nrow(dc_goalies))) {
+    g <- dc_goalies[i, ]
+    gsax_row <- if (!is.null(goalie_gsax_pooled)) goalie_gsax_pooled %>% filter(player_id == as.character(g$player_id)) %>% slice(1) else NULL
+    cat("    ", coalesce(g$player_name, g$player_id), "| proj_gp=", round(coalesce(g$proj_gp,0),1),
+        "proj_sv_pct (box-score)=", round(coalesce(g$proj_sv_pct,NA),4),
+        "gsax_adj_sv_pct (used in sim)=", round(coalesce(g$gsax_adj_sv_pct,NA),4),
+        "\n         shots_tracked=", if (!is.null(gsax_row) && nrow(gsax_row)>0) round(gsax_row$shots_tracked[1],0) else NA,
+        "(needs >=", MIN_GSAX_SHOTS_TRACKED, ") gsax_pooled=", if (!is.null(gsax_row) && nrow(gsax_row)>0) round(gsax_row$gsax_pooled[1],2) else NA, "\n")
+  }
+  cat("    -> team_goaltending$goalie_sv_pct =", round(coalesce((team_goaltending %>% filter(team_abbrev==DEEP_CHECK_TEAM))$goalie_sv_pct[1], NA), 4), "\n")
+} else {
+  cat("  GOALTENDING (", DEEP_CHECK_TEAM, ") — no goalies with history/proj_gp found\n")
+}
 
 team_off_def <- data.frame(team_abbrev = names(net_lookup), stringsAsFactors = FALSE) %>%
   left_join(team_offense, by = "team_abbrev") %>%
