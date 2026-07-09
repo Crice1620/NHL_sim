@@ -1085,6 +1085,16 @@ if (nrow(dc) > 0) {
   cat("    shots_against_onice (pre-WOWY)    =", round(dc$shots_against_onice, 3), "| source:", ifelse(dc$n_with_onice_def >= 15, "onice", "proxy fallback"), "(", dc$n_with_onice_def, "/ 18 with on-ice history)\n")
   cat("    wowy_def_adj_per_game (EV)        =", round(dc$wowy_def_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_def, "/ 18\n")
   cat("    shots_against_pg (final)          =", round(dc$shots_against_pg, 3), "| league avg range was ~15-35\n")
+  cat("  DEFENSE — player-level breakdown (same top-18 feeding the average above)\n")
+  dc_roster <- skater_output %>% filter(has_history, team_abbrev == DEEP_CHECK_TEAM) %>%
+    arrange(desc(proj_points)) %>% slice_head(n = 18)
+  for (i in seq_len(nrow(dc_roster))) {
+    p <- dc_roster[i, ]
+    cat("    ", sprintf("%-20s", substr(coalesce(p$player_name, "?"), 1, 20)),
+        "| toi_pg_min=", round(coalesce(p$rate_toi_min, NA), 1),
+        "onice_ca_pg=", ifelse(is.na(p$onice_ca_pg), "NA", round(p$onice_ca_pg, 2)),
+        "onice_cf_pg=", ifelse(is.na(p$onice_cf_pg), "NA", round(p$onice_cf_pg, 2)), "\n")
+  }
 } else {
   cat("\n── Deep check:", DEEP_CHECK_TEAM, "— no row found in team_offense ──\n")
 }
