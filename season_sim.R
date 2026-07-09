@@ -82,7 +82,28 @@ nhl_get <- function(url, timeout_s = 25) {
   tryCatch(fromJSON(content(resp, "text", encoding = "UTF-8"), simplifyVector = FALSE),
            error = function(e) NULL)
 }
-gh_read <- function(url) tryCatch(read.csv(url(url), stringsAsFactors = FALSE), error = function(e) NULL)
+gh_read <- function(url, max_retries = 3) {
+  for (attempt in seq_len(max_retries)) {
+    con <- tryCatch(url(url), error = function(e) NULL)
+    if (is.null(con)) return(NULL)
+    result <- tryCatch({
+      on.exit(try(close(con), silent = TRUE), add = TRUE)
+      read.csv(con, stringsAsFactors = FALSE)
+    }, error = function(e) e)
+    if (!inherits(result, "error")) return(result)
+    # raw.githubusercontent.com rate-limits by IP over a short window —
+    # this file had its own separate copy of gh_read with no retry logic
+    # at all, so every 429 during a backfill/sim run failed instantly and
+    # silently returned NULL, which downstream code just treated as
+    # "missing data" (confirmed directly: this is what caused a goalie's
+    # GSAx sample to drop to ~1/5 size in one run, dragging that team's
+    # whole projection down for reasons that had nothing to do with their
+    # actual roster).
+    is_rate_limit <- grepl("429|too many requests", conditionMessage(result), ignore.case = TRUE)
+    if (attempt < max_retries) Sys.sleep(if (is_rate_limit) 2^attempt else 0.5)
+  }
+  NULL
+}
 
 # ── 0. Bail out if we're outside the projection window ──────────────────────
 cat("Checking whether the", season_year, "season has already started...\n")
