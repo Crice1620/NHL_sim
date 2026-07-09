@@ -161,7 +161,10 @@ recency_weights <- function(seasons_present) {
 recency_weights_gp <- function(seasons_present, gp_present) {
   n <- length(seasons_present)
   if (n == 0) return(numeric(0))
-  recency_factor <- seq_len(n)^2                    # 1,4,9,... most recent dominates
+  # Cubed, not squared — for 3 seasons this is a 27:8:1 ratio (most
+  # recent:middle:oldest) instead of 9:4:1. Requested directly: make the
+  # most recent season count for meaningfully more than it already did.
+  recency_factor <- seq_len(n)^3
   raw_w <- recency_factor * pmax(coalesce(gp_present, 0), 1)
   raw_w / sum(raw_w)
 }
