@@ -933,11 +933,32 @@ cat("  League-average WOWY (recentering baseline) — offense:", round(league_av
 # "team minus one player" approach that works reasonably at EV's sample
 # size may simply not be reliable at PP/PK's. Left as EV-only for now.
 
-team_offense <- skater_output %>%
-  filter(has_history) %>%
+# Position-aware roster selection: top 12 forwards + top 6 defensemen,
+# matching real NHL active-roster composition, rather than a blind top-18
+# by points regardless of position (which could easily grab, say, 15
+# forwards and only 3 defensemen if a team's scoring skews forward-heavy —
+# not how an actual lineup works, since a team dresses a fixed 12F/6D
+# split every night regardless of who's producing the most points).
+#
+# Selected by rate_toi_min, not proj_points — this is about estimating
+# who actually PLAYS and how much, not who scores the most. rate_toi_min
+# is a pure per-game RATE (ice time when they were actually in the
+# lineup), so a top-pairing defenseman or shutdown-line forward who
+# missed games to injury still shows their true role/usage rate rather
+# than being penalized for games they didn't get to play — exactly the
+# concern about not letting missed time look like reduced usage.
+team_offense_f <- skater_output %>%
+  filter(has_history, position != "D") %>%
   group_by(team_abbrev) %>%
-  arrange(desc(proj_points), .by_group = TRUE) %>%
-  slice_head(n = 18) %>%   # top 18 by projected points ~ approximate active lineup
+  arrange(desc(rate_toi_min), .by_group = TRUE) %>%
+  slice_head(n = 12)
+team_offense_d <- skater_output %>%
+  filter(has_history, position == "D") %>%
+  group_by(team_abbrev) %>%
+  arrange(desc(rate_toi_min), .by_group = TRUE) %>%
+  slice_head(n = 6)
+team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
+  group_by(team_abbrev) %>%
   mutate(
     # Prefer xG-based WOWY (less noisy — isolates shot quality from
     # shooting/goaltending luck) when available; fall back to goals-based
@@ -1132,9 +1153,12 @@ if (nrow(dc) > 0) {
   cat("    shots_against_onice (pre-WOWY)    =", round(dc$shots_against_onice, 3), "| source:", ifelse(dc$n_with_onice_def >= 15, "onice", "proxy fallback"), "(", dc$n_with_onice_def, "/ 18 with on-ice history)\n")
   cat("    wowy_def_adj_per_game (EV)        =", round(dc$wowy_def_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_def, "/ 18\n")
   cat("    shots_against_pg (final)          =", round(dc$shots_against_pg, 3), "| league avg range was ~15-35\n")
-  cat("  DEFENSE — player-level breakdown (same top-18 feeding the average above)\n")
-  dc_roster <- skater_output %>% filter(has_history, team_abbrev == DEEP_CHECK_TEAM) %>%
-    arrange(desc(proj_points)) %>% slice_head(n = 18)
+  cat("  DEFENSE — player-level breakdown (same 12F/6D roster feeding the average above)\n")
+  dc_roster_f <- skater_output %>% filter(has_history, team_abbrev == DEEP_CHECK_TEAM, position != "D") %>%
+    arrange(desc(rate_toi_min)) %>% slice_head(n = 12)
+  dc_roster_d <- skater_output %>% filter(has_history, team_abbrev == DEEP_CHECK_TEAM, position == "D") %>%
+    arrange(desc(rate_toi_min)) %>% slice_head(n = 6)
+  dc_roster <- bind_rows(dc_roster_f, dc_roster_d)
   for (i in seq_len(nrow(dc_roster))) {
     p <- dc_roster[i, ]
     cat("    ", sprintf("%-20s", substr(coalesce(p$player_name, "?"), 1, 20)),
@@ -1249,13 +1273,16 @@ cat("  Model league-avg shots_against_pg:", round(model_lg_avg_sa, 2), "vs. real
 # can see whether the root cause is a real data/pipeline issue (e.g. a
 # star's history not matching correctly) vs. the model accurately
 # reflecting a thin supporting cast that a reference tool weighs differently.
-cat("\n  ── Player-level diagnostic: EDM, VGK, MIN, NSH top-18 by proj_points ──\n")
+cat("\n  ── Player-level diagnostic: EDM, VGK, MIN, NSH, SEA — actual 12F/6D roster by rate_toi_min ──\n")
 for (tm in c("EDM", "VGK", "MIN", "NSH", "SEA")) {
   cat("\n  --", tm, "--\n")
-  tm_players <- skater_output %>%
-    filter(team_abbrev == tm, has_history) %>%
-    arrange(desc(proj_points)) %>%
-    slice_head(n = 18)
+  tm_players_f <- skater_output %>%
+    filter(team_abbrev == tm, has_history, position != "D") %>%
+    arrange(desc(rate_toi_min)) %>% slice_head(n = 12)
+  tm_players_d <- skater_output %>%
+    filter(team_abbrev == tm, has_history, position == "D") %>%
+    arrange(desc(rate_toi_min)) %>% slice_head(n = 6)
+  tm_players <- bind_rows(tm_players_f, tm_players_d) %>% arrange(desc(proj_points))
   for (i in seq_len(nrow(tm_players))) {
     p <- tm_players[i, ]
     cat(sprintf("    %-20s | proj_pts=%.1f rate_goals=%.3f rate_shots=%.3f rate_toi_min=%.1f n_seasons=%d\n",
