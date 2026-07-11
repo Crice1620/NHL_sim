@@ -1327,6 +1327,25 @@ cat("  Team shots/game range:", round(min(team_off_def$shots_for_pg),1), "-", ro
     "| shots-against range:", round(min(team_off_def$shots_against_pg),1), "-", round(max(team_off_def$shots_against_pg),1),
     "| Sv% range:", round(min(team_off_def$goalie_sv_pct),3), "-", round(max(team_off_def$goalie_sv_pct),3), "\n")
 
+# Full league-wide goaltending ranking — checking whether the save% spread
+# is genuinely too narrow league-wide (a real, plausible compression
+# source: this is a GP-weighted average across 2-3 goalies per team, each
+# of whose own GSAx is itself pooled across a 3-year window, which could
+# be regressing extreme goaltending performances toward the mean the same
+# way skater WOWY did before the sum/5 fix — except goalies genuinely
+# don't share credit the way skaters do, so this needs checking rather
+# than assuming the same fix applies).
+cat("\n  ── League-wide goaltending ranking (goalie_sv_pct — what the sim actually uses) ──\n")
+tryCatch({
+  goalie_sv_diag <- team_off_def %>% select(team_abbrev, goalie_sv_pct) %>% arrange(desc(goalie_sv_pct))
+  for (i in seq_len(nrow(goalie_sv_diag))) {
+    r <- goalie_sv_diag[i, ]
+    cat(sprintf("  %-4s | goalie_sv_pct=%.4f (rank %d/%d)\n", r$team_abbrev, r$goalie_sv_pct, i, nrow(goalie_sv_diag)))
+  }
+  cat("  Spread (best - worst):", round(max(goalie_sv_diag$goalie_sv_pct, na.rm=TRUE) - min(goalie_sv_diag$goalie_sv_pct, na.rm=TRUE), 4), "\n")
+}, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
+cat("\n")
+
 # Checking for a SYSTEMATIC (league-wide) bias vs. this being specific to
 # one or two teams. Real league-average shots-against last season was
 # ~27.83 (2282 SA / 82 GP, from the hockey-reference tables we've been
@@ -1643,6 +1662,19 @@ cd_map <- cd_map %>% distinct(team_abbrev, .keep_all = TRUE)
 
 # ── 8. Simulate N full seasons + playoff brackets ───────────────────────────
 cat("Running", N_SIMS, "season simulations (shot-based engine)...\n")
+
+# OT/shootout rate check — a single representative sample (the full
+# ~1300-game schedule) rather than tracking this across all 10,000 sims,
+# to keep this cheap. Real NHL OT rate is roughly 20-23% of games. If
+# ours runs meaningfully higher, that inflates bad teams' point floors
+# via guaranteed loser points more than it should, which would show up
+# as exactly the "bottom of the league compressed upward" pattern being
+# investigated.
+tryCatch({
+  ot_check <- simulate_games(last_schedule$home_abbrev, last_schedule$away_abbrev)
+  ot_rate <- mean(ot_check$went_ot)
+  cat("  OT/SO rate check (single sample,", nrow(last_schedule), "games):", round(ot_rate * 100, 1), "% | real NHL rate is roughly 20-23%\n")
+}, error = function(e) cat("  OT rate diagnostic error:", conditionMessage(e), "\n"))
 
 simulate_one_season_pts <- function() {
   g <- simulate_games(last_schedule$home_abbrev, last_schedule$away_abbrev)
