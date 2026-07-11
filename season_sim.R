@@ -1515,7 +1515,7 @@ goalie_sv_lu     <- setNames(team_off_def$goalie_sv_pct, team_off_def$team_abbre
 # in-season talent drift (trades, injuries, motivation swings) that a
 # fixed-roster, full-season simulation structurally can't capture at all;
 # treating the ENTIRE measured gap as pure bias risks overcorrecting.
-COMPRESSION_AMPLIFICATION <- 1.4
+COMPRESSION_AMPLIFICATION <- 1.75  # bumped from 1.4 — that run improved the Pythagorean-vs-corrected-sim correlation from -0.869 (uncorrected) to -0.586, suggesting a full correction needs closer to ~2.0-2.3x; 1.75 pushes further without jumping straight to full
 amplify_around_mean <- function(x) {
   m <- mean(x, na.rm = TRUE)
   m + COMPRESSION_AMPLIFICATION * (x - m)
