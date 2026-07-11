@@ -1278,6 +1278,36 @@ for (i in seq_len(nrow(diag_tbl))) {
 }
 cat("\n")
 
+# Raw xG-for/against sanity check — 5v5-only (matches team_onice.csv's
+# scope, see the comment in onice_stats.R where this is computed), per
+# game, for every team. Checking whether this data looks reasonable
+# before committing to a full xG-based simulation rewrite (the current
+# shots-based engine treats shot volume and shooting% as separate, only
+# weakly-connected inputs — xG combines both into one coherent number,
+# which would fix that structurally rather than needing another patch).
+cat("\n  ── Raw 5v5 xG-for/against sanity check (team_onice.csv, season", season_year, ") ──\n")
+tryCatch({
+  xg_team_cur <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice/", season_year, "/team_onice.csv"))
+  if (is.null(xg_team_cur) || !"xg_for" %in% names(xg_team_cur)) {
+    cat("  (xg_for/xg_against not available in this season's team_onice.csv yet)\n")
+  } else {
+    xg_diag <- xg_team_cur %>%
+      mutate(xg_for_pg = xg_for / pmax(coalesce(gp_onice, 1), 1),
+             xg_against_pg = xg_against / pmax(coalesce(gp_onice, 1), 1),
+             xg_diff_pg = xg_for_pg - xg_against_pg) %>%
+      arrange(desc(xg_diff_pg))
+    for (i in seq_len(nrow(xg_diag))) {
+      r <- xg_diag[i, ]
+      cat(sprintf("  %-4s | xg_for_pg=%.3f xg_against_pg=%.3f xg_diff_pg=%+.3f | gp_onice=%d\n",
+                  r$team_abbrev, r$xg_for_pg, r$xg_against_pg, r$xg_diff_pg, as.integer(coalesce(r$gp_onice, 0))))
+    }
+    cat("  Range — xg_for_pg:", round(min(xg_diag$xg_for_pg, na.rm=TRUE),3), "-", round(max(xg_diag$xg_for_pg, na.rm=TRUE),3),
+        "| xg_against_pg:", round(min(xg_diag$xg_against_pg, na.rm=TRUE),3), "-", round(max(xg_diag$xg_against_pg, na.rm=TRUE),3), "\n")
+  }
+}, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
+cat("\n")
+
+
 shots_for_lu     <- setNames(team_off_def$shots_for_pg, team_off_def$team_abbrev)
 shots_against_lu <- setNames(team_off_def$shots_against_pg, team_off_def$team_abbrev)
 shooting_pct_lu  <- setNames(team_off_def$shooting_pct, team_off_def$team_abbrev)
