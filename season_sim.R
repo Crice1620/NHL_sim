@@ -1196,7 +1196,7 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
 # than check pieces one at a time, this traces every stage of the pipeline
 # for one team so a problem (if there is one) is visible directly rather
 # than inferred from the final number.
-DEEP_CHECK_TEAMS <- c("VGK", "SEA", "SJS", "EDM")
+DEEP_CHECK_TEAMS <- c("VGK", "SEA", "SJS", "EDM", "PIT")
 for (DEEP_CHECK_TEAM in DEEP_CHECK_TEAMS) {
 dc <- team_offense %>% filter(team_abbrev == DEEP_CHECK_TEAM)
 if (nrow(dc) > 0) {
@@ -1720,6 +1720,37 @@ tryCatch({
   chi_wr <- mean(c(mean(wp_home2$away_goals > wp_home2$home_goals), mean(wp_away2$home_goals > wp_away2$away_goals)))
   cat("    CHI's average win rate vs AVG (both directions):", round(chi_wr * 100, 1), "% -> rough implied points (ignoring OTL bonus):", round(chi_wr * 2 * 82, 1), "\n")
 }, error = function(e) cat("  AVG-team diagnostic error:", conditionMessage(e), "\n"))
+
+# Checking whether CHI's REAL schedule opponents are actually weaker than
+# league average (which would explain part of the gap between the vs-AVG
+# implied estimate and the full simulation's actual output) rather than
+# assuming this without checking.
+tryCatch({
+  chi_games <- last_schedule %>% filter(home_abbrev == "CHI" | away_abbrev == "CHI")
+  chi_opponents <- ifelse(chi_games$home_abbrev == "CHI", chi_games$away_abbrev, chi_games$home_abbrev)
+  opp_xg_diff <- (xgf_lu[chi_opponents] - xga_lu[chi_opponents])
+  cat("  CHI's real schedule — opponent quality check:\n")
+  cat("    Games scheduled:", length(chi_opponents), "| avg opponent xg_diff_pg:", round(mean(opp_xg_diff, na.rm = TRUE), 4),
+      "(league avg is ~0 by construction; negative here would mean CHI's real schedule is softer than average)\n")
+
+  # Directly running CHI's actual full schedule through simulate_one_season_pts()-
+  # style logic in isolation, many times, to get CHI's own point total distribution
+  # WITHOUT the noise of also tracking all 31 other teams and playoff brackets —
+  # a direct check of whether the full-schedule number matches the implied
+  # ~78 from the vs-AVG win rate, or diverges from it.
+  n_check2 <- 2000
+  chi_pts_samples <- numeric(n_check2)
+  for (i in seq_len(n_check2)) {
+    g <- simulate_games(chi_games$home_abbrev, chi_games$away_abbrev)
+    chi_home <- chi_games$home_abbrev == "CHI"
+    home_win <- g$home_goals > g$away_goals
+    pts <- ifelse(chi_home, ifelse(home_win, 2, ifelse(g$went_ot, 1, 0)),
+                            ifelse(!home_win, 2, ifelse(g$went_ot, 1, 0)))
+    chi_pts_samples[i] <- sum(pts)
+  }
+  cat("    CHI's own full-schedule simulated points (avg over", n_check2, "sims, before the 84-game scaling):",
+      round(mean(chi_pts_samples), 1), "| scaled to 84 games:", round(mean(chi_pts_samples) * 1.0244, 1), "\n")
+}, error = function(e) cat("  Schedule-mix diagnostic error:", conditionMessage(e), "\n"))
 
 simulate_one_season_pts <- function() {
   g <- simulate_games(last_schedule$home_abbrev, last_schedule$away_abbrev)
