@@ -1676,6 +1676,25 @@ tryCatch({
   cat("  OT/SO rate check (single sample,", nrow(last_schedule), "games):", round(ot_rate * 100, 1), "% | real NHL rate is roughly 20-23%\n")
 }, error = function(e) cat("  OT rate diagnostic error:", conditionMessage(e), "\n"))
 
+# Win-probability sanity check — a specific test of whether the Poisson
+# conversion properly reflects a large xG gap, independent of goaltending
+# or PP/PK. CHI has by far the worst 5v5 xG in the league (roughly double
+# the gap of the next-worst team) while its PP/PK/goaltending are all
+# close to league average — so if CHI still comes out anywhere near a
+# toss-up here, that's a specific, isolated sign the Poisson math itself
+# isn't translating a big xG gap into a correspondingly big win-prob gap,
+# separate from the goaltending-spread question checked above.
+tryCatch({
+  n_check <- 20000
+  wp_home <- simulate_games(rep("CAR", n_check), rep("CHI", n_check))
+  wp_away <- simulate_games(rep("CHI", n_check), rep("CAR", n_check))
+  cat("  Win-prob sanity check — CAR (best 5v5 xG) vs CHI (worst 5v5 xG):\n")
+  cat("    CAR at home:", round(mean(wp_home$home_goals > wp_home$away_goals) * 100, 1), "% CAR win |",
+      round(mean(wp_home$home_goals) , 2), "vs", round(mean(wp_home$away_goals), 2), "avg goals\n")
+  cat("    CHI at home:", round(mean(wp_away$away_goals > wp_away$home_goals) * 100, 1), "% CAR win |",
+      round(mean(wp_away$home_goals), 2), "vs", round(mean(wp_away$away_goals), 2), "avg goals\n")
+}, error = function(e) cat("  Win-prob diagnostic error:", conditionMessage(e), "\n"))
+
 simulate_one_season_pts <- function() {
   g <- simulate_games(last_schedule$home_abbrev, last_schedule$away_abbrev)
   home_win <- g$home_goals > g$away_goals
