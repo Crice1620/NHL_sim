@@ -1400,6 +1400,34 @@ tryCatch({
   }
   cat("  Range — onice_xgf_pg_wtd:", round(min(xg_diag$onice_xgf_pg_wtd, na.rm=TRUE),3), "-", round(max(xg_diag$onice_xgf_pg_wtd, na.rm=TRUE),3),
       "| onice_xga_pg_wtd:", round(min(xg_diag$onice_xga_pg_wtd, na.rm=TRUE),3), "-", round(max(xg_diag$onice_xga_pg_wtd, na.rm=TRUE),3), "\n")
+  cat("  Spread (best - worst) xg_diff_pg:", round(max(xg_diag$xg_diff_pg, na.rm=TRUE) - min(xg_diag$xg_diff_pg, na.rm=TRUE), 3), "\n")
+}, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
+cat("\n")
+
+# Direct comparison: team-level xG (most recent completed season only,
+# no roster reconstruction, no recency-blending across years) for the
+# SAME teams — checking whether roster-weighted reconstruction from
+# individual players' independent histories is compressing variance
+# relative to how extreme real, cohesive team performance actually gets.
+# If direct team-level spread is meaningfully wider than the roster-
+# weighted spread above, that's the compression showing up concretely.
+cat("\n  ── Direct team-level xG comparison (most recent season only, no roster reconstruction) ──\n")
+tryCatch({
+  most_recent_team_onice <- team_onice_by_season[[length(team_onice_by_season)]]
+  if (is.null(most_recent_team_onice) || !"xg_for" %in% names(most_recent_team_onice)) {
+    cat("  (most recent season's team_onice.csv doesn't have xg_for/xg_against)\n")
+  } else {
+    team_xg_direct <- most_recent_team_onice %>%
+      mutate(xgf_pg = xg_for / pmax(coalesce(gp_onice, 1), 1),
+             xga_pg = xg_against / pmax(coalesce(gp_onice, 1), 1),
+             xg_diff_pg = xgf_pg - xga_pg) %>%
+      arrange(desc(xg_diff_pg))
+    for (i in seq_len(nrow(team_xg_direct))) {
+      r <- team_xg_direct[i, ]
+      cat(sprintf("  %-4s | xgf_pg=%.3f xga_pg=%.3f xg_diff_pg=%+.3f\n", r$team_abbrev, r$xgf_pg, r$xga_pg, r$xg_diff_pg))
+    }
+    cat("  Spread (best - worst) xg_diff_pg:", round(max(team_xg_direct$xg_diff_pg, na.rm=TRUE) - min(team_xg_direct$xg_diff_pg, na.rm=TRUE), 3), "\n")
+  }
 }, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
 cat("\n")
 
