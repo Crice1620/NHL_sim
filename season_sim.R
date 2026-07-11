@@ -874,40 +874,39 @@ if (!"ev_offense_xgwowy" %in% names(skater_onice_hist)) {
   skater_onice_hist$ev_offense_xgwowy <- NA_real_; skater_onice_hist$ev_defense_xgwowy <- NA_real_
 }
 
-# Team-level PP/PK conversion rates (shooting%/save% while on the man
-# advantage/disadvantage) — recency-weighted across the same 3-season
-# window as everything else, pooling goals/shots first then taking one
-# ratio (more robust to season-to-season sample swings than averaging
-# three separate ratios). Team-level, not roster-weighted, because no
-# stable player-level PP/PK xG exists yet, and last session's attempt at
-# player-level PP/PK WOWY specifically showed severe instability (values
-# as extreme as -33) that a team-level number doesn't have. Shot VOLUME
-# for PP/PK still comes from the existing roster-weighted, trade-aware
-# onice_pp_sf_pg/onice_pk_sa_pg below — only the conversion rate uses
-# this team-level fallback.
+# Team-level PP/PK goals-per-game — recency-weighted across the same
+# 3-season window as everything else. Deliberately NOT shots*conversion-
+# rate (the structure this replaces): that approach separated shot volume
+# from scoring rate, meaning a team's PK shot-suppression barely affected
+# the opponent's actual scoring probability — the same structural flaw
+# just proven wrong for 5v5 (fixed there via xG, which combines volume
+# and quality into one number). No stable player-level PP/PK xG exists
+# yet to do the same fix here (last session's attempt at player-level
+# PP/PK WOWY showed severe instability, values as extreme as -33 — PP/PK
+# ice time is roughly 10x smaller per game than 5v5, and that thin a
+# sample doesn't hold up to this kind of decomposition). Team-level goals-
+# per-game sidesteps the specific flaw without needing new data: it's
+# already one number combining volume and efficiency, same as xG's
+# spirit, just built from real goals instead of expected goals. Shot
+# VOLUME for PP/PK still comes from the existing roster-weighted, trade-
+# aware onice_pp_sf_pg/onice_pk_sa_pg — only used for diagnostics now,
+# not to decompose the goal rate.
 team_pp_pk_rates <- if (length(team_onice_by_season) > 0) {
   bind_rows(team_onice_by_season) %>%
     group_by(team_abbrev) %>%
     arrange(season, .by_group = TRUE) %>%
     summarise(
-      pp_goals_wtd = { w <- recency_weights_gp(season, pmax(coalesce(toi_pp_sec, 0), 1)); sum(w * coalesce(pp_goals, 0)) },
-      pp_shots_wtd = { w <- recency_weights_gp(season, pmax(coalesce(toi_pp_sec, 0), 1)); sum(w * coalesce(pp_shots, 1)) },
-      pk_ga_wtd    = { w <- recency_weights_gp(season, pmax(coalesce(toi_pk_sec, 0), 1)); sum(w * coalesce(pk_goals_against, 0)) },
-      pk_sa_wtd    = { w <- recency_weights_gp(season, pmax(coalesce(toi_pk_sec, 0), 1)); sum(w * coalesce(pk_shots_against, 1)) },
+      pp_goals_pg = { w <- recency_weights_gp(season, pmax(coalesce(gp_onice, 0), 1)); sum(w * (coalesce(pp_goals, 0) / pmax(coalesce(gp_onice, 1), 1))) },
+      pk_ga_pg    = { w <- recency_weights_gp(season, pmax(coalesce(gp_onice, 0), 1)); sum(w * (coalesce(pk_goals_against, 0) / pmax(coalesce(gp_onice, 1), 1))) },
       .groups = "drop"
-    ) %>%
-    mutate(
-      pp_shoot_pct = ifelse(pp_shots_wtd > 0, pp_goals_wtd / pp_shots_wtd, NA_real_),
-      pk_save_pct  = ifelse(pk_sa_wtd > 0, 1 - pk_ga_wtd / pk_sa_wtd, NA_real_)
-    ) %>%
-    select(team_abbrev, pp_shoot_pct, pk_save_pct)
+    )
 } else {
-  data.frame(team_abbrev = character(0), pp_shoot_pct = numeric(0), pk_save_pct = numeric(0))
+  data.frame(team_abbrev = character(0), pp_goals_pg = numeric(0), pk_ga_pg = numeric(0))
 }
-lg_avg_pp_shoot_pct <- mean(team_pp_pk_rates$pp_shoot_pct, na.rm = TRUE)
-lg_avg_pk_save_pct  <- mean(team_pp_pk_rates$pk_save_pct, na.rm = TRUE)
-if (is.na(lg_avg_pp_shoot_pct)) lg_avg_pp_shoot_pct <- 0.12   # rough real-world PP shooting% fallback
-if (is.na(lg_avg_pk_save_pct))  lg_avg_pk_save_pct  <- 0.87   # rough real-world PK save% fallback
+lg_avg_pp_goals_pg <- mean(team_pp_pk_rates$pp_goals_pg, na.rm = TRUE)
+lg_avg_pk_ga_pg    <- mean(team_pp_pk_rates$pk_ga_pg, na.rm = TRUE)
+if (is.na(lg_avg_pp_goals_pg)) lg_avg_pp_goals_pg <- 0.55   # rough real-world PP-goals/game fallback
+if (is.na(lg_avg_pk_ga_pg))    lg_avg_pk_ga_pg    <- 0.55   # PK-goals-against/game is symmetric with PP-goals-for/game league-wide
 
 proj_skater_onice <- project_skater_onice(skater_onice_hist)
 cat("  proj_skater_onice rows:", if (is.null(proj_skater_onice)) 0 else nrow(proj_skater_onice), "\n")
@@ -1126,8 +1125,8 @@ cat("  Of which using real xG-based WOWY (vs. goals-based fallback) — offense:
 team_offense <- team_offense %>%
   left_join(team_pp_pk_rates, by = "team_abbrev") %>%
   mutate(
-    pp_shoot_pct = coalesce(pp_shoot_pct, lg_avg_pp_shoot_pct),
-    pk_save_pct  = coalesce(pk_save_pct, lg_avg_pk_save_pct)
+    pp_goals_pg = coalesce(pp_goals_pg, lg_avg_pp_goals_pg),
+    pk_ga_pg    = coalesce(pk_ga_pg, lg_avg_pk_ga_pg)
   )
 
 # League-average 5v5 xGA/shot — the denominator for the same kind of
@@ -1305,8 +1304,8 @@ team_off_def <- data.frame(team_abbrev = names(net_lookup), stringsAsFactors = F
     onice_xga_pg_wtd = coalesce(onice_xga_pg_wtd, mean(onice_xga_pg_wtd, na.rm = TRUE)),
     onice_pp_sf_pg_wtd = coalesce(onice_pp_sf_pg_wtd, mean(onice_pp_sf_pg_wtd, na.rm = TRUE)),
     onice_pk_sa_pg_wtd = coalesce(onice_pk_sa_pg_wtd, mean(onice_pk_sa_pg_wtd, na.rm = TRUE)),
-    pp_shoot_pct     = coalesce(pp_shoot_pct, lg_avg_pp_shoot_pct),
-    pk_save_pct      = coalesce(pk_save_pct, lg_avg_pk_save_pct)
+    pp_goals_pg      = coalesce(pp_goals_pg, lg_avg_pp_goals_pg),
+    pk_ga_pg         = coalesce(pk_ga_pg, lg_avg_pk_ga_pg)
   )
 
 league_avg_sv_pct <- mean(team_off_def$goalie_sv_pct, na.rm = TRUE)
@@ -1412,12 +1411,14 @@ goalie_sv_lu     <- setNames(team_off_def$goalie_sv_pct, team_off_def$team_abbre
 # xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
 # onice_xgf_pg/onice_xga_pg are built) plus the team-level PP/PK
 # conversion rates that fill in what xG doesn't cover yet.
+# xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
+# onice_xgf_pg/onice_xga_pg are built) plus team-level PP/PK goals-per-
+# game (direct, not shots*rate — see the note where team_pp_pk_rates is
+# built for why that decomposition was avoided).
 xgf_lu       <- setNames(team_off_def$onice_xgf_pg_wtd, team_off_def$team_abbrev)
 xga_lu       <- setNames(team_off_def$onice_xga_pg_wtd, team_off_def$team_abbrev)
-pp_sf_lu     <- setNames(team_off_def$onice_pp_sf_pg_wtd, team_off_def$team_abbrev)
-pk_sa_lu     <- setNames(team_off_def$onice_pk_sa_pg_wtd, team_off_def$team_abbrev)
-pp_shoot_lu  <- setNames(team_off_def$pp_shoot_pct, team_off_def$team_abbrev)
-pk_save_lu   <- setNames(team_off_def$pk_save_pct, team_off_def$team_abbrev)
+pp_goals_lu  <- setNames(team_off_def$pp_goals_pg, team_off_def$team_abbrev)
+pk_ga_lu     <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
 
 # Simulates games for parallel vectors of home/away team abbrevs (works for
 # a single pair too — used for both the full season schedule, vectorized in
@@ -1464,22 +1465,26 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
   home_xg_5v5_adj <- home_xg_5v5 * (1 - goalie_sv_lu[away_abbrevs]) / (1 - league_avg_sv_pct)
   away_xg_5v5_adj <- away_xg_5v5 * (1 - goalie_sv_lu[home_abbrevs]) / (1 - league_avg_sv_pct)
 
-  # ── PP/PK: shots-based layer, same spirit as the old full-game version ──
-  home_pp_shots <- pmax(0, (pp_sf_lu[home_abbrevs] + pk_sa_lu[away_abbrevs]) / 2)
-  away_pp_shots <- pmax(0, (pp_sf_lu[away_abbrevs] + pk_sa_lu[home_abbrevs]) / 2)
-  home_pp_goal_prob <- pmin(0.40, pmax(0.01,
-    pp_shoot_lu[home_abbrevs] * (1 - pk_save_lu[away_abbrevs]) / (1 - lg_avg_pk_save_pct)))
-  away_pp_goal_prob <- pmin(0.40, pmax(0.01,
-    pp_shoot_lu[away_abbrevs] * (1 - pk_save_lu[home_abbrevs]) / (1 - lg_avg_pk_save_pct)))
+  # ── PP/PK: direct goals-per-game (Poisson), not shots*rate ──────────────
+  # Deliberately not shots*conversion-rate (what this replaced) — that
+  # structure separated shot volume from scoring rate, the same flaw xG
+  # fixed for 5v5 (a team's shot-suppression barely affecting the
+  # opponent's actual scoring probability). No stable player-level PP/PK
+  # xG exists yet to do the identical fix here, so this uses team-level
+  # PP-goals-for/PK-goals-against per game directly instead — already one
+  # number combining volume and efficiency, same spirit as xG, just real
+  # goals instead of expected goals.
+  home_pp_xg <- (pp_goals_lu[home_abbrevs] + pk_ga_lu[away_abbrevs]) / 2
+  away_pp_xg <- (pp_goals_lu[away_abbrevs] + pk_ga_lu[home_abbrevs]) / 2
 
-  # ── Combine: 5v5 (Poisson, xG-driven) + PP/PK (binomial, shots-driven) ──
+  # ── Combine: 5v5 (Poisson, xG-driven) + PP/PK (Poisson, goals-driven) ───
   # HOME_XG_BOOST replaces the old per-shot HOME_GOAL_BOOST — same home-
   # ice-advantage concept, just expressed as a direct expected-goals bump
   # now that goals aren't built from a shots*per-shot-probability chain.
   home_goals_5v5 <- rpois(n, pmax(0.05, home_xg_5v5_adj + HOME_XG_BOOST))
   away_goals_5v5 <- rpois(n, pmax(0.05, away_xg_5v5_adj))
-  home_pp_goals  <- rbinom(n, pmax(0, round(home_pp_shots)), home_pp_goal_prob)
-  away_pp_goals  <- rbinom(n, pmax(0, round(away_pp_shots)), away_pp_goal_prob)
+  home_pp_goals  <- rpois(n, pmax(0.01, home_pp_xg))
+  away_pp_goals  <- rpois(n, pmax(0.01, away_pp_xg))
 
   home_goals <- home_goals_5v5 + home_pp_goals
   away_goals <- away_goals_5v5 + away_pp_goals
@@ -1488,10 +1493,8 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
   if (any(tied)) {
     nt <- sum(tied)
     # ~5 minutes of OT ~ 1/12 of a full game's expected-goals volume.
-    # Total (5v5 + PP-rate-implied) expected goals scaled down the same
-    # way the old model scaled down shot volume for OT.
-    total_home_xg <- (home_xg_5v5_adj[tied] + home_pp_goal_prob[tied] * home_pp_shots[tied]) / 12
-    total_away_xg <- (away_xg_5v5_adj[tied] + away_pp_goal_prob[tied] * away_pp_shots[tied]) / 12
+    total_home_xg <- (home_xg_5v5_adj[tied] + home_pp_xg[tied]) / 12
+    total_away_xg <- (away_xg_5v5_adj[tied] + away_pp_xg[tied]) / 12
     ot_h_score <- rpois(nt, pmax(0.01, total_home_xg)) > 0
     ot_a_score <- rpois(nt, pmax(0.01, total_away_xg)) > 0
     home_wins_ot <- ot_h_score & !ot_a_score
