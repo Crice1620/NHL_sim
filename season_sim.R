@@ -782,6 +782,8 @@ project_skater_onice <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"pk_shots_against" %in% names(hist_df)) hist_df$pk_shots_against <- NA_real_  # guard for pre-update on-ice CSVs
   if (!"pp_shots" %in% names(hist_df)) hist_df$pp_shots <- NA_real_  # guard for pre-update on-ice CSVs
+  if (!"xg_for_5v5" %in% names(hist_df)) hist_df$xg_for_5v5 <- NA_real_        # guard for pre-xG-model on-ice CSVs
+  if (!"xg_against_5v5" %in% names(hist_df)) hist_df$xg_against_5v5 <- NA_real_
   for (wc in c("ev_offense_wowy", "ev_defense_wowy", "pp_offense_wowy", "pk_defense_wowy", "ev_offense_xgwowy", "ev_defense_xgwowy")) {
     if (!wc %in% names(hist_df)) hist_df[[wc]] <- NA_real_  # guard for pre-update on-ice CSVs or seasons where WOWY couldn't be computed
   }
@@ -791,7 +793,16 @@ project_skater_onice <- function(hist_df) {
       ca_pg = coalesce(ca_5v5, 0) / gp_onice,   # on-ice Corsi-against per game while this player is on the ice
       cf_pg = coalesce(cf_5v5, 0) / gp_onice,   # on-ice Corsi-for per game — used only to self-calibrate the SOG/Corsi ratio below
       pk_sa_pg = coalesce(pk_shots_against, 0) / gp_onice,   # real individual on-ice PK shots-against per game (now tracked at the source)
-      pp_sf_pg = coalesce(pp_shots, 0) / gp_onice   # real individual on-ice PP shots-for per game — same purpose as pk_sa_pg above, but for offense: needed to properly scope-match the SOG/Corsi ratio's denominator (roster-aggregated, not team full-game totals)
+      pp_sf_pg = coalesce(pp_shots, 0) / gp_onice,   # real individual on-ice PP shots-for per game — same purpose as pk_sa_pg above, but for offense: needed to properly scope-match the SOG/Corsi ratio's denominator (roster-aggregated, not team full-game totals)
+      # Same idea as ca_pg/cf_pg, but expected-goals instead of Corsi — this
+      # is the roster-weighted (not team-level) xG aggregate: built from
+      # each CURRENT roster player's own on-ice xG history, so a traded
+      # player's real impact carries over onto their new team correctly,
+      # the same way onice_ca_pg/onice_cf_pg already do for Corsi. A
+      # team-level xg_for/xg_against lookup from last season would be
+      # stuck to last year's roster and blind to any offseason move.
+      xgf_pg = coalesce(xg_for_5v5, 0) / gp_onice,
+      xga_pg = coalesce(xg_against_5v5, 0) / gp_onice
     )
   if (nrow(rates) == 0) return(NULL)
   rates %>%
@@ -802,6 +813,8 @@ project_skater_onice <- function(hist_df) {
       onice_cf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * cf_pg) },
       onice_pk_sa_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * pk_sa_pg) },
       onice_pp_sf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * pp_sf_pg) },
+      onice_xgf_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * xgf_pg) },
+      onice_xga_pg = { w <- recency_weights_gp(season, gp_onice); sum(w * xga_pg) },
       ev_offense_wowy_3yr = weighted_avg_skip_na(ev_offense_wowy, season, gp_onice),
       ev_defense_wowy_3yr = weighted_avg_skip_na(ev_defense_wowy, season, gp_onice),
       pp_offense_wowy_3yr = weighted_avg_skip_na(pp_offense_wowy, season, gp_onice),
@@ -962,6 +975,13 @@ team_offense <- skater_output %>%
     # entirely (a team's full-game Corsi is much bigger than any one
     # player's on-ice rate during just their own shifts).
     onice_pp_sf_pg_wtd = sum(onice_pp_sf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_pp_sf_pg)], na.rm = TRUE),
+    # Same shared-stat/TOI-weighted-average reasoning as Corsi above,
+    # for xG — this is the roster-weighted (current-roster, trade-aware)
+    # xG aggregate, NOT a team-level lookup (which would be stuck to
+    # whichever players happened to be on this team historically).
+    onice_xgf_pg_wtd  = sum(onice_xgf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_xgf_pg)], na.rm = TRUE),
+    onice_xga_pg_wtd  = sum(onice_xga_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_xga_pg)], na.rm = TRUE),
+    n_with_onice_xg   = sum(!is.na(onice_xgf_pg)),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
     # WOWY is also a shared/context stat (it represents team-level effects
     # attributable to a player, not an individually-authored event like a
@@ -1278,32 +1298,25 @@ for (i in seq_len(nrow(diag_tbl))) {
 }
 cat("\n")
 
-# Raw xG-for/against sanity check — 5v5-only (matches team_onice.csv's
-# scope, see the comment in onice_stats.R where this is computed), per
-# game, for every team. Checking whether this data looks reasonable
-# before committing to a full xG-based simulation rewrite (the current
-# shots-based engine treats shot volume and shooting% as separate, only
-# weakly-connected inputs — xG combines both into one coherent number,
-# which would fix that structurally rather than needing another patch).
-cat("\n  ── Raw 5v5 xG-for/against sanity check (team_onice.csv, season", season_year, ") ──\n")
+# Roster-weighted xG sanity check — built from each CURRENT roster
+# player's own on-ice xG history (onice_xgf_pg_wtd/onice_xga_pg_wtd,
+# same TOI-weighted-average construction as the existing Corsi numbers),
+# NOT a team-level lookup. A team-level xg_for/xg_against from last
+# season would be stuck to last year's roster and blind to any trade or
+# free-agent signing since then — this version isn't, for the same
+# reason onice_ca_pg_wtd/onice_cf_pg_wtd already aren't.
+cat("\n  ── Roster-weighted xG sanity check (current-roster, trade-aware) ──\n")
 tryCatch({
-  xg_team_cur <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice/", season_year, "/team_onice.csv"))
-  if (is.null(xg_team_cur) || !"xg_for" %in% names(xg_team_cur)) {
-    cat("  (xg_for/xg_against not available in this season's team_onice.csv yet)\n")
-  } else {
-    xg_diag <- xg_team_cur %>%
-      mutate(xg_for_pg = xg_for / pmax(coalesce(gp_onice, 1), 1),
-             xg_against_pg = xg_against / pmax(coalesce(gp_onice, 1), 1),
-             xg_diff_pg = xg_for_pg - xg_against_pg) %>%
-      arrange(desc(xg_diff_pg))
-    for (i in seq_len(nrow(xg_diag))) {
-      r <- xg_diag[i, ]
-      cat(sprintf("  %-4s | xg_for_pg=%.3f xg_against_pg=%.3f xg_diff_pg=%+.3f | gp_onice=%d\n",
-                  r$team_abbrev, r$xg_for_pg, r$xg_against_pg, r$xg_diff_pg, as.integer(coalesce(r$gp_onice, 0))))
-    }
-    cat("  Range — xg_for_pg:", round(min(xg_diag$xg_for_pg, na.rm=TRUE),3), "-", round(max(xg_diag$xg_for_pg, na.rm=TRUE),3),
-        "| xg_against_pg:", round(min(xg_diag$xg_against_pg, na.rm=TRUE),3), "-", round(max(xg_diag$xg_against_pg, na.rm=TRUE),3), "\n")
+  xg_diag <- team_offense %>%
+    mutate(xg_diff_pg = onice_xgf_pg_wtd - onice_xga_pg_wtd) %>%
+    arrange(desc(xg_diff_pg))
+  for (i in seq_len(nrow(xg_diag))) {
+    r <- xg_diag[i, ]
+    cat(sprintf("  %-4s | onice_xgf_pg_wtd=%.3f onice_xga_pg_wtd=%.3f xg_diff_pg=%+.3f | roster coverage: %d / 18\n",
+                r$team_abbrev, r$onice_xgf_pg_wtd, r$onice_xga_pg_wtd, r$xg_diff_pg, r$n_with_onice_xg))
   }
+  cat("  Range — onice_xgf_pg_wtd:", round(min(xg_diag$onice_xgf_pg_wtd, na.rm=TRUE),3), "-", round(max(xg_diag$onice_xgf_pg_wtd, na.rm=TRUE),3),
+      "| onice_xga_pg_wtd:", round(min(xg_diag$onice_xga_pg_wtd, na.rm=TRUE),3), "-", round(max(xg_diag$onice_xga_pg_wtd, na.rm=TRUE),3), "\n")
 }, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
 cat("\n")
 
