@@ -1030,12 +1030,22 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     # entirely (a team's full-game Corsi is much bigger than any one
     # player's on-ice rate during just their own shifts).
     onice_pp_sf_pg_wtd = sum(onice_pp_sf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_pp_sf_pg)], na.rm = TRUE),
-    # Same shared-stat/TOI-weighted-average reasoning as Corsi above,
-    # for xG — this is the roster-weighted (current-roster, trade-aware)
-    # xG aggregate, NOT a team-level lookup (which would be stuck to
-    # whichever players happened to be on this team historically).
-    onice_xgf_pg_wtd  = sum(onice_xgf_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_xgf_pg)], na.rm = TRUE),
-    onice_xga_pg_wtd  = sum(onice_xga_pg * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(onice_xga_pg)], na.rm = TRUE),
+    # xG — summed and divided by 5, NOT a TOI-weighted average. At 5v5,
+    # exactly 5 skaters share full credit for every event at any given
+    # moment, so summing every rostered player's own onice_xgf_pg (each
+    # already a per-game rate reflecting their own ice-time share) and
+    # dividing by 5 reconstructs the team's real total xG-for-per-game —
+    # since summing across the full roster gives exactly 5x the true
+    # team total (each moment of play counted once per player on the ice).
+    # A TOI-weighted AVERAGE, by contrast, is mathematically bounded
+    # between the min and max of the players being averaged — it can
+    # never be more extreme than one player's own number, which throws
+    # away the fact that a team can stack multiple good (or bad) players
+    # together. Confirmed this was compressing variance badly: roster-
+    # weighted xG spread (best-worst team) was 0.335 under the average,
+    # vs. 1.187 for real, direct single-season team xG — a 3.5x gap.
+    onice_xgf_pg_wtd  = sum(coalesce(onice_xgf_pg, 0), na.rm = TRUE) / 5,
+    onice_xga_pg_wtd  = sum(coalesce(onice_xga_pg, 0), na.rm = TRUE) / 5,
     n_with_onice_xg   = sum(!is.na(onice_xgf_pg)),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
     # WOWY is also a shared/context stat (it represents team-level effects
@@ -1186,7 +1196,7 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
 # than check pieces one at a time, this traces every stage of the pipeline
 # for one team so a problem (if there is one) is visible directly rather
 # than inferred from the final number.
-DEEP_CHECK_TEAMS <- c("VGK", "SEA", "SJS")
+DEEP_CHECK_TEAMS <- c("VGK", "SEA", "SJS", "EDM")
 for (DEEP_CHECK_TEAM in DEEP_CHECK_TEAMS) {
 dc <- team_offense %>% filter(team_abbrev == DEEP_CHECK_TEAM)
 if (nrow(dc) > 0) {
@@ -1197,6 +1207,10 @@ if (nrow(dc) > 0) {
   cat("    goals_for_pg_wowy_adj (final)     =", round(dc$goals_for_pg_wowy_adj, 3), "\n")
   cat("    shots_for_pg                      =", round(dc$shots_for_pg, 3), "\n")
   cat("    shooting_pct (final)              =", round(dc$shooting_pct, 4), "| league avg was", round(lg_avg_shooting_pct, 4), "\n")
+  cat("  ACTUAL SIMULATION INPUTS (what simulate_games() really uses now)\n")
+  cat("    onice_xgf_pg_wtd (5v5 xG-for)     =", round(dc$onice_xgf_pg_wtd, 3), "| onice_xga_pg_wtd (5v5 xG-against) =", round(dc$onice_xga_pg_wtd, 3), "\n")
+  cat("    pp_goals_pg (team-level PP-for)   =", round(dc$pp_goals_pg, 3), "| league avg =", round(lg_avg_pp_goals_pg, 3), "\n")
+  cat("    pk_ga_pg (team-level PK-against)  =", round(dc$pk_ga_pg, 3), "| league avg =", round(lg_avg_pk_ga_pg, 3), "\n")
   cat("  DEFENSE\n")
   cat("    onice_ca_pg_wtd (5v5, pre-convert)=", round(dc$onice_ca_pg_wtd, 3), "\n")
   cat("    onice_pk_sa_pg_wtd                =", round(dc$onice_pk_sa_pg_wtd, 3), "\n")
@@ -1403,6 +1417,24 @@ tryCatch({
   cat("  Spread (best - worst) xg_diff_pg:", round(max(xg_diag$xg_diff_pg, na.rm=TRUE) - min(xg_diag$xg_diff_pg, na.rm=TRUE), 3), "\n")
 }, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
 cat("\n")
+
+# League-wide PP/PK ranking — the EXACT same recency-weighted, 3-year
+# team-level rates the simulation actually uses (team_pp_pk_rates),
+# sorted so we can directly verify whether a team known for elite special
+# teams (e.g. a league-best power play) actually shows up that way here.
+cat("\n  ── League-wide PP/PK ranking (recency-weighted, 3yr — what the sim actually uses) ──\n")
+tryCatch({
+  pp_pk_diag <- team_pp_pk_rates %>% arrange(desc(pp_goals_pg))
+  for (i in seq_len(nrow(pp_pk_diag))) {
+    r <- pp_pk_diag[i, ]
+    cat(sprintf("  %-4s | pp_goals_pg=%.3f (rank %d/%d) | pk_ga_pg=%.3f\n",
+                r$team_abbrev, r$pp_goals_pg, i, nrow(pp_pk_diag), r$pk_ga_pg))
+  }
+  cat("  Range — pp_goals_pg:", round(min(pp_pk_diag$pp_goals_pg, na.rm=TRUE),3), "-", round(max(pp_pk_diag$pp_goals_pg, na.rm=TRUE),3),
+      "| pk_ga_pg:", round(min(pp_pk_diag$pk_ga_pg, na.rm=TRUE),3), "-", round(max(pp_pk_diag$pk_ga_pg, na.rm=TRUE),3), "\n")
+}, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
+cat("\n")
+
 
 # Direct comparison: team-level xG (most recent completed season only,
 # no roster reconstruction, no recency-blending across years) for the
