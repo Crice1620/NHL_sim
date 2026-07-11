@@ -1520,6 +1520,15 @@ amplify_around_mean <- function(x) {
   m <- mean(x, na.rm = TRUE)
   m + COMPRESSION_AMPLIFICATION * (x - m)
 }
+# Save the ORIGINAL (true, un-amplified) values before correcting — needed
+# so the Pythagorean validation check below can compare the CORRECTED
+# simulation against TRUE talent, not against an already-amplified number
+# (comparing amplified-vs-amplified would test something else entirely and
+# give a misleading read on whether the correction actually worked).
+xgf_lu_orig      <- setNames(team_off_def$onice_xgf_pg_wtd, team_off_def$team_abbrev)
+xga_lu_orig      <- setNames(team_off_def$onice_xga_pg_wtd, team_off_def$team_abbrev)
+pp_goals_lu_orig <- setNames(team_off_def$pp_goals_pg, team_off_def$team_abbrev)
+pk_ga_lu_orig    <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
 team_off_def <- team_off_def %>%
   mutate(
     onice_xgf_pg_wtd = amplify_around_mean(onice_xgf_pg_wtd),
@@ -1528,7 +1537,8 @@ team_off_def <- team_off_def %>%
     pk_ga_pg         = amplify_around_mean(pk_ga_pg)
   )
 cat("\n  Standings-compression correction applied (amplification factor =", COMPRESSION_AMPLIFICATION,
-    ") — all diagnostics below reflect POST-correction inputs.\n")
+    ") — all diagnostics below reflect POST-correction inputs (except the Pythagorean\n")
+cat("  check, which deliberately uses TRUE pre-correction values as the benchmark).\n")
 
 # xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
 # onice_xgf_pg/onice_xga_pg are built) plus team-level PP/PK goals-per-
@@ -1761,25 +1771,22 @@ tryCatch({
   cat("    CHI's average win rate vs AVG (both directions):", round(chi_wr * 100, 1), "% -> rough implied points (ignoring OTL bonus):", round(chi_wr * 2 * 82, 1), "\n")
 }, error = function(e) cat("  AVG-team diagnostic error:", conditionMessage(e), "\n"))
 
-# League-wide check: our Poisson-simulated win% vs AVG, compared against
-# the Pythagorean expectation formula (win% = GF^k / (GF^k + GA^k), the
-# same style of formula popularized in baseball, recalibrated for hockey
-# scoring levels with k ~ 2) — computed from the EXACT SAME GF/GA inputs
-# our simulation already uses. This is a genuinely independent check:
-# Pythagorean expectation isn't derived from our Poisson math at all, so
-# if our simulated win% systematically runs higher than Pythagorean for
-# bad teams and lower for good teams, that's a real, checkable sign the
-# win-probability curve itself (not just the input data) is compressing
-# the standings — the exact question of whether a team's per-game win%
-# is "too high" or "too low" for how good/bad their numbers actually are.
-cat("\n  ── League-wide check: our simulated win% vs Pythagorean expectation ──\n")
+# League-wide check: our (POST-correction) Poisson-simulated win% vs AVG,
+# compared against the Pythagorean expectation formula computed from the
+# TRUE, pre-correction GF/GA inputs (not the amplified ones) — this is
+# the actual test of whether the correction worked: does our corrected
+# simulation now match what Pythagorean says the REAL talent gap should
+# produce? Comparing against an already-amplified Pythagorean benchmark
+# would be circular (both sides would have moved together) and wouldn't
+# actually validate anything.
+cat("\n  ── League-wide check: our (corrected) simulated win% vs Pythagorean expectation on TRUE talent ──\n")
 tryCatch({
   pytk <- 2.05  # standard hockey-calibrated Pythagorean exponent
   n_check3 <- 4000
   py_rows <- list()
   for (tm in team_off_def$team_abbrev) {
-    gf <- coalesce(xgf_lu[tm], NA_real_) + coalesce(pp_goals_lu[tm], NA_real_)
-    ga <- coalesce(xga_lu[tm], NA_real_) + coalesce(pk_ga_lu[tm], NA_real_)
+    gf <- coalesce(xgf_lu_orig[tm], NA_real_) + coalesce(pp_goals_lu_orig[tm], NA_real_)
+    ga <- coalesce(xga_lu_orig[tm], NA_real_) + coalesce(pk_ga_lu_orig[tm], NA_real_)
     if (is.na(gf) || is.na(ga)) next
     pyth_wp <- gf^pytk / (gf^pytk + ga^pytk)
     wh <- simulate_games(rep(tm, n_check3), rep("AVG", n_check3))
@@ -1790,12 +1797,13 @@ tryCatch({
   py_df <- do.call(rbind, py_rows) %>% arrange(desc(gap))
   for (i in seq_len(nrow(py_df))) {
     r <- py_df[i, ]
-    cat(sprintf("  %-4s | pyth_wp=%.3f sim_wp=%.3f gap(sim-pyth)=%+.3f\n", r$team_abbrev, r$pyth_wp, r$sim_wp, r$gap))
+    cat(sprintf("  %-4s | pyth_wp(TRUE)=%.3f sim_wp(corrected)=%.3f gap=%+.3f\n", r$team_abbrev, r$pyth_wp, r$sim_wp, r$gap))
   }
   cat("  Mean gap:", round(mean(py_df$gap), 4), "| if bad teams (low pyth_wp) cluster toward positive gap\n")
-  cat("  and good teams (high pyth_wp) cluster toward negative gap, that's the compression signature.\n")
-  cat("  Correlation between pyth_wp and gap:", round(cor(py_df$pyth_wp, py_df$gap), 3),
-      "(negative = compression: bad teams over-performing, good teams under-performing vs Pythagorean)\n")
+  cat("  and good teams (high pyth_wp) cluster toward negative gap, that's residual compression.\n")
+  cat("  Correlation between pyth_wp(TRUE) and gap:", round(cor(py_df$pyth_wp, py_df$gap), 3),
+      "(closer to 0 = correction working; this should be smaller in magnitude\n")
+  cat("  than the PRE-correction run's -0.869, since this now tests corrected-sim vs TRUE talent.)\n")
 }, error = function(e) cat("  Pythagorean diagnostic error:", conditionMessage(e), "\n"))
 
 # Checking whether CHI's REAL schedule opponents are actually weaker than
