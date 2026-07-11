@@ -1095,7 +1095,8 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
 # than check pieces one at a time, this traces every stage of the pipeline
 # for one team so a problem (if there is one) is visible directly rather
 # than inferred from the final number.
-DEEP_CHECK_TEAM <- "VGK"
+DEEP_CHECK_TEAMS <- c("VGK", "SEA", "SJS")
+for (DEEP_CHECK_TEAM in DEEP_CHECK_TEAMS) {
 dc <- team_offense %>% filter(team_abbrev == DEEP_CHECK_TEAM)
 if (nrow(dc) > 0) {
   cat("\n── Deep check:", DEEP_CHECK_TEAM, "— every stage of the offense/defense pipeline ──\n")
@@ -1123,6 +1124,7 @@ if (nrow(dc) > 0) {
   }
 } else {
   cat("\n── Deep check:", DEEP_CHECK_TEAM, "— no row found in team_offense ──\n")
+}
 }
 
 # ── GSAx-based goaltending adjustment ────────────────────────────────────────
@@ -1175,8 +1177,9 @@ team_goaltending <- goalie_output %>%
   group_by(team_abbrev) %>%
   summarise(goalie_sv_pct = sum(sv_pct_for_sim * proj_gp, na.rm = TRUE) / sum(proj_gp, na.rm = TRUE), .groups = "drop")
 
-# Goaltending piece of the same deep check — each of this team's actual
-# rostered goalies, box-score vs GSAx-adjusted save rate side by side.
+# Goaltending piece of the same deep check — each team's actual rostered
+# goalies, box-score vs GSAx-adjusted save rate side by side.
+for (DEEP_CHECK_TEAM in DEEP_CHECK_TEAMS) {
 dc_goalies <- goalie_output %>% filter(team_abbrev == DEEP_CHECK_TEAM, has_history, coalesce(proj_gp, 0) > 0)
 if (nrow(dc_goalies) > 0) {
   cat("  GOALTENDING (", DEEP_CHECK_TEAM, ")\n")
@@ -1192,6 +1195,7 @@ if (nrow(dc_goalies) > 0) {
   cat("    -> team_goaltending$goalie_sv_pct =", round(coalesce((team_goaltending %>% filter(team_abbrev==DEEP_CHECK_TEAM))$goalie_sv_pct[1], NA), 4), "\n")
 } else {
   cat("  GOALTENDING (", DEEP_CHECK_TEAM, ") — no goalies with history/proj_gp found\n")
+}
 }
 
 team_off_def <- data.frame(team_abbrev = names(net_lookup), stringsAsFactors = FALSE) %>%
