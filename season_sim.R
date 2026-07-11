@@ -1487,9 +1487,49 @@ shots_for_lu     <- setNames(team_off_def$shots_for_pg, team_off_def$team_abbrev
 shots_against_lu <- setNames(team_off_def$shots_against_pg, team_off_def$team_abbrev)
 shooting_pct_lu  <- setNames(team_off_def$shooting_pct, team_off_def$team_abbrev)
 goalie_sv_lu     <- setNames(team_off_def$goalie_sv_pct, team_off_def$team_abbrev)
-# xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
-# onice_xgf_pg/onice_xga_pg are built) plus the team-level PP/PK
-# conversion rates that fill in what xG doesn't cover yet.
+
+# ── Standings-compression correction ────────────────────────────────────────
+# Empirically validated (see the Pythagorean-expectation-vs-simulated-win%
+# diagnostic below): even though our per-game randomness matches real NHL
+# season-to-season variance closely (~8.5 vs. a real 8-10 point SD
+# benchmark), the simulation still produces win probabilities that are
+# systematically pulled toward 50% relative to an independent Pythagorean
+# benchmark — correlation between team quality and the gap was -0.869, a
+# very clean, near-monotonic signature, not noise. This is a known
+# mathematical consequence of averaging an S-shaped win-probability curve
+# over a real, varied schedule (Jensen's inequality): bad teams get pulled
+# up, good teams pulled down, roughly in proportion to how extreme they are.
+#
+# Fix: amplify each team's DEVIATION from league average (5v5 xG and PP/PK
+# handled separately, same factor) before it reaches the Poisson simulation,
+# rather than touching the simulation's randomness itself (already
+# validated as realistic — changing that would break something we
+# confirmed is correct to fix something else). League-average teams are
+# unaffected (deviation ~0, unchanged regardless of factor).
+#
+# This is a DELIBERATELY PARTIAL correction, not a full one. The observed
+# sim-vs-Pythagorean ratio clustered loosely around 0.4-0.6 (our sim
+# currently produces roughly half the separation Pythagorean implies),
+# which would suggest ~2x for a full correction — we're using less than
+# that because some of the real-world gap plausibly reflects actual
+# in-season talent drift (trades, injuries, motivation swings) that a
+# fixed-roster, full-season simulation structurally can't capture at all;
+# treating the ENTIRE measured gap as pure bias risks overcorrecting.
+COMPRESSION_AMPLIFICATION <- 1.4
+amplify_around_mean <- function(x) {
+  m <- mean(x, na.rm = TRUE)
+  m + COMPRESSION_AMPLIFICATION * (x - m)
+}
+team_off_def <- team_off_def %>%
+  mutate(
+    onice_xgf_pg_wtd = amplify_around_mean(onice_xgf_pg_wtd),
+    onice_xga_pg_wtd = amplify_around_mean(onice_xga_pg_wtd),
+    pp_goals_pg      = amplify_around_mean(pp_goals_pg),
+    pk_ga_pg         = amplify_around_mean(pk_ga_pg)
+  )
+cat("\n  Standings-compression correction applied (amplification factor =", COMPRESSION_AMPLIFICATION,
+    ") — all diagnostics below reflect POST-correction inputs.\n")
+
 # xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
 # onice_xgf_pg/onice_xga_pg are built) plus team-level PP/PK goals-per-
 # game (direct, not shots*rate — see the note where team_pp_pk_rates is
