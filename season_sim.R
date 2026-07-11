@@ -1693,7 +1693,33 @@ tryCatch({
       round(mean(wp_home$home_goals) , 2), "vs", round(mean(wp_home$away_goals), 2), "avg goals\n")
   cat("    CHI at home:", round(mean(wp_away$away_goals > wp_away$home_goals) * 100, 1), "% CAR win |",
       round(mean(wp_away$home_goals), 2), "vs", round(mean(wp_away$away_goals), 2), "avg goals\n")
-}, error = function(e) cat("  Win-prob diagnostic error:", conditionMessage(e), "\n"))
+}, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
+
+# CAR-vs-CHI is the single most extreme matchup possible (best vs worst) —
+# it only tells us the Poisson math is behaving correctly for THAT gap.
+# What actually determines a bad team's season point total is their win
+# rate against AVERAGE competition, since that's most of their schedule.
+# This injects a synthetic "AVG" team at the league-average xG/PP/PK/
+# goaltending inputs to test that directly, rather than the extreme case.
+tryCatch({
+  xgf_lu["AVG"]      <- mean(team_off_def$onice_xgf_pg_wtd, na.rm = TRUE)
+  xga_lu["AVG"]      <- mean(team_off_def$onice_xga_pg_wtd, na.rm = TRUE)
+  pp_goals_lu["AVG"] <- mean(team_off_def$pp_goals_pg, na.rm = TRUE)
+  pk_ga_lu["AVG"]    <- mean(team_off_def$pk_ga_pg, na.rm = TRUE)
+  goalie_sv_lu["AVG"]<- mean(team_off_def$goalie_sv_pct, na.rm = TRUE)
+  n_check <- 20000
+  wp_home2 <- simulate_games(rep("AVG", n_check), rep("CHI", n_check))
+  wp_away2 <- simulate_games(rep("CHI", n_check), rep("AVG", n_check))
+  cat("  Win-prob sanity check — league-AVERAGE team vs CHI (worst 5v5 xG):\n")
+  cat("    AVG at home:", round(mean(wp_home2$home_goals > wp_home2$away_goals) * 100, 1), "% AVG win |",
+      round(mean(wp_home2$home_goals), 2), "vs", round(mean(wp_home2$away_goals), 2), "avg goals\n")
+  cat("    CHI at home:", round(mean(wp_away2$away_goals > wp_away2$home_goals) * 100, 1), "% AVG win |",
+      round(mean(wp_away2$home_goals), 2), "vs", round(mean(wp_away2$away_goals), 2), "avg goals\n")
+  # Rough season-points-implied check: if CHI's true win rate against a
+  # neutral-quality schedule is p, season points ~ p*2*82 + otl bonus.
+  chi_wr <- mean(c(mean(wp_home2$away_goals > wp_home2$home_goals), mean(wp_away2$home_goals > wp_away2$away_goals)))
+  cat("    CHI's average win rate vs AVG (both directions):", round(chi_wr * 100, 1), "% -> rough implied points (ignoring OTL bonus):", round(chi_wr * 2 * 82, 1), "\n")
+}, error = function(e) cat("  AVG-team diagnostic error:", conditionMessage(e), "\n"))
 
 simulate_one_season_pts <- function() {
   g <- simulate_games(last_schedule$home_abbrev, last_schedule$away_abbrev)
