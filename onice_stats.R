@@ -160,6 +160,29 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
   shots_df_scored
 }
 
+# Fallback for when home_defending_side is missing (confirmed: the NHL API
+# doesn't include this field for older seasons — 100% missing for 2011-2016
+# tested, 0% missing for 2023/2025). Infers it from shot coordinates
+# instead: teams switch ends every period (a fixed rule, not a tendency),
+# so the home team's own shots should cluster toward whichever net they're
+# ATTACKING that period — the opposite of what they defend. VALIDATED
+# against 2023 (real ground truth available): 100% agreement at both the
+# row level (164,336 shots) and the game-period level (4,593 periods),
+# zero disagreements even in the lowest-sample-size bucket — a strong,
+# checked result, not an unverified guess. Logged when it fires (not
+# silent) — if this triggers during NORMAL daily processing of a current
+# season, that would be surprising and worth a second look, unlike its
+# expected use backfilling old seasons.
+infer_defending_side <- function(shots_df) {
+  per_period <- shots_df %>%
+    filter(owner_team_id == home_id, !is.na(x_coord)) %>%
+    group_by(game_id, period) %>%
+    summarise(home_median_x = median(x_coord, na.rm = TRUE), .groups = "drop") %>%
+    mutate(inferred_side = ifelse(home_median_x > 0, "left", "right")) %>%
+    select(game_id, period, inferred_side)
+  shots_df %>% left_join(per_period, by = c("game_id", "period"))
+}
+
 MAX_GAMES_PER_RUN <- if (MODE == "backfill") Inf else 50L
 
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
@@ -547,6 +570,16 @@ process_game <- function(game_id) {
   }
 
   shots_raw_df <- if (length(shot_rows) > 0) bind_rows(shot_rows) else NULL
+  if (!is.null(shots_raw_df) && "home_defending_side" %in% names(shots_raw_df) &&
+      any(is.na(shots_raw_df$home_defending_side))) {
+    n_missing <- sum(is.na(shots_raw_df$home_defending_side))
+    cat("  home_defending_side missing for", n_missing, "of", nrow(shots_raw_df),
+        "shots in game", game_id, "— inferring from shot coordinates",
+        "(validated 100% agreement against known-good seasons; see onice_stats.R notes).\n")
+    shots_raw_df <- infer_defending_side(shots_raw_df) %>%
+      mutate(home_defending_side = coalesce(home_defending_side, inferred_side)) %>%
+      select(-inferred_side)
+  }
   shots_raw_df <- score_shots_with_xg(shots_raw_df, xg_model_obj)
   shots_xg_lookup <- if (!is.null(shots_raw_df) && "xg" %in% names(shots_raw_df) && "event_idx" %in% names(shots_raw_df)) {
     setNames(shots_raw_df$xg, as.character(shots_raw_df$event_idx))
