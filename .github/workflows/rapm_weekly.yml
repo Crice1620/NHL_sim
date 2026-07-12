@@ -1,0 +1,49 @@
+name: RAPM Weekly Refit
+permissions:
+  contents: write   # required so the default GITHUB_TOKEN can push commits
+on:
+  schedule:
+    # Weekly, not daily — RAPM (like WOWY) is a season-long aggregate
+    # measure, not something meant to capture single-game swings, and
+    # re-fitting it is a real compute cost (cross-validated ridge
+    # regression over a season's accumulated shots), unlike WOWY which is
+    # just arithmetic computed on the fly every time season_sim.R/app.R
+    # run. Only re-fits the CURRENT season (--mode=current) — completed
+    # historical seasons don't need repeated re-fitting once done.
+    - cron: '0 11 * * 0'   # Sundays at 11am UTC — adjust as you like
+  workflow_dispatch: {}     # lets you trigger it manually from the Actions tab
+jobs:
+  run-rapm-weekly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+      - name: Install system dependencies (needed to build httr/curl/openssl, same as onice_daily.yml)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c("dplyr","Matrix","glmnet"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+        # NOTE: no xgboost install needed here, unlike onice_daily.yml —
+        # fit_rapm.R only reads the ALREADY-SCORED xg column from
+        # shots_raw.csv, it never scores shots itself.
+      - name: Run RAPM refit for current season
+        run: Rscript fit_rapm.R --mode=current
+      - name: Commit and push results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if compgen -G "data/rapm/*/rapm.csv" > /dev/null; then
+            git add data/rapm/
+            git diff --cached --quiet || git commit -m "Weekly RAPM refit [skip ci]"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying..."
+              sleep 5
+            done
+          else
+            echo "No RAPM output found yet — nothing to commit."
+          fi
