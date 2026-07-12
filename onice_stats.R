@@ -90,14 +90,9 @@ SKATER_OUT  <- file.path(OUT_DIR, "skater_onice.csv")
 TEAM_OUT    <- file.path(OUT_DIR, "team_onice.csv")
 GOALIE_OUT  <- file.path(OUT_DIR, "goalie_onice.csv")
 SHOTS_RAW_OUT <- file.path(OUT_DIR, "shots_raw.csv")  # event-level shot data for future xG training — one row per shot attempt
+LINEUP_OUT    <- file.path(OUT_DIR, "shot_lineups.csv")  # full on-ice lineups per 5v5 shot event — RAPM's design-matrix input, joinable to shots_raw.csv via game_id+event_idx
 
 # ── xG model loading and scoring ────────────────────────────────────────────
-# Reads the model trained by train_xg_model.R (a local file read, not a
-# GitHub fetch, since this script runs with the repo already checked out
-# via GitHub Actions — same working directory both scripts write/read
-# relative to). If no model has been trained yet, shots simply get scored
-# as NA rather than erroring — everything downstream (goalie GSAx) treats
-# NA gracefully rather than breaking.
 XG_MODEL_PATH <- file.path("data", "xg_model", "xg_model.rds")
 xg_model_obj <- if (file.exists(XG_MODEL_PATH)) tryCatch(readRDS(XG_MODEL_PATH), error = function(e) NULL) else NULL
 if (is.null(xg_model_obj)) {
@@ -106,10 +101,6 @@ if (is.null(xg_model_obj)) {
   cat("Loaded xG model (trained", as.character(xg_model_obj$trained_at), "| seasons:", paste(xg_model_obj$seasons, collapse=", "), ")\n")
 }
 
-# Replicates train_xg_model.R's feature engineering EXACTLY — any drift
-# between this and the training script would silently produce wrong scores,
-# so if the training script's feature engineering ever changes, this needs
-# to change with it.
 score_shots_with_xg <- function(shots_df, xg_obj) {
   if (is.null(xg_obj) || is.null(shots_df) || nrow(shots_df) == 0) {
     if (!is.null(shots_df)) shots_df$xg <- NA_real_
@@ -145,9 +136,6 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
            is_rebound = !is.na(time_since_own_last_shot) & time_since_own_last_shot <= 3) %>%
     ungroup()
 
-  # Match training's exact factor levels — an unseen category (e.g. a shot
-  # type that never appeared in training data) maps to NA rather than
-  # silently shifting every other column's meaning.
   s$shot_type_clean  <- factor(s$shot_type_clean,  levels = xg_obj$shot_type_levels)
   s$shooter_strength <- factor(s$shooter_strength, levels = xg_obj$shooter_strength_levels)
 
@@ -158,45 +146,20 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
     X_raw <- model.matrix(~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1,
                             data = s[valid, c("dist_to_net","angle_to_net","is_rebound","shot_type_clean","shooter_strength")] %>%
                               mutate(is_rebound = as.integer(is_rebound)))
-    # Pre-allocate ONE clean matrix with exactly the training columns and
-    # fill it via indexing, rather than cbind()-ing two separately
-    # allocated matrices together — cbind() on a model.matrix() output can
-    # produce a result with memory-alignment quirks that trip up XGBoost's
-    # C++ prediction backend ("Input pointer misalignment"), which is
-    # exactly the error this fixes. Always wrapping in xgb.DMatrix() before
-    # predict() (rather than passing a raw matrix directly) is also what
-    # train_xg_model.R itself does — this scoring function just wasn't
-    # doing the same thing consistently before.
     train_cols <- xg_obj$model$feature_names
     X_new <- matrix(0, nrow = nrow(X_raw), ncol = length(train_cols), dimnames = list(NULL, train_cols))
     common_cols <- intersect(train_cols, colnames(X_raw))
     X_new[, common_cols] <- X_raw[, common_cols]
-    # Known xgboost R package issue: a matrix built via matrix()+indexed
-    # assignment can end up with a memory layout that fails XGBoost's C++
-    # "array interface" alignment check ("Input pointer misalignment"),
-    # even though it's a perfectly valid R matrix. Forcing a clean re-copy
-    # via as.numeric()+reshape allocates a genuinely fresh, standard
-    # buffer that satisfies the alignment requirement — this is the
-    # standard workaround for this exact, documented issue.
     X_new <- matrix(as.numeric(X_new), nrow = nrow(X_new), ncol = ncol(X_new), dimnames = dimnames(X_new))
     xg_vals[valid] <- predict(xg_obj$model, xgb.DMatrix(data = X_new))
   }
   shots_df_scored <- s %>% select(-is_home_shooter, -target_side, -norm_x, -norm_y, -dist_to_net, -angle_to_net,
                                     -shooter_strength, -shot_type_clean, -time_since_own_last_shot, -is_rebound)
   shots_df_scored$xg <- xg_vals
-  # Also worth keeping is_rebound and shooter_strength on the output row
-  # for anyone inspecting shots_raw.csv later — re-attach from s directly
-  # since select() above dropped them from the returned frame.
   shots_df_scored$is_rebound_at_scoring <- s$is_rebound
   shots_df_scored
 }
 
-
-
-# Caps how many NEW games get processed in a single run.
-# - daily mode: small safety-net cap (a normal day only has ~5-15 new games).
-# - backfill mode: NO cap — processes the entire remaining backlog for the
-#   season in one run.
 MAX_GAMES_PER_RUN <- if (MODE == "backfill") Inf else 50L
 
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
@@ -208,7 +171,6 @@ nhl_get <- function(url, timeout_s = 25) {
            error = function(e) NULL)
 }
 
-# ── 1. Find completed games not yet processed ────────────────────────────
 processed_ids <- if (file.exists(STATE_FILE)) readLines(STATE_FILE) else character(0)
 
 find_recent_games <- function(days_back) {
@@ -231,8 +193,6 @@ find_recent_games <- function(days_back) {
 find_season_games <- function(season_end_year) {
   ids <- character(0)
   start_date <- as.Date(paste0(season_end_year - 1L, "-09-01"))
-  # Bound the end to THIS season's end, not always today — otherwise
-  # backfilling an older season would sweep in every later season's games.
   end_date <- min(Sys.Date(), as.Date(paste0(season_end_year, "-07-15")))
   d <- start_date
   while (d <= end_date) {
@@ -268,7 +228,6 @@ if (length(new_games) > MAX_GAMES_PER_RUN) {
   new_games <- new_games[seq_len(MAX_GAMES_PER_RUN)]
 }
 
-# ── 2. Helpers: time parsing, situationCode parsing ──────────────────────────
 parse_mmss <- function(x) {
   if (is.null(x) || is.na(x)) return(NA_real_)
   p <- strsplit(as.character(x), ":")[[1]]
@@ -276,19 +235,10 @@ parse_mmss <- function(x) {
   suppressWarnings(as.numeric(p[1]) * 60 + as.numeric(p[2]))
 }
 
-# situationCode: 4-char string, [awayGoalieIn][awaySkaters][homeSkaters][homeGoalieIn]
 parse_situation <- function(code) {
   if (is.null(code) || is.na(code) || nchar(as.character(code)) != 4)
     return(list(label = "other"))
   ch <- strsplit(as.character(code), "")[[1]]
-  # VERIFIED directly against real NHL API play-by-play data (not just a
-  # community reference, which turned out to be wrong/unverified on this
-  # specific point): situationCode reads as [Away Goalie][Away Skaters]
-  # [Home Skaters][Home Goalie]. Confirmed using two real penalty events
-  # from an actual game — a team that just took a penalty correctly shows
-  # up shorthanded under THIS byte order, and backwards under the other
-  # one. This is the original order this function used before an earlier,
-  # incorrect "fix" reversed it based on an unverified external source.
   away_g <- suppressWarnings(as.integer(ch[1])); away_sk <- suppressWarnings(as.integer(ch[2]))
   home_sk <- suppressWarnings(as.integer(ch[3])); home_g <- suppressWarnings(as.integer(ch[4]))
   if (any(is.na(c(away_g, away_sk, home_sk, home_g)))) return(list(label = "other"))
@@ -306,14 +256,9 @@ bump  <- function(lst, ids, by = 1) { for (pid in ids) if (!is.na(pid)) lst[[pid
 to_named_list <- function(ids, vals) { if (length(ids) == 0) return(list()); setNames(as.list(vals), as.character(ids)) }
 merge_add <- function(base, add) { for (k in names(add)) base[[k]] <- (base[[k]] %||% 0) + add[[k]]; base }
 
-# ── 3. Skater on-ice reconstruction (ONLY runs when shift data exists) ──────
-process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shots_xg_lookup = numeric(0)) {
+process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shots_xg_lookup = numeric(0), game_id = NA_character_) {
   shifts <- lapply(shifts_raw$data, function(s) {
     tryCatch({
-      # The shift-chart API mixes actual shifts (typeCode 517) with
-      # non-shift event markers sharing the same feed (e.g. typeCode 505
-      # goal markers, shiftNumber 0, duration null) — these are NOT ice
-      # time intervals and must never be treated as one.
       tc <- suppressWarnings(as.integer(s$typeCode %||% NA))
       if (is.na(tc) || tc != 517) return(NULL)
       per <- suppressWarnings(as.integer(s$period %||% NA))
@@ -330,28 +275,6 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
 
   on_ice_at <- function(t_abs, team_id) {
     if (is.na(t_abs) || is.na(team_id)) return(character(0))
-    # Every event's own timestamp becomes a segment boundary in sit_df, so
-    # an event's t_abs always lands exactly on a boundary — meaning a
-    # shift that's ending AND a shift that's starting can both technically
-    # satisfy a naive inclusive-both-ends match at that exact instant
-    # (confirmed directly: a PP goal originally credited 10 players
-    # instead of ~5, matching 5 departing + 5 arriving simultaneously).
-    #
-    # Which side should be excluded is NOT symmetric, though. When a goal
-    # is scored, the players who were actually on the ice for it are the
-    # ones whose shift concludes right around that moment (they get
-    # changed off right after, since a goal stops play) — while a
-    # DIFFERENT line often starts fresh for the ensuing faceoff, having
-    # nothing to do with the goal itself. An earlier version of this fix
-    # excluded the departing shift and kept the arriving one — backwards.
-    # Confirmed directly: under that version, a team's clear #1 power-play
-    # player (46% of the team's total PP ice time) was only credited with
-    # ~10% of the team's PP goals, while the "team without him" rate came
-    # out to an impossible ~19 goals/60 — i.e. goals he was actually part
-    # of were being misattributed to the arriving, uninvolved line.
-    #
-    # Fix: include the shift already underway at the event (even if it
-    # ends exactly then), exclude the shift that's only just starting.
     rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs < t_abs & shifts_df$end_abs >= t_abs, ]
     unique(rows$player_id)
   }
@@ -360,25 +283,27 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
   ev_goals <- list(); ev_assists <- list()
   pp_goals <- list(); pp_assists <- list()
   pk_ga <- list()
-  # Individual on-ice PP-shots-for / PK-shots-against — same shift-matching
-  # approach as 5v5 CF/CA above, just filtered to power-play/penalty-kill
-  # situations instead. This is what makes real per-player PK/PP shot
-  # volume possible (not just goals), which wasn't tracked before.
   pp_shots_ind <- list(); pk_shots_against_ind <- list()
-  # On-ice (not individual-credit) PP-goals-for / PK-goals-against — needed
-  # for true WOWY on PP Offense/PK Defense, same reasoning as CF/CA vs.
-  # ev_goals above: on-ice credits EVERYONE who was out there, not just
-  # the scorer, which is what a "team rate with/without this player"
-  # comparison actually needs.
   pp_gf_onice_ind <- list(); pk_ga_onice_ind <- list()
-  # On-ice xG-for/against — needed for xG-based WOWY (a less noisy signal
-  # than actual goals, since it isolates shot-generation/shot-suppression
-  # skill from shooting/goaltending luck). Same shared-credit reasoning as
-  # CF/CA/goals above: whoever was on the ice for a shot gets credited,
-  # not just the shooter/goalie.
   xg_for_5v5 <- list(); xg_against_5v5 <- list()
   toi_5v5 <- list(); toi_pp <- list(); toi_pk <- list()
   player_team_id <- list()
+  # RAPM needs the FULL lineup combination for every event (who was on the
+  # ice TOGETHER), not just each player's own marginal total the way
+  # for_on/against_on (and their PP/PK equivalents) get used everywhere
+  # else below (via bump()). This is genuinely new — everything else in
+  # this function already computed these on-ice lists for every shot, at
+  # both 5v5 and PP/PK, they just never got kept. One row per shot event,
+  # both sides' full rosters as semicolon-joined strings (compact — full
+  # long-format one-row-per-player-per-event would run ~10x larger across
+  # 15 seasons' worth of games) — matches shots_raw.csv's granularity
+  # exactly (one row per shot, joinable via game_id+event_idx).
+  # situation_code is preserved on every row so the exact strength state
+  # (5v5, 5v4, 5v3, 4v3, etc.) can be recovered later — PP/PK RAPM needs
+  # to handle asymmetric strength states differently from 5v5's uniform
+  # 5-a-side case, and that's a modeling decision for later, not something
+  # this capture step should pre-judge by discarding the raw code.
+  lineup_rows <- list()
 
   if (nrow(sit_df) > 0) {
     game_end_abs <- suppressWarnings(max(shifts_df$end_abs, na.rm = TRUE))
@@ -419,15 +344,26 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
       for_on <- on_ice_at(t_abs, owner_team); against_on <- on_ice_at(t_abs, against_team)
       cf <- bump(cf, for_on); ca <- bump(ca, against_on)
       if (typ == "goal") { gf <- bump(gf, for_on); ga <- bump(ga, against_on) }
-      # On-ice xG credit — same shift-matching as CF/CA above, just weighted
-      # by this specific shot's scored xG value instead of a flat +1 count.
-      # Single-bracket indexing (not [[ ) so a missing key returns NA
-      # rather than erroring — expected for any shot the model couldn't
-      # score (e.g. missing coordinates) or if no trained model exists yet.
       shot_xg <- unname(shots_xg_lookup[as.character(play_i)])
       if (!is.na(shot_xg)) {
         xg_for_5v5 <- bump(xg_for_5v5, for_on, by = shot_xg)
         xg_against_5v5 <- bump(xg_against_5v5, against_on, by = shot_xg)
+      }
+      # NEW — RAPM capture: same for_on/against_on already computed above
+      # for the counter-bumping, just also written down as a row instead
+      # of discarded. Only kept when both sides have a plausible full
+      # complement (>=3 skaters) — a shift-chart gap or mid-transition
+      # artifact producing an obviously incomplete lineup would poison a
+      # RAPM regression far more than it would a simple per-player counter,
+      # so this is a stricter bar than bump() above needs.
+      if (length(for_on) >= 3 && length(against_on) >= 3) {
+        lineup_rows[[length(lineup_rows) + 1]] <- data.frame(
+          game_id = game_id, event_idx = play_i, situation_code = code,
+          for_team_id = owner_team, against_team_id = against_team,
+          for_players = paste(for_on, collapse = ";"),
+          against_players = paste(against_on, collapse = ";"),
+          stringsAsFactors = FALSE
+        )
       }
     }
     if (is_shot_evt && sit$label %in% c("home_pp", "away_pp") && !is.na(t_abs) && !is.na(owner_team)) {
@@ -435,7 +371,6 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
                      (identical(owner_team, away_id) && sit$label == "away_pp")
       against_team <- if (identical(owner_team, home_id)) away_id else home_id
       if (isTRUE(owner_on_pp)) {
-        # owner_team has the power play; against_team is killing the penalty
         pp_shooters_on <- on_ice_at(t_abs, owner_team)
         pk_defenders_on <- on_ice_at(t_abs, against_team)
         pp_shots_ind <- bump(pp_shots_ind, pp_shooters_on)
@@ -444,10 +379,25 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
           pp_gf_onice_ind <- bump(pp_gf_onice_ind, pp_shooters_on)
           pk_ga_onice_ind <- bump(pk_ga_onice_ind, pk_defenders_on)
         }
+        # NEW — RAPM capture for PP/PK, same principle as the 5v5 capture
+        # above: pp_shooters_on/pk_defenders_on are already computed right
+        # here for the counter bumps, just also written down instead of
+        # discarded. Deliberately a LOOSER gate than 5v5's >=3 (just
+        # non-empty on both sides) rather than a hardcoded skater count —
+        # PP/PK strength states aren't uniform (5v4, 5v3, 4v3 all have
+        # different natural counts), so raw situation_code is preserved
+        # instead, letting the actual modeling step decide how to bucket
+        # by exact strength state rather than this capture step guessing.
+        if (length(pp_shooters_on) > 0 && length(pk_defenders_on) > 0) {
+          lineup_rows[[length(lineup_rows) + 1]] <- data.frame(
+            game_id = game_id, event_idx = play_i, situation_code = code,
+            for_team_id = owner_team, against_team_id = against_team,
+            for_players = paste(pp_shooters_on, collapse = ";"),
+            against_players = paste(pk_defenders_on, collapse = ";"),
+            stringsAsFactors = FALSE
+          )
+        }
       }
-      # Shorthanded shot BY the penalty-killing team (rare) isn't tracked
-      # here — matches the existing team-level handling, which also treats
-      # this as a minor edge case rather than precisely modeling it.
     }
 
     if (typ == "goal") {
@@ -481,10 +431,10 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
        pp_gf_onice_ind = pp_gf_onice_ind, pk_ga_onice_ind = pk_ga_onice_ind,
        xg_for_5v5 = xg_for_5v5, xg_against_5v5 = xg_against_5v5,
        player_team_id = player_team_id,
-       toi_5v5 = toi_5v5, toi_pp = toi_pp, toi_pk = toi_pk)
+       toi_5v5 = toi_5v5, toi_pp = toi_pp, toi_pk = toi_pk,
+       lineup = if (length(lineup_rows) > 0) bind_rows(lineup_rows) else NULL)
 }
 
-# ── 4. Per-game processing ───────────────────────────────────────────────────
 process_game <- function(game_id) {
   pbp <- nhl_get(paste0("https://api-web.nhle.com/v1/gamecenter/", game_id, "/play-by-play"))
   if (is.null(pbp) || is.null(pbp$plays) || length(pbp$plays) == 0) return(NULL)
@@ -523,21 +473,7 @@ process_game <- function(game_id) {
   t_cf <- list(); t_ca <- list(); t_gf <- list(); t_ga <- list()
   t_pp_goals <- list(); t_pp_shots <- list(); t_pk_ga <- list(); t_pk_shots <- list()
   g_shots5 <- list(); g_ga5 <- list(); g_shotspk <- list(); g_gapk <- list()
-  # Raw shot-level rows for future xG training — NOT aggregated here, just
-  # collected as individual rows and written to a separate per-season file.
-  # Coordinates/shot type were always present in the play-by-play feed;
-  # this is the first time we're actually keeping them instead of only
-  # checking whether a shot happened.
   shot_rows <- list()
-  # Penalties taken/drawn — new, needed for the WAR "Penalties" component.
-  # FIELD NAMES BELOW ARE BEST-GUESS based on the NHL API's general
-  # naming convention (committedByPlayerId / drawnByPlayerId), consistent
-  # with how other event types in this same feed name their fields
-  # (eventOwnerTeamId, scoringPlayerId, assist1PlayerId, etc.) — but this
-  # is the one part of this extension that should be verified against a
-  # real penalty event from the live feed before trusting the output,
-  # the same way every other field-name assumption in this pipeline has
-  # needed a real-data check at some point.
   pen_taken <- list(); pen_drawn <- list()
 
   for (play_i in seq_along(pbp$plays)) {
@@ -556,17 +492,6 @@ process_game <- function(game_id) {
       pen_desc <- tryCatch(det$descKey %||% NA_character_, error = function(e) NA_character_)
       pen_type_code <- tryCatch(det$typeCode %||% NA_character_, error = function(e) NA_character_)
       pen_dur <- tryCatch(suppressWarnings(as.integer(det$duration %||% NA)), error = function(e) NA_integer_)
-      # Fights/misconducts/matches shouldn't count toward normal penalty
-      # impact the way a minor does — exclude anything not a standard
-      # minor from this WAR component (majors/misconducts still get
-      # written to the raw output below if you want them later, they just
-      # aren't counted in the simple taken/drawn tallies).
-      # NOTE: duration is reported in MINUTES, not seconds (confirmed from
-      # a real event: a standard minor shows duration=2, not 120) — the
-      # first version of this check assumed seconds and silently excluded
-      # every single penalty as a result. typeCode == "MIN" is the more
-      # explicit, robust signal and is checked first; the duration check
-      # is kept as a secondary guard in case typeCode is ever missing.
       is_std_minor <- (!is.na(pen_type_code) && pen_type_code == "MIN") ||
                       (is.na(pen_type_code) && !is.na(pen_dur) && pen_dur == 2)
       if (is_std_minor) {
@@ -583,10 +508,6 @@ process_game <- function(game_id) {
         game_id = game_id, event_idx = play_i, period = per, time_in_period = tip, t_abs = t_abs_shot,
         situation_code = code, situation_label = sit$label,
         event_type = typ, owner_team_id = owner_team, home_id = home_id,
-        # Which side the HOME team defends this period — needed to know
-        # which net (x=+89 or x=-89) a given shot was actually aimed at,
-        # since teams switch ends every period. Without this, x_coord/
-        # y_coord alone can't give a correct distance/angle to net.
         home_defending_side = tryCatch(pl$homeTeamDefendingSide %||% NA_character_, error = function(e) NA_character_),
         shooter_id = tryCatch(as.character(det$shootingPlayerId %||% det$scoringPlayerId %||% NA), error = function(e) NA_character_),
         goalie_id = goalie_id,
@@ -626,25 +547,11 @@ process_game <- function(game_id) {
   }
 
   shots_raw_df <- if (length(shot_rows) > 0) bind_rows(shot_rows) else NULL
-  # Score shots HERE, before process_game_skaters() runs, so on-ice xG
-  # credit can use the exact same scored values as everything else
-  # (shots_raw.csv output, goalie xg_faced) — never re-derived or
-  # recomputed a second time, which would risk the two computations
-  # drifting out of sync with each other.
   shots_raw_df <- score_shots_with_xg(shots_raw_df, xg_model_obj)
   shots_xg_lookup <- if (!is.null(shots_raw_df) && "xg" %in% names(shots_raw_df) && "event_idx" %in% names(shots_raw_df)) {
     setNames(shots_raw_df$xg, as.character(shots_raw_df$event_idx))
   } else numeric(0)
 
-  # Team-level xG-for/against — aggregated from the already-scored shots
-  # (can't be done inline during the main loop above, since scoring itself
-  # needs the FULL shot sequence first for rebound detection).
-  # MUST be filtered to 5v5-only, matching gf_5v5/ga_5v5's scope and the
-  # player-level xg_for_5v5/xg_against_5v5 — without this filter, the team
-  # baseline included PP/PK shots while the player-level number was
-  # 5v5-only, a scope mismatch that produced a systematic bias (every
-  # player looking like they contribute far less than their "fair share"
-  # of an inflated all-situation team total).
   t_xg_for <- list(); t_xg_against <- list()
   if (!is.null(shots_raw_df) && "xg" %in% names(shots_raw_df)) {
     valid_xg <- shots_raw_df[!is.na(shots_raw_df$xg) & shots_raw_df$situation_label == "5v5", ]
@@ -668,7 +575,7 @@ process_game <- function(game_id) {
   skater_result <- NULL
   shifts_raw <- nhl_get(paste0("https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=", game_id))
   if (!is.null(shifts_raw) && !is.null(shifts_raw$data) && length(shifts_raw$data) > 0) {
-    skater_result <- tryCatch(process_game_skaters(pbp, shifts_raw, home_id, away_id, sit_df, shots_xg_lookup), error = function(e) NULL)
+    skater_result <- tryCatch(process_game_skaters(pbp, shifts_raw, home_id, away_id, sit_df, shots_xg_lookup, game_id), error = function(e) NULL)
     if (!is.null(skater_result)) {
       skater_result$player_team_abbrev <- lapply(skater_result$player_team_id, function(tid) {
         if (identical(as.character(tid), as.character(home_id))) home_abbrev
@@ -682,7 +589,6 @@ process_game <- function(game_id) {
        shots_raw = shots_raw_df, penalty = penalty_result)
 }
 
-# ── 5. Load existing totals, process new games, merge ───────────────────────
 existing_skater <- if (file.exists(SKATER_OUT)) tryCatch(read.csv(SKATER_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
 existing_team   <- if (file.exists(TEAM_OUT))   tryCatch(read.csv(TEAM_OUT,   stringsAsFactors = FALSE), error = function(e) NULL) else NULL
 existing_goalie <- if (file.exists(GOALIE_OUT)) tryCatch(read.csv(GOALIE_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
@@ -692,12 +598,6 @@ blank_skater <- function() list(cf=list(),ca=list(),gf=list(),ga=list(),ev_goals
                                  pp_gf_onice=list(),pk_ga_onice=list(),pen_taken=list(),pen_drawn=list(),
                                  xg_for_5v5=list(),xg_against_5v5=list(),
                                  toi_5v5=list(),toi_pp=list(),toi_pk=list(),gp=list())
-# Guard against older skater_onice.csv files from before pp_shots/
-# pk_shots_against/pp_gf_onice/pk_ga_onice/pen_taken/pen_drawn/xg_for_5v5/
-# xg_against_5v5 existed — default to 0 rather than erroring, meaning
-# those already-processed games just won't contribute to the new columns
-# until reprocessed (not a correctness issue, just a coverage gap that
-# closes naturally as new games get processed).
 if (!is.null(existing_skater) && nrow(existing_skater) > 0) {
   if (!"pp_shots" %in% names(existing_skater)) existing_skater$pp_shots <- 0
   if (!"pk_shots_against" %in% names(existing_skater)) existing_skater$pk_shots_against <- 0
@@ -740,7 +640,7 @@ team_totals <- if (is.null(existing_team) || nrow(existing_team) == 0) blank_tea
 )
 
 blank_goalie <- function() list(shots_5v5=list(),ga_5v5=list(),shots_pk=list(),ga_pk=list(),xg_faced=list(),gp=list())
-if (!is.null(existing_goalie) && nrow(existing_goalie) > 0 && !"xg_faced" %in% names(existing_goalie)) existing_goalie$xg_faced <- 0  # guard for pre-xG-model CSVs
+if (!is.null(existing_goalie) && nrow(existing_goalie) > 0 && !"xg_faced" %in% names(existing_goalie)) existing_goalie$xg_faced <- 0
 goalie_totals <- if (is.null(existing_goalie) || nrow(existing_goalie) == 0) blank_goalie() else list(
   shots_5v5 = to_named_list(existing_goalie$player_id, existing_goalie$shots_5v5), ga_5v5 = to_named_list(existing_goalie$player_id, existing_goalie$ga_5v5),
   shots_pk = to_named_list(existing_goalie$player_id, existing_goalie$shots_pk), ga_pk = to_named_list(existing_goalie$player_id, existing_goalie$ga_pk),
@@ -760,15 +660,9 @@ remap_team_keys <- function(lst, home_id, away_id, home_abbrev, away_abbrev) {
 processed_this_run <- character(0)
 skater_games_ok <- 0L
 team_games_ok <- 0L
-# One row per player per game — used at the end to determine each player's
-# primary team for the season (most games played), same simplification
-# most public tools use for a season-total row rather than splitting
-# traded players' stats across multiple team rows.
 player_team_rows <- list()
-# Raw shots accumulate as a list of per-game data.frames, combined and
-# written once at the end — same "append to existing CSV" pattern as
-# everything else in this script, so backfill runs can resume/extend.
 shots_raw_new <- list()
+lineup_rows_new <- list()  # accumulates across games, same append pattern as shots_raw_new
 
 for (gid in new_games) {
   cat("Processing game", gid, "...\n")
@@ -801,15 +695,8 @@ for (gid in new_games) {
   goalie_totals$gp <- merge_add(goalie_totals$gp, to_named_list(goalie_game_players, rep(1, length(goalie_game_players))))
 
   if (!is.null(res$shots_raw) && nrow(res$shots_raw) > 0) {
-    scored_shots <- res$shots_raw  # already scored inside process_game()
+    scored_shots <- res$shots_raw
     shots_raw_new[[length(shots_raw_new) + 1]] <- scored_shots
-    # Goalie xG-faced — matches the SAME scope as the existing goalie
-    # shots_5v5/shots_pk tracking above (5v5 shots faced + shots faced
-    # while this goalie's team is shorthanded). The rarer "shorthanded
-    # goal against a power-play team" situation isn't tracked for goalies
-    # anywhere in this pipeline yet (a pre-existing scope limitation, not
-    # something newly introduced here), so it's excluded here too for
-    # consistency rather than partially covering it.
     if (!is.null(scored_shots) && "xg" %in% names(scored_shots)) {
       xg_tracked <- scored_shots %>%
         filter(!is.na(goalie_id), !is.na(xg),
@@ -823,10 +710,6 @@ for (gid in new_games) {
     }
   }
 
-  # Penalties taken/drawn come from play-by-play parsing alone (same as
-  # team/goalie stats) — NOT gated behind shift-data availability the way
-  # skater on-ice stats below are, so this has better coverage even for
-  # games with missing shift charts.
   skater_totals$pen_taken <- merge_add(skater_totals$pen_taken, res$penalty$pen_taken)
   skater_totals$pen_drawn <- merge_add(skater_totals$pen_drawn, res$penalty$pen_drawn)
 
@@ -855,6 +738,14 @@ for (gid in new_games) {
         stringsAsFactors = FALSE
       )
     }
+    if (!is.null(sk$lineup) && nrow(sk$lineup) > 0) {
+      lu <- sk$lineup
+      lu$for_team_abbrev <- ifelse(lu$for_team_id == tr$home_id, tr$home_abbrev,
+                                    ifelse(lu$for_team_id == tr$away_id, tr$away_abbrev, NA_character_))
+      lu$against_team_abbrev <- ifelse(lu$against_team_id == tr$home_id, tr$home_abbrev,
+                                        ifelse(lu$against_team_id == tr$away_id, tr$away_abbrev, NA_character_))
+      lineup_rows_new[[length(lineup_rows_new) + 1]] <- lu
+    }
     skater_games_ok <- skater_games_ok + 1L
   }
   processed_this_run <- c(processed_this_run, gid)
@@ -868,7 +759,6 @@ if (length(processed_this_run) == 0) {
 
 gv <- function(lst, pid) lst[[pid]] %||% 0
 
-# ── Team output ───────────────────────────────────────────────────────────
 all_teams <- unique(names(team_totals$gp))
 team_df <- data.frame(
   team_abbrev = all_teams,
@@ -881,12 +771,6 @@ team_df <- data.frame(
   pp_shots    = sapply(all_teams, gv, lst = team_totals$pp_shots),
   pk_goals_against = sapply(all_teams, gv, lst = team_totals$pk_ga),
   pk_shots_against = sapply(all_teams, gv, lst = team_totals$pk_shots),
-  # NOTE: despite the name not saying "5v5" the way gf_5v5/ga_5v5 does,
-  # these ARE 5v5-only (filtered at the aggregation step above) — that
-  # ambiguous naming is exactly what let a real scope-mismatch bug slip
-  # through once already (team-level was all-situation while player-level
-  # xg_for_5v5 was 5v5-only). Keep these two scoped together if this ever
-  # gets extended to also track an all-situation version.
   xg_for     = sapply(all_teams, gv, lst = team_totals$xg_for),
   xg_against = sapply(all_teams, gv, lst = team_totals$xg_against),
   toi_5v5_sec = sapply(all_teams, gv, lst = team_totals$toi_5v5),
@@ -902,7 +786,6 @@ team_df <- data.frame(
 )
 write.csv(team_df, TEAM_OUT, row.names = FALSE)
 
-# ── Goalie output ─────────────────────────────────────────────────────────
 all_goalies <- unique(names(goalie_totals$gp))
 goalie_df <- data.frame(
   player_id = all_goalies,
@@ -916,23 +799,11 @@ goalie_df <- data.frame(
 ) %>% mutate(
   sv_pct_5v5 = ifelse(shots_5v5 > 0, round(1 - ga_5v5 / shots_5v5, 4), NA_real_),
   sv_pct_pk  = ifelse(shots_pk  > 0, round(1 - ga_pk  / shots_pk,  4), NA_real_),
-  # Goals Saved Above Expected — real goaltending skill independent of shot
-  # quality, using the same 5v5+PK-against scope as sv_pct_5v5/sv_pct_pk
-  # above (see the scope note where xg_faced gets accumulated). Positive
-  # GSAx = allowed fewer goals than the shots they faced would suggest an
-  # average goalie allows; negative = allowed more.
   actual_ga_tracked = ga_5v5 + ga_pk,
   gsax = ifelse(xg_faced > 0, round(xg_faced - actual_ga_tracked, 2), NA_real_)
 )
 write.csv(goalie_df, GOALIE_OUT, row.names = FALSE)
 
-# ── Determine each player's team for the season ─────────────────────────────
-# Mode (most frequent) of the team_abbrev seen across this run's newly-
-# processed games. For players with no new games this run, fall back to
-# whatever was already recorded — this is a "current team" heuristic
-# consistent with how the rest of this pipeline treats team association
-# (current roster is the source of truth), not a full multi-team season
-# split for traded players.
 team_lookup <- list()
 if (length(player_team_rows) > 0) {
   ptr <- bind_rows(player_team_rows)
@@ -946,7 +817,6 @@ existing_team_lookup <- if (!is.null(existing_skater) && "team_abbrev" %in% name
   setNames(as.list(existing_skater$team_abbrev), as.character(existing_skater$player_id))
 } else list()
 
-# ── Skater output (only if we have any shift-dependent data at all) ────────
 all_pids <- unique(names(skater_totals$gp))
 if (length(all_pids) > 0) {
   skater_df <- data.frame(
@@ -985,28 +855,11 @@ if (length(all_pids) > 0) {
     ev_points_per60 = ifelse(toi_5v5_sec > 0, round((ev_goals + ev_assists) / (toi_5v5_sec / 3600), 2), NA_real_),
     pp_points_per60 = ifelse(toi_pp_sec > 0, round((pp_goals + pp_assists) / (toi_pp_sec / 3600), 2), NA_real_),
     pk_ga_per60     = ifelse(toi_pk_sec > 0, round(pk_ga / (toi_pk_sec / 3600), 2), NA_real_),
-    # Real on-ice PK save rate — how often shots against were stopped while
-    # THIS player was on the ice killing a penalty. Previously impossible
-    # (no per-player PK shot volume existed); pk_ga_per60 alone can't tell
-    # you whether a low goals-against rate reflects genuinely good penalty
-    # killing or just facing very few shots.
     pk_save_pct     = ifelse(pk_shots_against > 0, round(1 - pk_ga / pk_shots_against, 4), NA_real_),
-    # On-ice (not individual-credit) PP-GF/60 and PK-GA/60 — these are what
-    # WOWY actually needs to compare against team totals, same idea as
-    # gf_per60_5v5/ga_per60_5v5 above but for special teams.
     pp_gf_onice_per60 = ifelse(toi_pp_sec > 0, round(pp_gf_onice / (toi_pp_sec / 3600), 2), NA_real_),
     pk_ga_onice_per60 = ifelse(toi_pk_sec > 0, round(pk_ga_onice / (toi_pk_sec / 3600), 2), NA_real_),
-    # On-ice xG-for/against per 60 — a less noisy version of gf_per60_5v5/
-    # ga_per60_5v5 above, since it reflects shot-generation/shot-suppression
-    # quality directly rather than actual goals (which include shooting/
-    # goaltending luck on top of the underlying shot quality).
     xg_for_per60_5v5     = ifelse(toi_5v5_sec > 0, round(xg_for_5v5 / (toi_5v5_sec / 3600), 3), NA_real_),
     xg_against_per60_5v5 = ifelse(toi_5v5_sec > 0, round(xg_against_5v5 / (toi_5v5_sec / 3600), 3), NA_real_),
-    # Penalties can happen in any strength state, so total tracked TOI
-    # (5v5+PP+PK) is the denominator here rather than one specific state.
-    # This slightly undercounts true all-situation TOI (garbage-time/
-    # empty-net play isn't tracked), which is a minor, acceptable
-    # imprecision rather than a real error.
     toi_all_tracked_sec = toi_5v5_sec + toi_pp_sec + toi_pk_sec,
     pen_taken_per60 = ifelse(toi_all_tracked_sec > 0, round(pen_taken / (toi_all_tracked_sec / 3600), 2), NA_real_),
     pen_drawn_per60 = ifelse(toi_all_tracked_sec > 0, round(pen_drawn / (toi_all_tracked_sec / 3600), 2), NA_real_),
@@ -1015,18 +868,26 @@ if (length(all_pids) > 0) {
   write.csv(skater_df, SKATER_OUT, row.names = FALSE)
 }
 
-# ── Raw shots output (event-level, for future xG training) ─────────────────
 if (length(shots_raw_new) > 0) {
   new_shots_df <- bind_rows(shots_raw_new)
   existing_shots_raw <- if (file.exists(SHOTS_RAW_OUT)) tryCatch(read.csv(SHOTS_RAW_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
   combined_shots_df <- if (!is.null(existing_shots_raw) && nrow(existing_shots_raw) > 0) {
-    # De-dupe on game_id in case a game somehow got reprocessed — keep the
-    # existing rows and only add shots from genuinely new games.
     new_shots_df <- new_shots_df[!(new_shots_df$game_id %in% existing_shots_raw$game_id), ]
     bind_rows(existing_shots_raw, new_shots_df)
   } else new_shots_df
   write.csv(combined_shots_df, SHOTS_RAW_OUT, row.names = FALSE)
   cat("Wrote", SHOTS_RAW_OUT, "-", nrow(combined_shots_df), "shot events total (", nrow(new_shots_df), "new)\n")
+}
+
+if (length(lineup_rows_new) > 0) {
+  new_lineup_df <- bind_rows(lineup_rows_new)
+  existing_lineup <- if (file.exists(LINEUP_OUT)) tryCatch(read.csv(LINEUP_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
+  combined_lineup_df <- if (!is.null(existing_lineup) && nrow(existing_lineup) > 0) {
+    new_lineup_df <- new_lineup_df[!(new_lineup_df$game_id %in% existing_lineup$game_id), ]
+    bind_rows(existing_lineup, new_lineup_df)
+  } else new_lineup_df
+  write.csv(combined_lineup_df, LINEUP_OUT, row.names = FALSE)
+  cat("Wrote", LINEUP_OUT, "-", nrow(combined_lineup_df), "shot-lineup rows total (", nrow(new_lineup_df), "new)\n")
 }
 
 writeLines(unique(c(processed_ids, processed_this_run)), STATE_FILE)
