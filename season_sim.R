@@ -65,6 +65,22 @@ current_month <- as.integer(format(Sys.Date(), "%m"))
 # would have already caused an exit.
 season_year <- current_year + 1L
 
+# ── Opt-in backtest mode ─────────────────────────────────────────────────────
+# Purely additive: when unset, everything below behaves exactly as before.
+# When set (e.g. NHLSIM_BACKTEST_SEASON=2026), targets a PAST, already-
+# completed season instead of the upcoming one — this lets us calibrate the
+# compression-correction amplification factor against REAL, KNOWN final
+# standings (fetched further below) instead of guessing values and eyeballing
+# against a third-party site, which is what we were doing before. Skips the
+# "already started" gate entirely, since we're deliberately targeting a
+# season that's long since finished.
+BACKTEST_SEASON <- suppressWarnings(as.integer(Sys.getenv("NHLSIM_BACKTEST_SEASON", unset = NA)))
+IS_BACKTEST <- !is.na(BACKTEST_SEASON)
+if (IS_BACKTEST) {
+  season_year <- BACKTEST_SEASON
+  cat("── BACKTEST MODE: targeting completed season", season_year, "(real final standings will be fetched for calibration) ──\n")
+}
+
 # app.R requests results via load_season_sim_results(season_year) using ITS
 # OWN season_year variable, which (per the above) can still equal current_year
 # during July/August. We must save the output under THAT filename so app.R's
@@ -106,6 +122,9 @@ gh_read <- function(url, max_retries = 3) {
 }
 
 # ── 0. Bail out if we're outside the projection window ──────────────────────
+if (IS_BACKTEST) {
+  cat("Skipping the offseason-window gate — backtest mode targets a completed past season on purpose.\n")
+} else {
 cat("Checking whether the", season_year, "season has already started...\n")
 standings_now <- nhl_get("https://api-web.nhle.com/v1/standings/now")
 already_started <- FALSE
@@ -127,6 +146,7 @@ if (!is.null(standings_now) && !is.null(standings_now$standings) && length(stand
 if (Sys.Date() < as.Date(paste0(current_year, "-07-01")) || already_started) {
   cat("Outside projection window (before July 1, or season already underway). Exiting.\n")
   quit(save = "no", status = 0)
+}
 }
 
 # ── 1. Season window for player/team averaging ───────────────────────────────
@@ -485,8 +505,15 @@ fetch_roster <- function(abbrev, season_slug) {
 cat("Fetching rosters for", length(team_abbrevs), "teams (target season", season_year, ")...\n")
 roster_method_used <- character(0)
 all_rosters <- bind_rows(lapply(team_abbrevs, function(a) {
-  r <- tryCatch(fetch_roster(a, "current"), error = function(e) NULL)
-  method <- "current"
+  r <- NULL; method <- "none"
+  if (!IS_BACKTEST) {
+    # Only try "current" for real, live projections — using it during a
+    # backtest would leak today's actual roster (including trades/drafts
+    # that hadn't happened yet) into what should be a fair test of only
+    # information available before that past season started.
+    r <- tryCatch(fetch_roster(a, "current"), error = function(e) NULL)
+    method <- "current"
+  }
   if (is.null(r)) {
     r <- tryCatch(fetch_roster(a, szn_id(season_year)), error = function(e) NULL)
     method <- "target_season"
@@ -1515,7 +1542,7 @@ goalie_sv_lu     <- setNames(team_off_def$goalie_sv_pct, team_off_def$team_abbre
 # in-season talent drift (trades, injuries, motivation swings) that a
 # fixed-roster, full-season simulation structurally can't capture at all;
 # treating the ENTIRE measured gap as pure bias risks overcorrecting.
-COMPRESSION_AMPLIFICATION <- 1.75  # bumped from 1.4 — that run improved the Pythagorean-vs-corrected-sim correlation from -0.869 (uncorrected) to -0.586, suggesting a full correction needs closer to ~2.0-2.3x; 1.75 pushes further without jumping straight to full
+COMPRESSION_AMPLIFICATION <- 1.4  # dialed back down from 1.75 — a direct backtest against REAL final standings for 3 completed seasons (2023-2025, via season_sim_backtest.R's calibration sweep) found 1.4 minimized RMSE on average, with 1.75 performing noticeably worse, especially in the one backtest season with a full, proper 3-year prior-data window (which alone preferred 1.0, no correction at all). This is direct outcome evidence, a stronger signal than the indirect Pythagorean-correlation tuning that originally justified 1.75 — 1.4 is a middle point that respects both the real backtest evidence (which leans lower) and the independently-validated Jensen's-inequality rationale for some correction (which argues against dropping to 1.0 entirely based on one data point).
 amplify_around_mean <- function(x) {
   m <- mean(x, na.rm = TRUE)
   m + COMPRESSION_AMPLIFICATION * (x - m)
@@ -1932,6 +1959,66 @@ schedule_games_per_team <- mean(table(c(last_schedule$home_abbrev, last_schedule
 pts_scale <- NHL_GAMES / schedule_games_per_team
 cat("  Schedule template games/team:", round(schedule_games_per_team, 1),
     "| scaling proj_points to", NHL_GAMES, "-game season (x", round(pts_scale, 4), ")\n")
+
+# ── Backtest calibration: solve for the amplification factor directly ──────
+# against REAL, KNOWN final standings, instead of guessing values and
+# eyeballing against a third-party site. Sweeps a range of candidate
+# factors, re-simulating a season for each and comparing projected points
+# against the real final points every team actually earned.
+if (IS_BACKTEST) {
+  cat("\n\n═══ BACKTEST CALIBRATION MODE — season", season_year, "═══\n")
+  cat("Fetching REAL final standings to calibrate against...\n")
+  # Querying a date well after the regular season ends (this season's late
+  # April) returns each team's actual final regular-season points as of
+  # that date — a reasonable, simple way to get the real final table.
+  standings_date <- paste0(season_year, "-04-25")
+  real_standings_raw <- nhl_get(paste0("https://api-web.nhle.com/v1/standings/", standings_date))
+  real_standings <- NULL
+  if (!is.null(real_standings_raw) && !is.null(real_standings_raw$standings)) {
+    real_standings <- bind_rows(lapply(real_standings_raw$standings, function(s) {
+      data.frame(
+        team_abbrev = tryCatch(s$teamAbbrev$default %||% NA_character_, error = function(e) NA_character_),
+        real_points = tryCatch(as.numeric(s$points %||% NA), error = function(e) NA_real_),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }
+  if (is.null(real_standings) || nrow(real_standings) == 0 || all(is.na(real_standings$real_points))) {
+    cat("  Could not fetch real standings for this date — aborting calibration.\n")
+  } else {
+    real_standings <- real_standings %>% filter(!is.na(team_abbrev), !is.na(real_points))
+    cat("  Fetched real final standings for", nrow(real_standings), "teams.\n")
+    candidate_factors <- c(1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5)
+    n_calib_sims <- 1500  # reduced from N_SIMS — we need a reasonable RMSE estimate per factor, not precise playoff odds, and this runs once per candidate
+    calib_rows <- list()
+    for (fac in candidate_factors) {
+      m_xgf <- mean(xgf_lu_orig, na.rm = TRUE); m_xga <- mean(xga_lu_orig, na.rm = TRUE)
+      m_pp  <- mean(pp_goals_lu_orig, na.rm = TRUE); m_pk <- mean(pk_ga_lu_orig, na.rm = TRUE)
+      xgf_lu      <- m_xgf + fac * (xgf_lu_orig - m_xgf)
+      xga_lu      <- m_xga + fac * (xga_lu_orig - m_xga)
+      pp_goals_lu <- m_pp  + fac * (pp_goals_lu_orig - m_pp)
+      pk_ga_lu    <- m_pk  + fac * (pk_ga_lu_orig - m_pk)
+      pts_sum_c <- setNames(numeric(length(net_lookup)), names(net_lookup))
+      for (i in seq_len(n_calib_sims)) {
+        pts_i <- simulate_one_season_pts()
+        pts_sum_c <- pts_sum_c + pts_i[names(pts_sum_c)]
+      }
+      proj_c <- (pts_sum_c[names(net_lookup)] / n_calib_sims) * pts_scale
+      cmp <- data.frame(team_abbrev = names(proj_c), proj = as.numeric(proj_c), stringsAsFactors = FALSE) %>%
+        inner_join(real_standings, by = "team_abbrev")
+      rmse <- sqrt(mean((cmp$proj - cmp$real_points)^2, na.rm = TRUE))
+      mae  <- mean(abs(cmp$proj - cmp$real_points), na.rm = TRUE)
+      calib_rows[[as.character(fac)]] <- data.frame(factor = fac, rmse = rmse, mae = mae, n_teams = nrow(cmp))
+      cat("  factor =", fac, "| RMSE =", round(rmse, 2), "| MAE =", round(mae, 2), "(", nrow(cmp), "teams matched)\n")
+    }
+    calib_df <- do.call(rbind, calib_rows) %>% arrange(rmse)
+    cat("\n  ── Ranked by RMSE (lower = better) ──\n")
+    print(calib_df, row.names = FALSE)
+    cat("\n  Best factor by RMSE:", calib_df$factor[1], "(RMSE =", round(calib_df$rmse[1], 2), ", MAE =", round(calib_df$mae[1], 2), ")\n")
+  }
+  cat("\nBacktest calibration complete — not writing to", OUT_DIR, "(this run produces no real projection).\n")
+  quit(save = "no", status = 0)
+}
 
 results <- data.frame(
   team_abbrev = names(net_lookup),
