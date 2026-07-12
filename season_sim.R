@@ -721,6 +721,38 @@ load_all_skater_onice <- function(seasons) {
   bind_rows(Filter(Negate(is.null), rows))
 }
 
+# ── RAPM (Regularized Adjusted Plus-Minus) — loaded the same way WOWY is,
+# per season, then recency-weighted across recent3 using the identical
+# weighted_avg_skip_na() function defined below. RAPM is a genuinely
+# different (and more rigorous) estimate of the same underlying skill WOWY
+# approximates — see fit_rapm.R for the full methodology (two separate
+# ridge regressions per strength state, one isolating offense, one
+# isolating defense, both cross-validated). Loaded here as a NEW,
+# preferred option ahead of WOWY in the existing fallback chain — not a
+# replacement of WOWY's own columns, so if RAPM data is missing for a
+# player/season (e.g. before this pipeline existed), the existing
+# WOWY/box-score fallback chain still works exactly as it did before.
+load_all_rapm <- function(seasons) {
+  rows <- lapply(seasons, function(s) {
+    d <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/rapm/", s, "/rapm.csv"))
+    if (is.null(d) || nrow(d) == 0) return(NULL)
+    d$player_id <- as.character(d$player_id)
+    d$season <- s
+    d
+  })
+  bind_rows(Filter(Negate(is.null), rows))
+}
+load_all_rapm_pppk <- function(seasons) {
+  rows <- lapply(seasons, function(s) {
+    d <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/rapm/", s, "/rapm_pppk.csv"))
+    if (is.null(d) || nrow(d) == 0) return(NULL)
+    d$player_id <- as.character(d$player_id)
+    d$season <- s
+    d
+  })
+  bind_rows(Filter(Negate(is.null), rows))
+}
+
 # ── WOWY (With Or Without You) — our own approximation of RAPM's context
 # adjustment, without needing a full ridge regression. Real RAPM controls
 # for every teammate/opponent simultaneously; WOWY is cruder — it just
@@ -855,6 +887,45 @@ project_skater_onice <- function(hist_df) {
     )
 }
 
+# Recency-weighted RAPM projection — same pattern as project_skater_onice
+# above, just for RAPM's own columns instead of WOWY's. Uses TOI (already
+# present in rapm.csv from fit_rapm.R) as the GP-equivalent weighting
+# input, since RAPM output is per-season (not per-game) and doesn't have
+# its own gp_onice column — toi_5v5_sec serves the identical purpose
+# recency_weights_gp() needs (a sample-size proxy per season).
+project_rapm <- function(hist_df) {
+  if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
+  if (!"off_rapm_per60" %in% names(hist_df)) return(NULL)
+  hist_df %>%
+    filter(!is.na(toi_5v5_sec), toi_5v5_sec > 0) %>%
+    group_by(player_id) %>%
+    arrange(season, .by_group = TRUE) %>%
+    summarise(
+      off_rapm_3yr = weighted_avg_skip_na(off_rapm_per60, season, toi_5v5_sec),
+      def_rapm_3yr = weighted_avg_skip_na(def_rapm_per60, season, toi_5v5_sec),
+      .groups = "drop"
+    )
+}
+project_rapm_pppk <- function(hist_df) {
+  if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
+  if (!"pp_rapm_per60" %in% names(hist_df)) return(NULL)
+  # Uses own_pp_shots_per60/own_pk_sa_per60 (already in rapm_pppk.csv) as
+  # a rough activity proxy for recency weighting, since PP/PK doesn't have
+  # its own dedicated TOI column joined in at this stage — a genuine
+  # approximation, acceptable here since this feeds a diagnostic
+  # comparison, not the production simulation (see the note below where
+  # this gets used).
+  hist_df %>%
+    mutate(pp_weight_proxy = coalesce(own_pp_shots_per60, 1), pk_weight_proxy = coalesce(own_pk_sa_per60, 1)) %>%
+    group_by(player_id) %>%
+    arrange(season, .by_group = TRUE) %>%
+    summarise(
+      pp_rapm_3yr = weighted_avg_skip_na(pp_rapm_per60, season, pp_weight_proxy),
+      pk_rapm_3yr = weighted_avg_skip_na(pk_rapm_per60, season, pk_weight_proxy),
+      .groups = "drop"
+    )
+}
+
 abbrev_fix <- c("ARI" = "UTA", "PHX" = "UTA")  # extend if another franchise relocates/renames
 cat("Computing skater on-ice defense projections...\n")
 skater_onice_hist <- load_all_skater_onice(recent3)
@@ -949,6 +1020,38 @@ if (!"ev_offense_xgwowy_3yr" %in% names(skater_output)) {
   skater_output$ev_offense_xgwowy_3yr <- NA_real_; skater_output$ev_defense_xgwowy_3yr <- NA_real_
 }
 
+# ── RAPM (5v5) — loaded and joined the SAME way WOWY is, feeding into the
+# coalesce fallback chain below as the new, most-preferred option. Missing
+# RAPM data (e.g. seasons before this pipeline existed, or a player with
+# no RAPM row for some reason) gracefully falls through to the existing
+# WOWY/box-score chain, exactly the same failure mode WOWY itself already
+# has relative to the box-score fallback beneath it.
+cat("Loading RAPM (5v5) data...\n")
+rapm_hist <- tryCatch(load_all_rapm(recent3), error = function(e) NULL)
+proj_rapm <- if (!is.null(rapm_hist) && nrow(rapm_hist) > 0) project_rapm(rapm_hist) else NULL
+cat("  proj_rapm rows:", if (is.null(proj_rapm)) 0 else nrow(proj_rapm), "\n")
+if (!is.null(proj_rapm)) {
+  skater_output <- skater_output %>% left_join(proj_rapm, by = "player_id")
+} else {
+  skater_output$off_rapm_3yr <- NA_real_; skater_output$def_rapm_3yr <- NA_real_
+}
+
+# ── RAPM (PP/PK) — loaded but DELIBERATELY NOT joined into skater_output
+# or wired into any production coalesce chain. PP/PK currently bypasses
+# player-level data entirely (team_pp_pk_rates uses team-level historical
+# goals/game, built specifically because an earlier attempt at
+# player-level PP/PK WOWY was reverted for real instability — see the
+# note where team_pp_pk_rates is built). RAPM's ridge regularization
+# should handle PP/PK's small samples far better than WOWY's raw
+# with/without comparison could, but that's a real claim worth actually
+# checking, not assuming — so this is computed and printed as a
+# side-by-side DIAGNOSTIC COMPARISON only (see below, near the other
+# league-wide diagnostics), not fed into the simulation.
+cat("Loading RAPM (PP/PK) data for diagnostic comparison only (not used in simulation)...\n")
+rapm_pppk_hist <- tryCatch(load_all_rapm_pppk(recent3), error = function(e) NULL)
+proj_rapm_pppk <- if (!is.null(rapm_pppk_hist) && nrow(rapm_pppk_hist) > 0) project_rapm_pppk(rapm_pppk_hist) else NULL
+cat("  proj_rapm_pppk rows:", if (is.null(proj_rapm_pppk)) 0 else nrow(proj_rapm_pppk), "\n")
+
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
 # actual per-shot outcomes (shot happens -> is it a goal?) rather than
@@ -977,8 +1080,8 @@ HOME_XG_BOOST <- 0.1         # extra expected goals/game for the home team — a
 # dividing by SD, to keep this in real goals/60 units for the additive
 # adjustment below) removes that constant bias while leaving real relative
 # differences between players intact.
-league_avg_off_wowy <- mean(coalesce(skater_output$ev_offense_xgwowy_3yr, skater_output$ev_offense_wowy_3yr), na.rm = TRUE)
-league_avg_def_wowy <- mean(coalesce(skater_output$ev_defense_xgwowy_3yr, skater_output$ev_defense_wowy_3yr), na.rm = TRUE)
+league_avg_off_wowy <- mean(coalesce(skater_output$off_rapm_3yr, skater_output$ev_offense_xgwowy_3yr, skater_output$ev_offense_wowy_3yr), na.rm = TRUE)
+league_avg_def_wowy <- mean(coalesce(skater_output$def_rapm_3yr, skater_output$ev_defense_xgwowy_3yr, skater_output$ev_defense_wowy_3yr), na.rm = TRUE)
 if (is.na(league_avg_off_wowy)) league_avg_off_wowy <- 0
 if (is.na(league_avg_def_wowy)) league_avg_def_wowy <- 0
 cat("  League-average WOWY (recentering baseline) — offense:", round(league_avg_off_wowy, 3), "| defense:", round(league_avg_def_wowy, 3), "\n")
@@ -1021,14 +1124,15 @@ team_offense_d <- skater_output %>%
 team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
   group_by(team_abbrev) %>%
   mutate(
-    # Prefer xG-based WOWY (less noisy — isolates shot quality from
-    # shooting/goaltending luck) when available; fall back to goals-based
-    # WOWY for seasons before the xG model existed. Per-player, before
-    # aggregation, so the team-level number reflects whichever signal each
-    # individual player actually has rather than an all-or-nothing switch.
-    # Recentered against the league average — see note above.
-    ev_off_wowy_effective = coalesce(ev_offense_xgwowy_3yr, ev_offense_wowy_3yr) - league_avg_off_wowy,
-    ev_def_wowy_effective = coalesce(ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy
+    # Prefer RAPM (ridge-regularized, properly isolates offense from
+    # defense by construction — see fit_rapm.R) when available; fall back
+    # to xG-based WOWY, then goals-based WOWY for seasons before either
+    # existed. Per-player, before aggregation, so the team-level number
+    # reflects whichever signal each individual player actually has rather
+    # than an all-or-nothing switch. Recentered against the league
+    # average — see note above.
+    ev_off_wowy_effective = coalesce(off_rapm_3yr, ev_offense_xgwowy_3yr, ev_offense_wowy_3yr) - league_avg_off_wowy,
+    ev_def_wowy_effective = coalesce(def_rapm_3yr, ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy
   ) %>%
   summarise(
     shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
@@ -1481,8 +1585,58 @@ tryCatch({
 }, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
 cat("\n")
 
+# ── DIAGNOSTIC ONLY: what would team-level PP/PK inputs look like if built
+# from RAPM instead of the current team-level historical-rate approach?
+# NOT fed into the simulation — team_pp_pk_rates (above) is still what
+# simulate_games() actually uses. This exists purely to test whether
+# RAPM's ridge regularization handles PP/PK's small samples better than
+# the earlier, reverted player-level WOWY attempt did — see the note
+# where proj_rapm_pppk gets loaded for the full reasoning. If this looks
+# stable and sensible across a few runs, that's real evidence worth
+# revisiting whether PP/PK RAPM should graduate to actual production use;
+# if it shows the same kind of extreme, unstable values the earlier WOWY
+# attempt did, that's evidence it shouldn't, at least not without further
+# work (e.g. more seasons of data, or a different strength-state handling
+# approach).
+cat("\n  ── DIAGNOSTIC (not used in simulation): team PP/PK inputs from RAPM vs current team-level approach ──\n")
+tryCatch({
+  if (is.null(proj_rapm_pppk) || nrow(proj_rapm_pppk) == 0) {
+    cat("  No PP/PK RAPM data available for this comparison (proj_rapm_pppk is empty).\n")
+  } else {
+    pppk_roster <- team_offense_f %>% bind_rows(team_offense_d) %>%
+      select(team_abbrev, player_id, rate_toi_min) %>%
+      left_join(proj_rapm_pppk, by = "player_id")
+    rapm_team_pppk <- pppk_roster %>%
+      group_by(team_abbrev) %>%
+      summarise(
+        # TOI-weighted average, same reasoning as wowy_ev_off_wtd above —
+        # this is a shared/context stat, not an individually-authored
+        # event, so it gets averaged like WOWY does, not summed like shots.
+        pp_rapm_team = sum(coalesce(pp_rapm_3yr, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(pp_rapm_3yr)], na.rm = TRUE),
+        pk_rapm_team = sum(coalesce(pk_rapm_3yr, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(pk_rapm_3yr)], na.rm = TRUE),
+        n_with_pp_rapm = sum(!is.na(pp_rapm_3yr)),
+        n_with_pk_rapm = sum(!is.na(pk_rapm_3yr)),
+        .groups = "drop"
+      ) %>%
+      left_join(team_pp_pk_rates, by = "team_abbrev") %>%
+      arrange(desc(pp_rapm_team))
+    for (i in seq_len(nrow(rapm_team_pppk))) {
+      r <- rapm_team_pppk[i, ]
+      cat(sprintf("  %-4s | pp_rapm_team=%+.4f (current pp_goals_pg=%.3f, roster coverage %d/18) | pk_rapm_team=%+.4f (current pk_ga_pg=%.3f, roster coverage %d/18)\n",
+                  r$team_abbrev, r$pp_rapm_team, coalesce(r$pp_goals_pg, NA_real_), r$n_with_pp_rapm,
+                  r$pk_rapm_team, coalesce(r$pk_ga_pg, NA_real_), r$n_with_pk_rapm))
+    }
+    cat("  Range — pp_rapm_team:", round(min(rapm_team_pppk$pp_rapm_team, na.rm=TRUE), 4), "to", round(max(rapm_team_pppk$pp_rapm_team, na.rm=TRUE), 4),
+        "| pk_rapm_team:", round(min(rapm_team_pppk$pk_rapm_team, na.rm=TRUE), 4), "to", round(max(rapm_team_pppk$pk_rapm_team, na.rm=TRUE), 4), "\n")
+    cat("  Compare this spread/stability against team_pp_pk_rates' own range above — wildly extreme\n")
+    cat("  values here (like the -33 seen in the earlier, reverted WOWY attempt) would be a sign\n")
+    cat("  PP/PK RAPM isn't ready for production use yet either; a reasonable, bounded spread\n")
+    cat("  would be evidence it's handling the small-sample problem better than WOWY did.\n")
+  }
+}, error = function(e) cat("  PP/PK RAPM diagnostic error:", conditionMessage(e), "\n"))
+cat("\n")
 
-# Direct comparison: team-level xG (most recent completed season only,
+
 # no roster reconstruction, no recency-blending across years) for the
 # SAME teams — checking whether roster-weighted reconstruction from
 # individual players' independent histories is compressing variance
