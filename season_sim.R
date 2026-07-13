@@ -752,6 +752,16 @@ load_all_rapm_pppk <- function(seasons) {
   })
   bind_rows(Filter(Negate(is.null), rows))
 }
+# Skater finishing skill (Goals Above Expected) — see fit_skater_finishing.R.
+# Already pooled across a 3-year window internally (not per-season), so
+# unlike RAPM this doesn't need its own separate recency-weighting step —
+# each season's file already represents "as of this target season."
+load_all_gax <- function(target_season) {
+  d <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/finishing/", target_season, "/skater_gax.csv"))
+  if (is.null(d) || nrow(d) == 0) return(NULL)
+  d$player_id <- as.character(d$player_id)
+  d
+}
 
 # ── WOWY (With Or Without You) — our own approximation of RAPM's context
 # adjustment, without needing a full ridge regression. Real RAPM controls
@@ -1058,6 +1068,21 @@ if (!is.null(proj_rapm_pppk)) {
   skater_output$pp_rapm_3yr <- NA_real_; skater_output$pk_rapm_3yr <- NA_real_
 }
 
+# ── Skater finishing skill (Goals Above Expected) — see fit_skater_finishing.R
+# for full methodology. Loaded for the TARGET season directly (season_year),
+# not recency-weighted across recent3 like RAPM — the file itself already
+# represents a pooled 3-year window internally, so this is already "as of
+# this target season," no additional blending needed here.
+cat("Loading skater finishing skill (GAx) data...\n")
+gax_data <- tryCatch(load_all_gax(season_year), error = function(e) NULL)
+if (!is.null(gax_data) && "gax_per60" %in% names(gax_data)) {
+  cat("  gax_data rows:", nrow(gax_data), "\n")
+  skater_output <- skater_output %>% left_join(gax_data %>% select(player_id, gax_per60), by = "player_id")
+} else {
+  cat("  No finishing-skill data available for season", season_year, "— proceeding without it.\n")
+  skater_output$gax_per60 <- NA_real_
+}
+
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
 # actual per-shot outcomes (shot happens -> is it a goal?) rather than
@@ -1212,6 +1237,14 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     rapm_xga_delta = sum(coalesce(def_rapm_3yr, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
     n_with_rapm_off = sum(!is.na(off_rapm_3yr)),
     n_with_rapm_def = sum(!is.na(def_rapm_3yr)),
+    # Finishing-skill (GAx) team delta — SAME sum-based construction as
+    # RAPM above (gax_per60 is already in the identical goals-per-60,
+    # additive-by-construction units), but OFFENSE-ONLY: finishing skill
+    # is purely about converting a team's OWN shots into goals, it has no
+    # defensive analog (a good defense doesn't make an opponent's shooters
+    # worse — that's already fully captured by def_rapm above).
+    finishing_xgf_delta = sum(coalesce(gax_per60, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    n_with_finishing = sum(!is.na(gax_per60)),
     # WOWY is also a shared/context stat (it represents team-level effects
     # attributable to a player, not an individually-authored event like a
     # shot), so this gets the same TOI-weighted-average treatment as CA/CF
@@ -1376,6 +1409,14 @@ team_offense <- team_offense %>%
                             pmax(-1.5, pmin(1.5, rapm_xgf_delta)), 0),
     rapm_xga_adj = ifelse(n_with_rapm_def >= MIN_WOWY_ROSTER_COVERAGE,
                             pmax(-1.5, pmin(1.5, rapm_xga_delta)), 0),
+    # Finishing-skill adjustment — same coverage-gating/clamping pattern,
+    # OFFENSE-ONLY (see the note where finishing_xgf_delta is computed
+    # above for why there's no defensive counterpart). Clamp is slightly
+    # tighter than RAPM's (±1.0 vs ±1.5) since individual players'
+    # gax_per60 values run smaller in magnitude than RAPM's own scale
+    # (roughly ±0.7 max per player vs RAPM's wider range).
+    finishing_adj = ifelse(n_with_finishing >= MIN_WOWY_ROSTER_COVERAGE,
+                            pmax(-1.0, pmin(1.0, finishing_xgf_delta)), 0),
     # onice_xgf_pg_wtd/onice_xga_pg_wtd — this is what simulate_games()
     # really reads (xgf_lu/xga_lu are built directly from these two
     # columns) — are now made ENTIRELY RAPM-driven: a real league-average
@@ -1386,11 +1427,14 @@ team_offense <- team_offense %>%
     # rate as the base and only nudging it with RAPM would undercut that
     # purpose. Defense is SUBTRACTED (not added) — positive def_rapm means
     # BETTER defense, which should REDUCE expected goals-against, not
-    # increase it.
+    # increase it. Finishing skill (offense only) is added on top of the
+    # RAPM-driven offense — a team's expected goals reflects both how many
+    # good chances they generate (RAPM) AND how well they convert those
+    # chances (finishing), matching the missing 6th HockeyStats component.
     # (The goals_for_pg_wowy_adj/shooting_pct chain above still feeds only
     # shots_against_lu/shooting_pct_lu, confirmed dead code elsewhere in
     # this script — left alone, not removed, but not what drives the sim.)
-    onice_xgf_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 + rapm_xgf_adj),
+    onice_xgf_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 + rapm_xgf_adj + finishing_adj),
     onice_xga_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 - rapm_xga_adj),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
