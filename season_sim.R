@@ -762,6 +762,15 @@ load_all_gax <- function(target_season) {
   d$player_id <- as.character(d$player_id)
   d
 }
+# Shot-volume RAPM (shots-for/shots-against per 60, separate from xG-based
+# RAPM's shot QUALITY) — see fit_shot_volume_rapm.R. Loaded for a single
+# target season directly, same reasoning as load_all_gax().
+load_all_shot_vol_rapm <- function(target_season) {
+  d <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/shot_volume_rapm/", target_season, "/shot_volume_rapm.csv"))
+  if (is.null(d) || nrow(d) == 0) return(NULL)
+  d$player_id <- as.character(d$player_id)
+  d
+}
 
 # ── WOWY (With Or Without You) — our own approximation of RAPM's context
 # adjustment, without needing a full ridge regression. Real RAPM controls
@@ -1090,6 +1099,20 @@ if (!is.null(gax_data) && "gax_per60" %in% names(gax_data)) {
   skater_output$gax_per60 <- NA_real_
 }
 
+# ── Shot-volume RAPM — same season-offset reasoning as GAx above: uses
+# the most recent COMPLETED season's fit, not season_year itself (which
+# hasn't been played and has no stint data to fit on).
+cat("Loading shot-volume RAPM data...\n")
+shot_vol_data <- tryCatch(load_all_shot_vol_rapm(season_year - 1L), error = function(e) NULL)
+if (!is.null(shot_vol_data) && "shot_vol_off_per60" %in% names(shot_vol_data)) {
+  cat("  shot_vol_data rows:", nrow(shot_vol_data), "\n")
+  skater_output <- skater_output %>% left_join(shot_vol_data %>% select(player_id, shot_vol_off_per60, shot_vol_def_per60), by = "player_id")
+} else {
+  cat("  No shot-volume RAPM data available for season", season_year, "— proceeding without it.\n")
+  skater_output$shot_vol_off_per60 <- NA_real_
+  skater_output$shot_vol_def_per60 <- NA_real_
+}
+
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
 # actual per-shot outcomes (shot happens -> is it a goal?) rather than
@@ -1252,6 +1275,15 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     # worse — that's already fully captured by def_rapm above).
     finishing_xgf_delta = sum(coalesce(gax_per60, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
     n_with_finishing = sum(!is.na(gax_per60)),
+    # Shot-volume RAPM team deltas — same sum-based construction as
+    # xG-RAPM above, but a SEPARATE metric entirely (shot COUNT, not shot
+    # QUALITY). Unlike finishing skill, this has both an offense AND
+    # defense side, same as xG-RAPM — shot suppression is a real
+    # defensive skill distinct from suppressing shot QUALITY.
+    shot_vol_off_delta = sum(coalesce(shot_vol_off_per60, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    shot_vol_def_delta = sum(coalesce(shot_vol_def_per60, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    n_with_shot_vol_off = sum(!is.na(shot_vol_off_per60)),
+    n_with_shot_vol_def = sum(!is.na(shot_vol_def_per60)),
     # WOWY is also a shared/context stat (it represents team-level effects
     # attributable to a player, not an individually-authored event like a
     # shot), so this gets the same TOI-weighted-average treatment as CA/CF
@@ -1393,6 +1425,15 @@ cat("  League-average 5v5 xGA-per-shot (xG-based goalie-adjustment baseline):", 
 league_avg_xg_5v5 <- mean(c(team_offense$onice_xgf_pg_wtd, team_offense$onice_xga_pg_wtd), na.rm = TRUE)
 cat("  League-average 5v5 xG baseline (for RAPM-driven team rates):", round(league_avg_xg_5v5, 3), "\n")
 
+# League-average 5v5 SHOT (attempt) baseline — anchored to the existing
+# Corsi-scale team data (onice_cf_pg_wtd/onice_ca_pg_wtd), since shot-
+# volume RAPM was fit on ALL shot attempts (shots-on-goal + missed +
+# blocked — see onice_stats.R's is_shot_evt filter), not just shots on
+# goal. Needs to be on the SAME scale as shot_vol_off_delta/
+# shot_vol_def_delta below, or the two won't combine sensibly.
+league_avg_shots_5v5 <- mean(c(team_offense$onice_cf_pg_wtd, team_offense$onice_ca_pg_wtd), na.rm = TRUE)
+cat("  League-average 5v5 shot-attempt baseline (for shot-volume-RAPM-driven team rates):", round(league_avg_shots_5v5, 3), "\n")
+
 team_offense <- team_offense %>%
   mutate(
     # WOWY adjustment — converts each team's average context-adjusted
@@ -1424,6 +1465,24 @@ team_offense <- team_offense %>%
     # (roughly ±0.7 max per player vs RAPM's wider range).
     finishing_adj = ifelse(n_with_finishing >= MIN_WOWY_ROSTER_COVERAGE,
                             pmax(-1.0, pmin(1.0, finishing_xgf_delta)), 0),
+    # Shot-volume RAPM adjustment — same coverage-gating pattern as
+    # xG-RAPM above, both offense AND defense (unlike finishing skill).
+    # CLAMP DELIBERATELY REMOVED for now — the ±8 guess turned out to be
+    # too tight once we saw real fitted data (several individual
+    # players alone exceed 8, e.g. 12.75 in one season's top offense),
+    # meaning it was likely cutting off real signal, not just acting as
+    # a rare safety net. Running unclamped first to see the real,
+    # empirical distribution before deciding whether a clamp is even
+    # needed, rather than guessing at another number.
+    # Deliberately named shot_vol_for_pg/shot_vol_against_pg (NOT
+    # shots_for_pg/shots_against_pg) to avoid any confusion with the
+    # existing dead shots_for_pg/shots_against_pg columns feeding the
+    # confirmed-unused shots_against_lu/shooting_pct_lu path elsewhere in
+    # this script.
+    shot_vol_off_adj = ifelse(n_with_shot_vol_off >= MIN_WOWY_ROSTER_COVERAGE, shot_vol_off_delta, 0),
+    shot_vol_def_adj = ifelse(n_with_shot_vol_def >= MIN_WOWY_ROSTER_COVERAGE, shot_vol_def_delta, 0),
+    shot_vol_for_pg_new     = pmax(1, league_avg_shots_5v5 + shot_vol_off_adj),
+    shot_vol_against_pg_new = pmax(1, league_avg_shots_5v5 - shot_vol_def_adj),
     # onice_xgf_pg_wtd/onice_xga_pg_wtd — this is what simulate_games()
     # really reads (xgf_lu/xga_lu are built directly from these two
     # columns) — are now made ENTIRELY RAPM-driven: a real league-average
@@ -1624,6 +1683,8 @@ team_off_def <- data.frame(team_abbrev = names(net_lookup), stringsAsFactors = F
     goalie_sv_pct    = coalesce(goalie_sv_pct, LEAGUE_AVG_SV_PCT_FALLBACK),
     onice_xgf_pg_wtd = coalesce(onice_xgf_pg_wtd, mean(onice_xgf_pg_wtd, na.rm = TRUE)),
     onice_xga_pg_wtd = coalesce(onice_xga_pg_wtd, mean(onice_xga_pg_wtd, na.rm = TRUE)),
+    shot_vol_for_pg_new     = coalesce(shot_vol_for_pg_new, mean(shot_vol_for_pg_new, na.rm = TRUE)),
+    shot_vol_against_pg_new = coalesce(shot_vol_against_pg_new, mean(shot_vol_against_pg_new, na.rm = TRUE)),
     onice_pp_sf_pg_wtd = coalesce(onice_pp_sf_pg_wtd, mean(onice_pp_sf_pg_wtd, na.rm = TRUE)),
     onice_pk_sa_pg_wtd = coalesce(onice_pk_sa_pg_wtd, mean(onice_pk_sa_pg_wtd, na.rm = TRUE)),
     pp_goals_pg      = coalesce(pp_goals_pg, lg_avg_pp_goals_pg),
@@ -1904,8 +1965,24 @@ cat("  check, which deliberately uses TRUE pre-correction values as the benchmar
 # built for why that decomposition was avoided).
 xgf_lu       <- setNames(team_off_def$onice_xgf_pg_wtd, team_off_def$team_abbrev)
 xga_lu       <- setNames(team_off_def$onice_xga_pg_wtd, team_off_def$team_abbrev)
+shot_vol_for_lu     <- setNames(team_off_def$shot_vol_for_pg_new, team_off_def$team_abbrev)
+shot_vol_against_lu <- setNames(team_off_def$shot_vol_against_pg_new, team_off_def$team_abbrev)
 pp_goals_lu  <- setNames(team_off_def$pp_goals_pg, team_off_def$team_abbrev)
 pk_ga_lu     <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
+
+# ── Validation: implied per-shot probability, BEFORE the [0.01, 0.15]
+# clamp in simulate_games() — checked here across every real team's own
+# offense in isolation, so we can see whether that clamp is comfortably
+# wide or whether it's actually doing a lot of the work (which would
+# suggest the shot-volume/xG scales don't line up as cleanly as assumed
+# and need re-examining, not just trusting the clamp to paper over it).
+implied_prob_check <- team_off_def$onice_xgf_pg_wtd / pmax(team_off_def$shot_vol_for_pg_new, 1)
+cat("  Implied per-shot probability check (pre-clamp, each team's own offense):",
+    round(min(implied_prob_check, na.rm=TRUE), 4), "to", round(max(implied_prob_check, na.rm=TRUE), 4),
+    "| clamp range is [0.01, 0.15] — values outside this range are being clamped, not reflecting the real fitted relationship\n")
+n_clamped <- sum(implied_prob_check < 0.01 | implied_prob_check > 0.15, na.rm = TRUE)
+cat("  Teams outside the clamp range:", n_clamped, "of", length(implied_prob_check),
+    "— a large number here would mean the clamp is doing real work, not just a safety net\n\n")
 
 # Simulates games for parallel vectors of home/away team abbrevs (works for
 # a single pair too — used for both the full season schedule, vectorized in
@@ -1944,13 +2021,40 @@ pk_ga_lu     <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
 simulate_games <- function(home_abbrevs, away_abbrevs) {
   n <- length(home_abbrevs)
 
-  # ── 5v5: expected goals directly from xG, adjusted for goaltending ──────
+  # ── 5v5: RESTRUCTURED to match HockeyStats' actual architecture —
+  # shots (volume) × per-shot scoring probability (quality + finishing +
+  # goaltending) — rather than applying goaltending as a multiplicative
+  # adjustment directly to xG. This matters for a real reason, not just
+  # style: shot-volume RAPM and xG-RAPM are correlated by construction
+  # (more shots directly means more cumulative xG, all else equal).
+  # Dividing xG by shots to get an IMPLIED per-shot probability actively
+  # cancels out most of that correlation — adding shot-volume RAPM as a
+  # separate additive term without this division would have risked
+  # double-counting the same underlying skill twice.
   home_xg_5v5 <- (xgf_lu[home_abbrevs] + xga_lu[away_abbrevs]) / 2
   away_xg_5v5 <- (xgf_lu[away_abbrevs] + xga_lu[home_abbrevs]) / 2
-  # Same goalie-relative-to-league-average ratio structure as the old
-  # shots-based formula, just applied to xG instead of shots*shooting_pct.
-  home_xg_5v5_adj <- home_xg_5v5 * (1 - goalie_sv_lu[away_abbrevs]) / (1 - league_avg_sv_pct)
-  away_xg_5v5_adj <- away_xg_5v5 * (1 - goalie_sv_lu[home_abbrevs]) / (1 - league_avg_sv_pct)
+  home_shots_5v5 <- (shot_vol_for_lu[home_abbrevs] + shot_vol_against_lu[away_abbrevs]) / 2
+  away_shots_5v5 <- (shot_vol_for_lu[away_abbrevs] + shot_vol_against_lu[home_abbrevs]) / 2
+
+  # Implied per-shot probability — xG (quality + finishing, already
+  # baked into xgf_lu/xga_lu) divided by shots (volume, from shot-volume
+  # RAPM). Safety-clamped to a plausible range (Corsi-scale shot attempts
+  # include many low-quality/no-chance attempts, so this runs lower than
+  # a shots-ON-GOAL-only conversion rate would) — guards against a
+  # nonsensical extreme if xG and shots land near opposite clamped ends.
+  home_implied_prob <- pmax(0.01, pmin(0.15, home_xg_5v5 / pmax(home_shots_5v5, 1)))
+  away_implied_prob <- pmax(0.01, pmin(0.15, away_xg_5v5 / pmax(away_shots_5v5, 1)))
+
+  # Goaltending — now an ADDITIVE nudge directly to the per-shot
+  # probability, matching HockeyStats' own structure exactly (their
+  # example applies goaltending/shooting as a direct percentage-point
+  # adjustment AFTER the xG/shots ratio, not as a ratio multiplied
+  # against the whole xG value the way this used to work here).
+  home_adj_prob <- pmax(0.005, home_implied_prob + (league_avg_sv_pct - goalie_sv_lu[away_abbrevs]))
+  away_adj_prob <- pmax(0.005, away_implied_prob + (league_avg_sv_pct - goalie_sv_lu[home_abbrevs]))
+
+  home_xg_5v5_adj <- home_shots_5v5 * home_adj_prob
+  away_xg_5v5_adj <- away_shots_5v5 * away_adj_prob
 
   # ── PP/PK: direct goals-per-game (Poisson), not shots*rate ──────────────
   # Deliberately not shots*conversion-rate (what this replaced) — that
