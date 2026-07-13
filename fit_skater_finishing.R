@@ -59,21 +59,40 @@
 
 suppressMessages({
   library(dplyr)
+  library(httr)
 })
 
 # ── Mode: identical convention to fit_rapm.R, so this can slot into the
 # same periodic workflow without reinventing the pattern.
+#
+# RSTUDIO-NATIVE OVERRIDE: commandArgs() only reflects real command-line
+# arguments, i.e. Rscript fit_skater_finishing.R --season=2015 --window=1
+# run from an actual shell — a plain source("fit_skater_finishing.R") from
+# an RStudio console never sets these at all. To loop through many seasons
+# directly in RStudio without spawning separate Rscript processes, set
+# SEASON_OVERRIDE/WINDOW_OVERRIDE/MODE_OVERRIDE in the console BEFORE each
+# source() call — if present, they take priority over commandArgs(); if
+# absent (the normal command-line-invocation case), nothing changes here.
 args <- commandArgs(trailingOnly = TRUE)
 get_arg <- function(name, default = NULL) {
   hit <- grep(paste0("^--", name, "="), args, value = TRUE)
   if (length(hit) == 0) return(default)
   sub(paste0("^--", name, "="), "", hit[1])
 }
-MODE <- get_arg("mode", "backfill")
-SEASON_ARG <- get_arg("season", NA_character_)
+MODE <- if (exists("MODE_OVERRIDE")) MODE_OVERRIDE else get_arg("mode", "backfill")
+SEASON_ARG <- if (exists("SEASON_OVERRIDE")) as.character(SEASON_OVERRIDE) else get_arg("season", NA_character_)
+WINDOW_ARG <- if (exists("WINDOW_OVERRIDE")) as.character(WINDOW_OVERRIDE) else get_arg("window", NA_character_)  # explicit override — see below
 
 GH_ONICE <- "https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice"
-LOAD_LOCAL <- MODE == "current" || !is.na(SEASON_ARG)
+# LOAD_LOCAL is tied ONLY to --mode=current (which runs via the weekly
+# workflow against a freshly-checked-out repo) — NOT to --season being set.
+# A specific historical --season on its own should default to GitHub,
+# matching backfill mode's own convention, since the whole point of
+# computing single-season values for PAST seasons (see the --window
+# override below) is comparing them against the already-uploaded,
+# GitHub-hosted pooled data — the user running this locally won't
+# generally have every historical season's onice data sitting on disk.
+LOAD_LOCAL <- MODE == "current"
 
 # Pooling window — 1 (genuinely single-season, no pooling at all) for
 # --mode=current, matching how RAPM's own --mode=current already behaves
@@ -88,7 +107,16 @@ LOAD_LOCAL <- MODE == "current" || !is.na(SEASON_ARG)
 # first place (same reasoning goalie GSAx already established) — but
 # that's the real cost of actually matching app.R's current-season-only
 # design goal, not something to paper over.
-POOL_WINDOW <- if (MODE == "current") 1L else 3L
+#
+# --window=N is a SEPARATE, explicit override on top of the mode-based
+# default above — needed for computing a genuine SINGLE-SEASON value for
+# a SPECIFIC HISTORICAL season (via --season=YYYY --window=1), which is
+# neither "current" (that season already happened) nor the normal 3-year
+# backfill (the whole point is comparing against the pooled value, not
+# reproducing it). Without this, there was no way to get a single-season
+# historical value at all outside of --mode=current's own auto-detected
+# "whatever season is live right now."
+POOL_WINDOW <- if (!is.na(WINDOW_ARG)) as.integer(WINDOW_ARG) else if (MODE == "current") 1L else 3L
 
 load_season_data <- function(season) {
   if (LOAD_LOCAL) {
@@ -97,8 +125,26 @@ load_season_data <- function(season) {
     shots <- if (file.exists(shots_path)) read.csv(shots_path, stringsAsFactors = FALSE) else NULL
     onice <- if (file.exists(onice_path)) read.csv(onice_path, stringsAsFactors = FALSE) else NULL
   } else {
-    shots <- tryCatch(read.csv(paste0(GH_ONICE, "/", season, "/shots_raw.csv"), stringsAsFactors = FALSE), error = function(e) NULL)
-    onice <- tryCatch(read.csv(paste0(GH_ONICE, "/", season, "/skater_onice.csv"), stringsAsFactors = FALSE), error = function(e) NULL)
+    # Timeout + retry — base R's read.csv() reading directly from a URL
+    # has neither, and shots_raw.csv files are large enough (163,818 rows
+    # for 2026 alone) that an occasional timeout is ordinary network
+    # flakiness, not a broken file — same fix already applied in
+    # check_stints.R and fit_shot_volume_rapm.R after hitting this
+    # exact issue in practice.
+    gh_fetch <- function(url) {
+      for (attempt in 1:3) {
+        resp <- tryCatch(GET(url, timeout(90)), error = function(e) NULL)
+        if (!is.null(resp) && status_code(resp) == 200) {
+          return(tryCatch(read.csv(text = content(resp, "text", encoding = "UTF-8"), stringsAsFactors = FALSE),
+                           error = function(e) NULL))
+        }
+        if (!is.null(resp) && status_code(resp) == 404) return(NULL)  # genuinely missing — retrying won't help
+        if (attempt < 3) Sys.sleep(2 * attempt)
+      }
+      NULL
+    }
+    shots <- gh_fetch(paste0(GH_ONICE, "/", season, "/shots_raw.csv"))
+    onice <- gh_fetch(paste0(GH_ONICE, "/", season, "/skater_onice.csv"))
   }
   if (is.null(shots)) {
     cat("  Missing shots_raw.csv for season", season, "— skipping.\n")
@@ -113,7 +159,7 @@ fit_finishing_for_season <- function(target_season) {
   cat("\n=== Fitting skater finishing (GAx) for target season", target_season, "===\n")
   window_seasons <- (target_season - POOL_WINDOW + 1L):target_season
   cat("  Pooling raw counts across seasons:", paste(window_seasons, collapse = ", "), "\n")
-  
+
   all_shots <- list()
   all_onice <- list()
   for (s in window_seasons) {
@@ -128,27 +174,27 @@ fit_finishing_for_season <- function(target_season) {
   }
   shots <- bind_rows(all_shots)
   onice <- if (length(all_onice) > 0) bind_rows(all_onice) else NULL
-  
+
   if (!"shooter_id" %in% names(shots) || !"xg" %in% names(shots)) {
     cat("  shots_raw.csv missing shooter_id or xg column — cannot compute finishing skill for this window.\n")
     return(NULL)
   }
   shots$shooter_id <- as.character(shots$shooter_id)
-  
+
   # Scope: 5v5 + shots taken by the shooter's own team while on the power
   # play (see header note on why these are pooled together, not split).
   own_team_pp <- (shots$situation_label == "home_pp" & shots$owner_team_id == shots$home_id) |
-    (shots$situation_label == "away_pp" & shots$owner_team_id != shots$home_id)
+                  (shots$situation_label == "away_pp" & shots$owner_team_id != shots$home_id)
   scoped <- shots %>%
     filter(!is.na(shooter_id), shooter_id != "", !is.na(xg),
            situation_label == "5v5" | own_team_pp)
-  
+
   cat("  Scoped to", nrow(scoped), "shots (5v5 + own-team PP) across", nrow(shots), "total shot rows in window.\n")
   if (nrow(scoped) == 0) {
     cat("  No usable scoped shots — skipping.\n")
     return(NULL)
   }
-  
+
   pooled <- scoped %>%
     group_by(shooter_id) %>%
     summarise(
@@ -158,7 +204,7 @@ fit_finishing_for_season <- function(target_season) {
       .groups = "drop"
     ) %>%
     mutate(gax_pooled = actual_goals - expected_goals)
-  
+
   cat("  ", nrow(pooled), "unique shooters found in scoped shots.\n")
   pooled <- pooled %>% filter(shots_taken >= MIN_GAX_SHOTS_POOLED)
   cat("  ", nrow(pooled), "shooters clear the", MIN_GAX_SHOTS_POOLED, "pooled-shot minimum.\n")
@@ -166,7 +212,7 @@ fit_finishing_for_season <- function(target_season) {
     cat("  No shooters cleared the minimum sample threshold — skipping.\n")
     return(NULL)
   }
-  
+
   # Per-60 conversion needs each player's own pooled ice time across the
   # SAME window (5v5 + PP, matching the shot scope above) — pulled from
   # skater_onice.csv, summed across the window's seasons per player,
@@ -180,24 +226,24 @@ fit_finishing_for_season <- function(target_season) {
   toi_pooled <- onice %>%
     group_by(player_id) %>%
     summarise(toi_total_sec = sum(coalesce(toi_5v5_sec, 0), na.rm = TRUE) + sum(coalesce(toi_pp_sec, 0), na.rm = TRUE), .groups = "drop")
-  
+
   pooled <- pooled %>%
     left_join(toi_pooled, by = c("shooter_id" = "player_id")) %>%
     filter(!is.na(toi_total_sec), toi_total_sec > 0) %>%
     mutate(gax_per60 = gax_pooled / (toi_total_sec / 3600))
-  
+
   cat("  ", nrow(pooled), "shooters have both a qualifying shot sample and usable TOI.\n")
-  
+
   result <- pooled %>%
     transmute(player_id = shooter_id, season = target_season,
               shots_taken, actual_goals, expected_goals, gax_pooled,
               toi_total_sec, gax_per60)
-  
+
   cat("  Done. Sample coefficients (top 5 by gax_per60):\n")
   print(head(result %>% arrange(desc(gax_per60)), 5))
   cat("  Bottom 5 by gax_per60 (worst finishers relative to shot quality):\n")
   print(head(result %>% arrange(gax_per60), 5))
-  
+
   result
 }
 
@@ -205,16 +251,23 @@ save_finishing_output <- function(df, season) {
   # data/finishing/{season}/ — a new, separate folder from data/rapm/, since
   # this is a genuinely different methodology (pooled goals-vs-expected,
   # not a ridge regression), not a RAPM variant.
-  # DISTINCT FILENAME for --mode=current output (skater_gax_current.csv,
-  # not skater_gax.csv) — this is the critical fix for the collision this
-  # change would otherwise create: the weekly workflow's single-season
-  # refresh must NEVER overwrite the 3-year-pooled skater_gax.csv that
-  # season_sim.R depends on. app.R's load_gh_gax() reads the "_current"
-  # file specifically; season_sim.R's load_all_gax() keeps reading the
-  # original, unchanged.
+  # THREE distinct filenames, none of which may ever collide:
+  #   skater_gax.csv          — 3-year pooled (default backfill), feeds season_sim.R
+  #   skater_gax_current.csv  — single-season, --mode=current, feeds app.R
+  #   skater_gax_single_season.csv — single-season for a SPECIFIC HISTORICAL
+  #     season (--season=YYYY --window=1), used ONLY to compare against
+  #     that same season's own pooled value when fitting finishing skill's
+  #     shrinkage regression — this is neither of the other two cases and
+  #     would silently corrupt one of them if it shared a filename.
   out_dir <- file.path("data", "finishing", as.character(season))
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  filename <- if (MODE == "current") "skater_gax_current.csv" else "skater_gax.csv"
+  filename <- if (MODE == "current") {
+    "skater_gax_current.csv"
+  } else if (!is.na(WINDOW_ARG) && as.integer(WINDOW_ARG) == 1 && !is.na(SEASON_ARG)) {
+    "skater_gax_single_season.csv"
+  } else {
+    "skater_gax.csv"
+  }
   out_path <- file.path(out_dir, filename)
   write.csv(df, out_path, row.names = FALSE)
   out_path
