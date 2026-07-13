@@ -48,6 +48,7 @@ suppressMessages({
   library(dplyr)
   library(Matrix)
   library(glmnet)
+  library(httr)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -68,7 +69,21 @@ load_stints <- function(season) {
     if (!file.exists(path)) return(NULL)
     tryCatch(read.csv(path, stringsAsFactors = FALSE), error = function(e) NULL)
   } else {
-    tryCatch(read.csv(paste0(GH_ONICE, "/", season, "/stints.csv"), stringsAsFactors = FALSE), error = function(e) NULL)
+    # Timeout + retry — base R's read.csv() reading directly from a URL
+    # has neither, and stints.csv files are large enough (400,000-670,000+
+    # rows for a full season) that an occasional timeout is ordinary
+    # network flakiness, not a broken file — same issue and same fix
+    # already applied in check_stints.R's gh_read().
+    url <- paste0(GH_ONICE, "/", season, "/stints.csv")
+    for (attempt in 1:3) {
+      resp <- tryCatch(httr::GET(url, httr::timeout(90)), error = function(e) NULL)
+      if (!is.null(resp) && httr::status_code(resp) == 200) {
+        return(tryCatch(read.csv(text = httr::content(resp, "text", encoding = "UTF-8"), stringsAsFactors = FALSE),
+                         error = function(e) NULL))
+      }
+      if (attempt < 3) { cat("    (stints.csv fetch attempt", attempt, "failed/timed out for season", season, "— retrying...)\n"); Sys.sleep(2 * attempt) }
+    }
+    NULL
   }
 }
 
@@ -80,7 +95,7 @@ fit_shot_volume_for_season <- function(season) {
     return(NULL)
   }
   cat("  Loaded", nrow(stints), "stints.\n")
-  
+
   # Long format: TWO rows per stint, one per team's own perspective —
   # same offense/defense split structure as fit_rapm.R, just with stints
   # (and a Poisson count target) instead of shots (and a linear xG target).
@@ -97,7 +112,7 @@ fit_shot_volume_for_season <- function(season) {
   long_df <- bind_rows(home_rows, away_rows)
   long_df <- long_df[!is.na(long_df$duration_sec) & long_df$duration_sec > 0, ]
   cat("  ", nrow(long_df), "team-stint rows after combining both perspectives.\n")
-  
+
   # ── Sparse design matrix — same construction principle as fit_rapm.R,
   # just built from semicolon-joined player lists instead of a lineup
   # data frame's own columns.
@@ -105,55 +120,55 @@ fit_shot_volume_for_season <- function(season) {
   all_players <- sort(unique(unlist(player_lists)))
   cat("  ", length(all_players), "unique players across", nrow(long_df), "team-stint rows.\n")
   if (length(all_players) == 0) { cat("  No usable players found — skipping.\n"); return(NULL) }
-  
+
   player_idx <- setNames(seq_along(all_players), all_players)
   n_per_row <- sapply(player_lists, length)
   row_i <- rep(seq_len(nrow(long_df)), times = n_per_row)
   col_j <- player_idx[unlist(player_lists)]
   X <- sparseMatrix(i = row_i, j = col_j, x = 1, dims = c(nrow(long_df), length(all_players)),
-                    dimnames = list(NULL, all_players))
-  
+                     dimnames = list(NULL, all_players))
+
   offset_vec <- log(long_df$duration_sec / 3600)  # per-hour Poisson exposure
-  
+
   # ── Offense model: shots THIS team's own players generated ─────────────
   cat("  Fitting offense (shots-for) Poisson ridge regression (nfolds=5 — see header note on why)...\n")
   off_fit <- cv.glmnet(X, long_df$shots_for, family = "poisson", offset = offset_vec,
-                       alpha = 0, standardize = FALSE, nfolds = 5)
+                        alpha = 0, standardize = FALSE, nfolds = 5)
   off_coef <- as.numeric(coef(off_fit, s = "lambda.min"))[-1]  # drop intercept
   names(off_coef) <- all_players
-  
+
   # ── Defense model: shots THIS team's own players ALLOWED ───────────────
   cat("  Fitting defense (shots-against) Poisson ridge regression...\n")
   def_fit <- cv.glmnet(X, long_df$shots_against, family = "poisson", offset = offset_vec,
-                       alpha = 0, standardize = FALSE, nfolds = 5)
+                        alpha = 0, standardize = FALSE, nfolds = 5)
   def_coef <- as.numeric(coef(def_fit, s = "lambda.min"))[-1]
   names(def_coef) <- all_players
-  
+
   # ── Convert log-scale Poisson coefficients to this project's additive
   # per-60 convention (see header note for the full reasoning).
   league_avg_shots_per60 <- sum(long_df$shots_for) / sum(long_df$duration_sec / 3600)
   cat("  League-average shots-for per 60 (this season):", round(league_avg_shots_per60, 2), "\n")
-  
+
   shot_vol_off_per60 <- round((exp(off_coef) - 1) * league_avg_shots_per60, 4)
   # DEFENSE sign: negated, same convention as xG-RAPM — higher should mean
   # BETTER defense (fewer shots allowed), not "the raw model's predicted
   # shot count," which runs the opposite direction without this flip.
   shot_vol_def_per60 <- round(-(exp(def_coef) - 1) * league_avg_shots_per60, 4)
-  
+
   result <- data.frame(
     player_id = all_players, season = season,
     shot_vol_off_per60 = shot_vol_off_per60,
     shot_vol_def_per60 = shot_vol_def_per60,
     stringsAsFactors = FALSE
   )
-  
+
   cat("  Done. Top 5 offense (shot-volume):\n")
   print(head(result[order(-result$shot_vol_off_per60), c("player_id", "shot_vol_off_per60")], 5))
   cat("  Top 5 defense (shot-suppression):\n")
   print(head(result[order(-result$shot_vol_def_per60), c("player_id", "shot_vol_def_per60")], 5))
   cat("  Means (both should be close to 0, matching RAPM's own zero-centered convention) — offense:",
       round(mean(result$shot_vol_off_per60), 4), "| defense:", round(mean(result$shot_vol_def_per60), 4), "\n")
-  
+
   result
 }
 
