@@ -81,6 +81,7 @@ load_stints <- function(season) {
         return(tryCatch(read.csv(text = httr::content(resp, "text", encoding = "UTF-8"), stringsAsFactors = FALSE),
                          error = function(e) NULL))
       }
+      if (!is.null(resp) && httr::status_code(resp) == 404) return(NULL)  # genuinely no data for this season — retrying won't help
       if (attempt < 3) { cat("    (stints.csv fetch attempt", attempt, "failed/timed out for season", season, "— retrying...)\n"); Sys.sleep(2 * attempt) }
     }
     NULL
