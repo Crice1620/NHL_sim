@@ -35,7 +35,7 @@ jobs:
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","Matrix","glmnet"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          Rscript -e 'install.packages(c("dplyr","Matrix","glmnet","httr"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
         # NOTE: no xgboost install needed here, unlike onice_daily.yml —
         # fit_rapm.R only reads the ALREADY-SCORED xg column from
         # shots_raw.csv, it never scores shots itself. fit_skater_finishing.R
