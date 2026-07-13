@@ -2234,44 +2234,71 @@ tryCatch({
   cat("  OT/SO rate check (single sample,", nrow(last_schedule), "games):", round(ot_rate * 100, 1), "% | real NHL rate is roughly 20-23%\n")
 }, error = function(e) cat("  OT rate diagnostic error:", conditionMessage(e), "\n"))
 
+# Dynamically determine the CURRENT best/worst team by real 5v5 xG
+# differential, rather than hardcoding specific team names. This matters
+# because it's been confirmed WRONG before: these diagnostics used to
+# hardcode "CAR"/"CHI" as the best/worst teams, but team_off_def's own
+# "Roster-weighted xG sanity check" table (which is what ACTUALLY feeds
+# xgf_lu/xga_lu, i.e. the real simulation) showed CAR as the WORST team
+# in the league, not the best — the hardcoded assumption had gone stale
+# after this session's RAPM/finishing-skill/shot-volume changes shifted
+# the actual rankings, silently making every diagnostic below compare
+# the wrong two teams without any error or warning.
+xg_diff_now <- team_off_def$onice_xgf_pg_wtd - team_off_def$onice_xga_pg_wtd
+tm_best  <- team_off_def$team_abbrev[which.max(xg_diff_now)]
+tm_worst <- team_off_def$team_abbrev[which.min(xg_diff_now)]
+cat("  Dynamically selected best/worst team by CURRENT 5v5 xG differential:",
+    tm_best, "(", round(max(xg_diff_now, na.rm=TRUE), 3), ") /",
+    tm_worst, "(", round(min(xg_diff_now, na.rm=TRUE), 3), ")\n")
+
 # Win-probability sanity check — a specific test of whether the Poisson
 # conversion properly reflects a large xG gap, independent of goaltending
-# or PP/PK. CHI has by far the worst 5v5 xG in the league (roughly double
-# the gap of the next-worst team) while its PP/PK/goaltending are all
-# close to league average — so if CHI still comes out anywhere near a
-# toss-up here, that's a specific, isolated sign the Poisson math itself
-# isn't translating a big xG gap into a correspondingly big win-prob gap,
+# or PP/PK. The current worst team (see tm_worst above) has by far the
+# worst 5v5 xG in the league while its PP/PK/goaltending are all close to
+# league average — so if it still comes out anywhere near a toss-up here,
+# that's a specific, isolated sign the Poisson math itself isn't
+# translating a big xG gap into a correspondingly big win-prob gap,
 # separate from the goaltending-spread question checked above.
 tryCatch({
   n_check <- 20000
-  wp_home <- simulate_games(rep("CAR", n_check), rep("CHI", n_check))
-  wp_away <- simulate_games(rep("CHI", n_check), rep("CAR", n_check))
-  cat("  Win-prob sanity check — CAR (best 5v5 xG) vs CHI (worst 5v5 xG):\n")
-  cat("    CAR at home:", round(mean(wp_home$home_goals > wp_home$away_goals) * 100, 1), "% CAR win |",
+  wp_home <- simulate_games(rep(tm_best, n_check), rep(tm_worst, n_check))
+  wp_away <- simulate_games(rep(tm_worst, n_check), rep(tm_best, n_check))
+  cat("  Win-prob sanity check —", tm_best, "(best 5v5 xG) vs", tm_worst, "(worst 5v5 xG):\n")
+  cat("   ", tm_best, "at home:", round(mean(wp_home$home_goals > wp_home$away_goals) * 100, 1), "%", tm_best, "win |",
       round(mean(wp_home$home_goals) , 2), "vs", round(mean(wp_home$away_goals), 2), "avg goals\n")
-  cat("    CHI at home:", round(mean(wp_away$away_goals > wp_away$home_goals) * 100, 1), "% CAR win |",
+  cat("   ", tm_worst, "at home:", round(mean(wp_away$away_goals > wp_away$home_goals) * 100, 1), "%", tm_best, "win |",
       round(mean(wp_away$home_goals), 2), "vs", round(mean(wp_away$away_goals), 2), "avg goals\n")
 }, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
 
-# CAR-vs-CHI is the single most extreme matchup possible (best vs worst) —
-# it only tells us the Poisson math is behaving correctly for THAT gap.
-# What actually determines a bad team's season point total is their win
-# rate against AVERAGE competition, since that's most of their schedule.
-# This injects a synthetic "AVG" team at the league-average xG/PP/PK/
-# goaltending inputs to test that directly, rather than the extreme case.
+# tm_best-vs-tm_worst is the single most extreme matchup possible (best vs
+# worst) — it only tells us the Poisson math is behaving correctly for
+# THAT gap. What actually determines a bad team's season point total is
+# their win rate against AVERAGE competition, since that's most of their
+# schedule. This injects a synthetic "AVG" team at the league-average
+# xG/PP/PK/goaltending inputs to test that directly, rather than the
+# extreme case.
 tryCatch({
   xgf_lu["AVG"]      <- mean(team_off_def$onice_xgf_pg_wtd, na.rm = TRUE)
   xga_lu["AVG"]      <- mean(team_off_def$onice_xga_pg_wtd, na.rm = TRUE)
+  # shot_vol_for_lu/shot_vol_against_lu didn't exist yet when this
+  # diagnostic was first written, and never got updated when they were
+  # added — this was the actual, confirmed source of the "NAs produced"
+  # warnings: simulate_games() needs both of these for ANY team it's
+  # given, including "AVG", and indexing a name that was never added to
+  # a named vector returns NA in R, which then silently propagates
+  # through home_shots_5v5 -> home_implied_prob -> home_xg_5v5_adj.
+  shot_vol_for_lu["AVG"]     <- mean(team_off_def$shot_vol_for_pg_new, na.rm = TRUE)
+  shot_vol_against_lu["AVG"] <- mean(team_off_def$shot_vol_against_pg_new, na.rm = TRUE)
   pp_goals_lu["AVG"] <- mean(team_off_def$pp_goals_pg, na.rm = TRUE)
   pk_ga_lu["AVG"]    <- mean(team_off_def$pk_ga_pg, na.rm = TRUE)
   goalie_sv_lu["AVG"]<- mean(team_off_def$goalie_sv_pct, na.rm = TRUE)
   n_check <- 20000
-  wp_home2 <- simulate_games(rep("AVG", n_check), rep("CHI", n_check))
-  wp_away2 <- simulate_games(rep("CHI", n_check), rep("AVG", n_check))
-  cat("  Win-prob sanity check — league-AVERAGE team vs CHI (worst 5v5 xG):\n")
+  wp_home2 <- simulate_games(rep("AVG", n_check), rep(tm_worst, n_check))
+  wp_away2 <- simulate_games(rep(tm_worst, n_check), rep("AVG", n_check))
+  cat("  Win-prob sanity check — league-AVERAGE team vs", tm_worst, "(worst 5v5 xG):\n")
   cat("    AVG at home:", round(mean(wp_home2$home_goals > wp_home2$away_goals) * 100, 1), "% AVG win |",
       round(mean(wp_home2$home_goals), 2), "vs", round(mean(wp_home2$away_goals), 2), "avg goals\n")
-  cat("    CHI at home:", round(mean(wp_away2$away_goals > wp_away2$home_goals) * 100, 1), "% AVG win |",
+  cat("   ", tm_worst, "at home:", round(mean(wp_away2$away_goals > wp_away2$home_goals) * 100, 1), "% AVG win |",
       round(mean(wp_away2$home_goals), 2), "vs", round(mean(wp_away2$away_goals), 2), "avg goals\n")
   # Rough season-points-implied check: if CHI's true win rate against a
   # neutral-quality schedule is p, season points ~ p*2*82 + otl bonus.
@@ -2319,8 +2346,8 @@ tryCatch({
 # implied estimate and the full simulation's actual output) rather than
 # assuming this without checking.
 tryCatch({
-  chi_games <- last_schedule %>% filter(home_abbrev == "CHI" | away_abbrev == "CHI")
-  chi_opponents <- ifelse(chi_games$home_abbrev == "CHI", chi_games$away_abbrev, chi_games$home_abbrev)
+  chi_games <- last_schedule %>% filter(home_abbrev == tm_worst | away_abbrev == tm_worst)
+  chi_opponents <- ifelse(chi_games$home_abbrev == tm_worst, chi_games$away_abbrev, chi_games$home_abbrev)
   opp_xg_diff <- (xgf_lu[chi_opponents] - xga_lu[chi_opponents])
   cat("  CHI's real schedule — opponent quality check:\n")
   cat("    Games scheduled:", length(chi_opponents), "| avg opponent xg_diff_pg:", round(mean(opp_xg_diff, na.rm = TRUE), 4),
@@ -2335,7 +2362,7 @@ tryCatch({
   chi_pts_samples <- numeric(n_check2)
   for (i in seq_len(n_check2)) {
     g <- simulate_games(chi_games$home_abbrev, chi_games$away_abbrev)
-    chi_home <- chi_games$home_abbrev == "CHI"
+    chi_home <- chi_games$home_abbrev == tm_worst
     home_win <- g$home_goals > g$away_goals
     pts <- ifelse(chi_home, ifelse(home_win, 2, ifelse(g$went_ot, 1, 0)),
                             ifelse(!home_win, 2, ifelse(g$went_ot, 1, 0)))
@@ -2374,8 +2401,8 @@ chi_pts_trace <- numeric(N_SIMS)
 for (i in seq_len(N_SIMS)) {
   pts_i <- simulate_one_season_pts()
   pts_sum <- pts_sum + pts_i[names(pts_sum)]
-  if ("CAR" %in% names(pts_i)) car_pts_trace[i] <- pts_i["CAR"]
-  if ("CHI" %in% names(pts_i)) chi_pts_trace[i] <- pts_i["CHI"]
+  if (tm_best %in% names(pts_i)) car_pts_trace[i] <- pts_i[tm_best]
+  if (tm_worst %in% names(pts_i)) chi_pts_trace[i] <- pts_i[tm_worst]
 
   df <- data.frame(team_abbrev = names(pts_i), pts = as.numeric(pts_i), stringsAsFactors = FALSE) %>%
     left_join(cd_map, by = "team_abbrev")
@@ -2417,12 +2444,12 @@ for (i in seq_len(N_SIMS)) {
 # comes out meaningfully higher, that's a concrete, checkable sign our
 # per-game randomness itself needs dampening — not just a philosophical
 # question about whether hockey has parity.
-cat("\n  ── Season-points variance check (CAR, CHI — is our per-game randomness realistic?) ──\n")
+cat("\n  ── Season-points variance check (", tm_best, ",", tm_worst, "— is our per-game randomness realistic?) ──\n")
 tryCatch({
   car_sd <- sd(car_pts_trace, na.rm = TRUE)
   chi_sd <- sd(chi_pts_trace, na.rm = TRUE)
-  cat("  CAR: mean =", round(mean(car_pts_trace, na.rm = TRUE), 1), "| SD =", round(car_sd, 2), "\n")
-  cat("  CHI: mean =", round(mean(chi_pts_trace, na.rm = TRUE), 1), "| SD =", round(chi_sd, 2), "\n")
+  cat("  ", tm_best, ": mean =", round(mean(car_pts_trace, na.rm = TRUE), 1), "| SD =", round(car_sd, 2), "\n")
+  cat("  ", tm_worst, ": mean =", round(mean(chi_pts_trace, na.rm = TRUE), 1), "| SD =", round(chi_sd, 2), "\n")
   cat("  Real NHL season-to-season 'luck' variance (fixed true talent) is roughly 8-10 points SD.\n")
   cat("  If ours runs meaningfully higher, per-game randomness is likely inflated, amplifying the\n")
   cat("  standings-compression effect discussed above beyond what real parity would produce.\n")
