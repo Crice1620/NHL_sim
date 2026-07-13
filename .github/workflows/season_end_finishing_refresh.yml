@@ -1,0 +1,65 @@
+name: Season-End Finishing-Skill Refresh
+permissions:
+  contents: write   # required so the default GITHUB_TOKEN can push commits
+on:
+  schedule:
+    # Once a year, early May — a buffer after a typical NHL regular
+    # season ends (usually mid-April). This is a genuine assumption, not
+    # a guarantee: an unusually delayed or extended season could mean
+    # this runs before the season's own data is fully available. If that
+    # happens in a given year, use workflow_dispatch below to re-run this
+    # manually once you know the season has actually wrapped up.
+    - cron: '0 11 30 6 *'   # 11am UTC on June 30th each year
+  workflow_dispatch: {}     # lets you trigger it manually if the automatic timing is wrong for a given year, or any other time you need to force a refresh
+jobs:
+  refresh-pooled-finishing-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+      - name: Install system dependencies (needed to build httr/curl/openssl, same as the other workflows)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c("dplyr","httr"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+      - name: Determine which season just completed
+        id: season
+        run: |
+          # Same month-based convention already used throughout this
+          # pipeline (season = year if before September, year+1 if from
+          # September onward) — early May is always "before September,"
+          # so this correctly resolves to the season that just finished,
+          # not the upcoming one.
+          SEASON=$(Rscript -e 'cy <- as.integer(format(Sys.Date(), "%Y")); cm <- as.integer(format(Sys.Date(), "%m")); cat(ifelse(cm >= 9, cy + 1L, cy))')
+          echo "season=$SEASON" >> "$GITHUB_OUTPUT"
+          echo "Refreshing pooled finishing-skill data for season $SEASON"
+      - name: Run pooled (3-year, default/backfill mode) finishing-skill fit for the just-completed season
+        run: Rscript fit_skater_finishing.R --season=${{ steps.season.outputs.season }}
+        # Deliberately NOT --mode=current — that uses a 1-year window for
+        # app.R's own needs (see fit_skater_finishing.R's own header
+        # notes). This needs the DEFAULT 3-year pooled window instead,
+        # writing to skater_gax.csv, which is what season_sim.R actually
+        # reads for its "most recent completed season" lookup.
+      - name: Commit and push results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if compgen -G "data/finishing/*/skater_gax.csv" > /dev/null; then
+            git add data/finishing/
+            if git diff --cached --quiet; then
+              echo "Nothing changed since last run — nothing to commit."
+            else
+              git commit -m "Season-end pooled finishing-skill refresh [skip ci]"
+              for i in 1 2 3; do
+                git pull --rebase origin main && git push && break
+                echo "Push attempt $i failed, retrying..."
+                sleep 5
+              done
+            fi
+          else
+            echo "No finishing-skill output found — script likely failed or the season's onice data isn't fully available yet. Nothing to commit."
+          fi
