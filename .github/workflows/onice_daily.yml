@@ -1,6 +1,8 @@
 name: On-Ice Stats (Daily)
+
 permissions:
   contents: write   # required so the default GITHUB_TOKEN can push commits
+
 on:
   schedule:
     # Runs once daily. Only checks the last 4 days for newly-completed
@@ -9,36 +11,54 @@ on:
     # for filling in history.
     - cron: '0 10 * * *'   # 10am UTC daily — adjust as you like
   workflow_dispatch: {}     # lets you trigger it manually from the Actions tab
+
 jobs:
   run-onice-daily:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: 'release'
+
       - name: Install system dependencies (needed to build httr/curl/openssl)
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","httr","jsonlite","remotes"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
-          Rscript -e 'remotes::install_version("xgboost", version = "1.7.8.1", repos = "https://cloud.r-project.org")'
+          Rscript -e 'install.packages(c("dplyr","httr","jsonlite"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+
       - name: Run daily on-ice stats update
         run: Rscript onice_stats.R --mode=daily
+
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if compgen -G "data/onice/*/skater_onice.csv" > /dev/null; then
             git add data/onice/
-            git diff --cached --quiet || git commit -m "Daily on-ice stats update [skip ci]"
-            for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying..."
-              sleep 5
-            done
+            if git diff --cached --quiet; then
+              echo "Nothing changed since last run — nothing to commit."
+            else
+              git commit -m "Daily on-ice stats update [skip ci]"
+              # Retry with a pull-first step — this workflow runs daily
+              # on a similar schedule to season_sim.yml/rapm_weekly.yml,
+              # all of which push to the same main branch. A plain
+              # "git push" with no retry is vulnerable to exactly the
+              # race condition already confirmed happening in practice:
+              # if another workflow pushes a commit between this job's
+              # checkout and its own push attempt, git correctly rejects
+              # a push that would silently orphan that other commit —
+              # pulling first resolves it safely.
+              for i in 1 2 3; do
+                git pull --rebase origin main && git push && break
+                echo "Push attempt $i failed, retrying..."
+                sleep 5
+              done
+            fi
           else
             echo "No on-ice output found yet — nothing to commit."
           fi
