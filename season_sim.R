@@ -2303,7 +2303,7 @@ tryCatch({
   # Rough season-points-implied check: if CHI's true win rate against a
   # neutral-quality schedule is p, season points ~ p*2*82 + otl bonus.
   chi_wr <- mean(c(mean(wp_home2$away_goals > wp_home2$home_goals), mean(wp_away2$home_goals > wp_away2$away_goals)))
-  cat("    CHI's average win rate vs AVG (both directions):", round(chi_wr * 100, 1), "% -> rough implied points (ignoring OTL bonus):", round(chi_wr * 2 * 82, 1), "\n")
+  cat("   ", tm_worst, "'s average win rate vs AVG (both directions):", round(chi_wr * 100, 1), "% -> rough implied points (ignoring OTL bonus):", round(chi_wr * 2 * 82, 1), "\n")
 }, error = function(e) cat("  AVG-team diagnostic error:", conditionMessage(e), "\n"))
 
 # League-wide check: our (POST-correction) Poisson-simulated win% vs AVG,
@@ -2349,15 +2349,16 @@ tryCatch({
   chi_games <- last_schedule %>% filter(home_abbrev == tm_worst | away_abbrev == tm_worst)
   chi_opponents <- ifelse(chi_games$home_abbrev == tm_worst, chi_games$away_abbrev, chi_games$home_abbrev)
   opp_xg_diff <- (xgf_lu[chi_opponents] - xga_lu[chi_opponents])
-  cat("  CHI's real schedule — opponent quality check:\n")
+  cat("  ", tm_worst, "'s real schedule — opponent quality check:\n")
   cat("    Games scheduled:", length(chi_opponents), "| avg opponent xg_diff_pg:", round(mean(opp_xg_diff, na.rm = TRUE), 4),
-      "(league avg is ~0 by construction; negative here would mean CHI's real schedule is softer than average)\n")
+      "(league avg is ~0 by construction; negative here would mean", tm_worst, "'s real schedule is softer than average)\n")
 
-  # Directly running CHI's actual full schedule through simulate_one_season_pts()-
-  # style logic in isolation, many times, to get CHI's own point total distribution
-  # WITHOUT the noise of also tracking all 31 other teams and playoff brackets —
-  # a direct check of whether the full-schedule number matches the implied
-  # ~78 from the vs-AVG win rate, or diverges from it.
+  # Directly running tm_worst's actual full schedule through
+  # simulate_one_season_pts()-style logic in isolation, many times, to
+  # get its own point total distribution WITHOUT the noise of also
+  # tracking all 31 other teams and playoff brackets — a direct check of
+  # whether the full-schedule number matches the implied win rate from
+  # the vs-AVG check above, or diverges from it.
   n_check2 <- 2000
   chi_pts_samples <- numeric(n_check2)
   for (i in seq_len(n_check2)) {
@@ -2368,7 +2369,7 @@ tryCatch({
                             ifelse(!home_win, 2, ifelse(g$went_ot, 1, 0)))
     chi_pts_samples[i] <- sum(pts)
   }
-  cat("    CHI's own full-schedule simulated points (avg over", n_check2, "sims, before the 84-game scaling):",
+  cat("   ", tm_worst, "'s own full-schedule simulated points (avg over", n_check2, "sims, before the 84-game scaling):",
       round(mean(chi_pts_samples), 1), "| scaled to 84 games:", round(mean(chi_pts_samples) * 1.0244, 1), "\n")
 }, error = function(e) cat("  Schedule-mix diagnostic error:", conditionMessage(e), "\n"))
 
