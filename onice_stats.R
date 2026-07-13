@@ -91,6 +91,7 @@ TEAM_OUT    <- file.path(OUT_DIR, "team_onice.csv")
 GOALIE_OUT  <- file.path(OUT_DIR, "goalie_onice.csv")
 SHOTS_RAW_OUT <- file.path(OUT_DIR, "shots_raw.csv")  # event-level shot data for future xG training — one row per shot attempt
 LINEUP_OUT    <- file.path(OUT_DIR, "shot_lineups.csv")  # full on-ice lineups per 5v5 shot event — RAPM's design-matrix input, joinable to shots_raw.csv via game_id+event_idx
+STINTS_OUT    <- file.path(OUT_DIR, "stints.csv")  # 5v5 stint-level lineups + shot counts + duration — shot-VOLUME RAPM's design-matrix input (see build_stints())
 
 # ── xG model loading and scoring ────────────────────────────────────────────
 XG_MODEL_PATH <- file.path("data", "xg_model", "xg_model.rds")
@@ -455,7 +456,81 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
        xg_for_5v5 = xg_for_5v5, xg_against_5v5 = xg_against_5v5,
        player_team_id = player_team_id,
        toi_5v5 = toi_5v5, toi_pp = toi_pp, toi_pk = toi_pk,
-       lineup = if (length(lineup_rows) > 0) bind_rows(lineup_rows) else NULL)
+       lineup = if (length(lineup_rows) > 0) bind_rows(lineup_rows) else NULL,
+       # Returned so process_game() can build shot-volume RAPM stints
+       # without duplicating this function's own shift-parsing logic —
+       # process_game() already independently builds sit_df's 5v5 segment
+       # boundaries and shot_rows' timestamps in its own scope, so this is
+       # the one missing piece needed there.
+       shifts_df = shifts_df)
+}
+
+# ── Shot-volume RAPM stint reconstruction ────────────────────────────────────
+# Unlike xG-RAPM (one row per SHOT EVENT — shot_lineups.csv already covers
+# this), shot-VOLUME RAPM needs to model shots-per-minute-of-ice-time,
+# which requires knowing every continuous interval of unchanged on-ice
+# personnel — "stints" — whether or not a shot happened during them. A
+# 5v5 segment (from sit_df, already built for team-level TOI tracking)
+# can span many individual player shifts (line changes don't change the
+# STRENGTH STATE, just who's on the ice) — each shift-change point WITHIN
+# a 5v5 segment splits it into a separate stint.
+#
+# Reuses three things that already exist elsewhere in this script, rather
+# than fetching or computing anything new: sit_df's 5v5 segment
+# boundaries (built for team_toi tracking), shifts_df's individual player
+# shift start/end times (returned from process_game_skaters — see its own
+# return statement for why), and shots_raw_df's shot timestamps (built by
+# process_game()'s own play-by-play loop). This function just combines
+# those three, it doesn't re-derive any of them from scratch.
+build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id) {
+  if (is.null(shifts_df) || nrow(shifts_df) == 0 || is.null(sit_df) || nrow(sit_df) == 0) return(NULL)
+  game_end_abs <- suppressWarnings(max(shifts_df$end_abs, na.rm = TRUE))
+  seg_start <- sit_df$t_abs; seg_end <- c(sit_df$t_abs[-1], game_end_abs); seg_label <- sit_df$label
+
+  on_ice_at_local <- function(t_abs, team_id) {
+    rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs < t_abs & shifts_df$end_abs >= t_abs, ]
+    unique(rows$player_id)
+  }
+
+  stint_rows <- list()
+  for (i in seq_along(seg_start)) {
+    if (is.na(seg_label[i]) || seg_label[i] != "5v5") next  # 5v5-only, matching xG-RAPM's own scope decision
+    s_start <- seg_start[i]; s_end <- seg_end[i]
+    if (is.na(s_start) || is.na(s_end) || s_end <= s_start) next
+    # Shift-change points STRICTLY inside this 5v5 segment split it into
+    # separate stints — a line change partway through a 5v5 segment means
+    # the on-ice personnel changed even though the strength state didn't.
+    boundaries <- unique(c(
+      shifts_df$start_abs[shifts_df$start_abs > s_start & shifts_df$start_abs < s_end],
+      shifts_df$end_abs[shifts_df$end_abs > s_start & shifts_df$end_abs < s_end]
+    ))
+    cut_points <- sort(unique(c(s_start, boundaries, s_end)))
+    if (length(cut_points) < 2) next
+    for (j in seq_len(length(cut_points) - 1)) {
+      stint_start <- cut_points[j]; stint_end <- cut_points[j + 1]
+      if (stint_end <= stint_start) next
+      # Probe strictly inside the stint (not exactly at a boundary) to
+      # avoid ambiguity in on_ice_at_local's own strict-inequality check.
+      probe_t <- stint_start + min(0.5, (stint_end - stint_start) / 2)
+      home_on <- on_ice_at_local(probe_t, home_id)
+      away_on <- on_ice_at_local(probe_t, away_id)
+      # Guard: only keep genuine, complete 5-on-5 stints — same quality
+      # gate philosophy as shot_lineups.csv, so a shift-data gap doesn't
+      # silently masquerade as a real (but incomplete) stint.
+      if (length(home_on) != 5 || length(away_on) != 5) next
+      duration <- stint_end - stint_start
+      shots_home <- if (!is.null(shots_df)) sum(shots_df$owner_team_id == home_id & shots_df$t_abs >= stint_start & shots_df$t_abs < stint_end, na.rm = TRUE) else 0
+      shots_away <- if (!is.null(shots_df)) sum(shots_df$owner_team_id == away_id & shots_df$t_abs >= stint_start & shots_df$t_abs < stint_end, na.rm = TRUE) else 0
+      stint_rows[[length(stint_rows) + 1]] <- data.frame(
+        game_id = game_id, stint_start = stint_start, stint_end = stint_end, duration_sec = duration,
+        home_players = paste(sort(home_on), collapse = ";"), away_players = paste(sort(away_on), collapse = ";"),
+        shots_home = shots_home, shots_away = shots_away,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  if (length(stint_rows) == 0) return(NULL)
+  bind_rows(stint_rows)
 }
 
 process_game <- function(game_id) {
@@ -618,8 +693,13 @@ process_game <- function(game_id) {
     }
   }
 
+  stints_result <- if (!is.null(skater_result) && !is.null(skater_result$shifts_df)) {
+    tryCatch(build_stints(sit_df, skater_result$shifts_df, shots_raw_df, home_id, away_id, game_id),
+             error = function(e) NULL)
+  } else NULL
+
   list(team = team_result, goalie = goalie_result, skater = skater_result,
-       shots_raw = shots_raw_df, penalty = penalty_result)
+       shots_raw = shots_raw_df, penalty = penalty_result, stints = stints_result)
 }
 
 existing_skater <- if (file.exists(SKATER_OUT)) tryCatch(read.csv(SKATER_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
@@ -696,6 +776,7 @@ team_games_ok <- 0L
 player_team_rows <- list()
 shots_raw_new <- list()
 lineup_rows_new <- list()  # accumulates across games, same append pattern as shots_raw_new
+stint_rows_new <- list()  # shot-volume RAPM's design-matrix input — same append pattern as lineup_rows_new
 
 for (gid in new_games) {
   cat("Processing game", gid, "...\n")
@@ -741,6 +822,15 @@ for (gid in new_games) {
         goalie_totals$xg_faced <- merge_add(goalie_totals$xg_faced, to_named_list(xg_by_goalie$goalie_id, xg_by_goalie$xg))
       }
     }
+  }
+
+  if (!is.null(res$stints) && nrow(res$stints) > 0) {
+    st <- res$stints
+    # home_id/away_id aren't in scope here the way tr$home_id is (tr is
+    # this game's team_result) — reusing that instead of re-deriving them.
+    st$home_abbrev <- tr$home_abbrev
+    st$away_abbrev <- tr$away_abbrev
+    stint_rows_new[[length(stint_rows_new) + 1]] <- st
   }
 
   skater_totals$pen_taken <- merge_add(skater_totals$pen_taken, res$penalty$pen_taken)
@@ -921,6 +1011,17 @@ if (length(lineup_rows_new) > 0) {
   } else new_lineup_df
   write.csv(combined_lineup_df, LINEUP_OUT, row.names = FALSE)
   cat("Wrote", LINEUP_OUT, "-", nrow(combined_lineup_df), "shot-lineup rows total (", nrow(new_lineup_df), "new)\n")
+}
+
+if (length(stint_rows_new) > 0) {
+  new_stints_df <- bind_rows(stint_rows_new)
+  existing_stints <- if (file.exists(STINTS_OUT)) tryCatch(read.csv(STINTS_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
+  combined_stints_df <- if (!is.null(existing_stints) && nrow(existing_stints) > 0) {
+    new_stints_df <- new_stints_df[!(new_stints_df$game_id %in% existing_stints$game_id), ]
+    bind_rows(existing_stints, new_stints_df)
+  } else new_stints_df
+  write.csv(combined_stints_df, STINTS_OUT, row.names = FALSE)
+  cat("Wrote", STINTS_OUT, "-", nrow(combined_stints_df), "stint rows total (", nrow(new_stints_df), "new)\n")
 }
 
 writeLines(unique(c(processed_ids, processed_this_run)), STATE_FILE)
