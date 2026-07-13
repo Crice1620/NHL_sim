@@ -771,6 +771,72 @@ load_all_shot_vol_rapm <- function(target_season) {
   d$player_id <- as.character(d$player_id)
   d
 }
+# Multi-season variant, matching load_all_rapm(seasons)'s exact pattern —
+# needed now that shot-volume RAPM gets a real 3-year blend (see
+# project_shot_vol_rapm() below) instead of the single-season lookup this
+# used before fit_recency_weights.R produced real fitted weights for it.
+load_all_shot_vol_rapm_multi <- function(seasons) {
+  rows <- lapply(seasons, function(s) {
+    d <- gh_read(paste0("https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/shot_volume_rapm/", s, "/shot_volume_rapm.csv"))
+    if (is.null(d) || nrow(d) == 0) return(NULL)
+    d$player_id <- as.character(d$player_id)
+    d$season <- s
+    d
+  })
+  bind_rows(Filter(Negate(is.null), rows))
+}
+
+# ── Fitted recency weights (fit_recency_weights.R) and finishing-skill
+# shrinkage (fit_finishing_shrinkage.R) — REPLACES the assumed decay
+# formula (recency_weights_gp()) for the 6 metrics fit_recency_weights.R
+# covers, with weights fit against real historical year-over-year
+# outcomes. HONEST, IMPORTANT DIFFERENCE from the old formula: these
+# fitted weights do NOT sum to 1 (recency_weights_gp() explicitly
+# normalizes to force that) — that's not an oversight, it's the correct,
+# expected behavior of a regression fit to predict a NOISY future
+# observation, which shrinks toward the population average rather than
+# assuming a player's full historical value carries forward unchanged.
+# Falls back to the old assumed-decay behavior if this file isn't
+# available for some reason, rather than failing outright.
+GH_RECENCY_WEIGHTS <- "https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/recency_weights"
+recency_weights_fitted <- tryCatch(gh_read(paste0(GH_RECENCY_WEIGHTS, "/recency_weights.csv")), error = function(e) NULL)
+finishing_shrinkage_fitted <- tryCatch(gh_read(paste0(GH_RECENCY_WEIGHTS, "/finishing_shrinkage.csv")), error = function(e) NULL)
+if (is.null(recency_weights_fitted)) {
+  cat("WARNING: No fitted recency weights found — falling back to the assumed decay formula for RAPM/shot-volume/PP/PK metrics.\n")
+}
+if (is.null(finishing_shrinkage_fitted)) {
+  cat("WARNING: No fitted finishing-skill shrinkage found — using the pooled GAx value at full face value, unshrunk.\n")
+}
+
+# Applies the fitted regression weights for a given metric, falling back
+# to the old weighted_avg_skip_na()/recency_weights_gp() behavior if no
+# fitted weights exist for this metric or player's exact season count.
+# 1-year passthrough matches HockeyStats' own documented approach for
+# players with only a single season of history — nothing to fit there.
+weighted_avg_fitted <- function(vals, season, gp, metric_name) {
+  keep <- !is.na(vals)
+  if (!any(keep)) return(NA_real_)
+  v <- vals[keep]; s <- season[keep]; g <- gp[keep]
+  ord <- order(s)
+  v <- v[ord]
+  n <- length(v)
+  if (n == 1) return(v[1])
+  if (is.null(recency_weights_fitted)) {
+    w <- recency_weights_gp(s[ord], g[ord])
+    return(sum(w * v))
+  }
+  row <- recency_weights_fitted %>% filter(metric == metric_name, n_years == min(n, 3))
+  if (nrow(row) == 0) {
+    w <- recency_weights_gp(s[ord], g[ord])
+    return(sum(w * v))
+  }
+  if (n >= 3) {
+    v3 <- tail(v, 3)  # most recent 3, in the rare case more than 3 seasons got through
+    row$intercept[1] + row$w1[1] * v3[1] + row$w2[1] * v3[2] + row$w3[1] * v3[3]
+  } else {
+    row$intercept[1] + row$w1[1] * v[1] + row$w2[1] * v[2]
+  }
+}
 
 # ── WOWY (With Or Without You) — our own approximation of RAPM's context
 # adjustment, without needing a full ridge regression. Real RAPM controls
@@ -920,8 +986,8 @@ project_rapm <- function(hist_df) {
     group_by(player_id) %>%
     arrange(season, .by_group = TRUE) %>%
     summarise(
-      off_rapm_3yr = weighted_avg_skip_na(off_rapm_per60, season, toi_5v5_sec),
-      def_rapm_3yr = weighted_avg_skip_na(def_rapm_per60, season, toi_5v5_sec),
+      off_rapm_3yr = weighted_avg_fitted(off_rapm_per60, season, toi_5v5_sec, "off_rapm_per60"),
+      def_rapm_3yr = weighted_avg_fitted(def_rapm_per60, season, toi_5v5_sec, "def_rapm_per60"),
       .groups = "drop"
     )
 }
@@ -939,8 +1005,27 @@ project_rapm_pppk <- function(hist_df) {
     group_by(player_id) %>%
     arrange(season, .by_group = TRUE) %>%
     summarise(
-      pp_rapm_3yr = weighted_avg_skip_na(pp_rapm_per60, season, pp_weight_proxy),
-      pk_rapm_3yr = weighted_avg_skip_na(pk_rapm_per60, season, pk_weight_proxy),
+      pp_rapm_3yr = weighted_avg_fitted(pp_rapm_per60, season, pp_weight_proxy, "pp_rapm_per60"),
+      pk_rapm_3yr = weighted_avg_fitted(pk_rapm_per60, season, pk_weight_proxy, "pk_rapm_per60"),
+      .groups = "drop"
+    )
+}
+# NEW — shot-volume RAPM previously used a single season directly
+# (season_year - 1) with no blending at all, since fit_recency_weights.R
+# hadn't produced real fitted weights for it yet. Now that it has, this
+# gives it the same real 3-year blend as the other metrics. No TOI needed
+# here — the fitted weights already encode the optimal combination
+# directly; TOI only mattered as an observation weight during FITTING,
+# not at prediction time.
+project_shot_vol_rapm <- function(hist_df) {
+  if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
+  if (!"shot_vol_off_per60" %in% names(hist_df)) return(NULL)
+  hist_df %>%
+    group_by(player_id) %>%
+    arrange(season, .by_group = TRUE) %>%
+    summarise(
+      shot_vol_off_3yr = weighted_avg_fitted(shot_vol_off_per60, season, rep(1, dplyr::n()), "shot_vol_off_per60"),
+      shot_vol_def_3yr = weighted_avg_fitted(shot_vol_def_per60, season, rep(1, dplyr::n()), "shot_vol_def_per60"),
       .groups = "drop"
     )
 }
@@ -1094,6 +1179,22 @@ gax_data <- tryCatch(load_all_gax(season_year - 1L), error = function(e) NULL)
 if (!is.null(gax_data) && "gax_per60" %in% names(gax_data)) {
   cat("  gax_data rows:", nrow(gax_data), "\n")
   skater_output <- skater_output %>% left_join(gax_data %>% select(player_id, gax_per60), by = "player_id")
+  # Shrinkage applied here (see fit_finishing_shrinkage.R) — the pooled
+  # 3-year gax_per60 was previously used at full face value with no
+  # reliability discount at all, despite finishing skill being one of the
+  # more volatile, harder-to-predict skills in hockey analytics even
+  # pooled over 3 years. A real, fitted slope well below 1.0 confirmed
+  # meaningful shrinkage was actually needed, not just theoretically
+  # possible — applied directly here so every downstream use (the
+  # finishing_xgf_delta computation below) automatically gets the
+  # shrunk, forecasting-accurate value.
+  if (!is.null(finishing_shrinkage_fitted) && nrow(finishing_shrinkage_fitted) > 0) {
+    fs <- finishing_shrinkage_fitted[1, ]
+    skater_output$gax_per60 <- fs$intercept + fs$slope * skater_output$gax_per60
+    cat("  Applied finishing-skill shrinkage (intercept:", round(fs$intercept, 4), "slope:", round(fs$slope, 4), ")\n")
+  } else {
+    cat("  No fitted finishing-skill shrinkage found — using the pooled value at full face value, unshrunk.\n")
+  }
 } else {
   cat("  No finishing-skill data available for season", season_year, "— proceeding without it.\n")
   skater_output$gax_per60 <- NA_real_
@@ -1103,14 +1204,18 @@ if (!is.null(gax_data) && "gax_per60" %in% names(gax_data)) {
 # the most recent COMPLETED season's fit, not season_year itself (which
 # hasn't been played and has no stint data to fit on).
 cat("Loading shot-volume RAPM data...\n")
-shot_vol_data <- tryCatch(load_all_shot_vol_rapm(season_year - 1L), error = function(e) NULL)
-if (!is.null(shot_vol_data) && "shot_vol_off_per60" %in% names(shot_vol_data)) {
-  cat("  shot_vol_data rows:", nrow(shot_vol_data), "\n")
-  skater_output <- skater_output %>% left_join(shot_vol_data %>% select(player_id, shot_vol_off_per60, shot_vol_def_per60), by = "player_id")
+# CHANGED from a single-season lookup (season_year - 1 only) to a real
+# 3-year blend, matching RAPM's own pattern — fit_recency_weights.R now
+# has real fitted weights for this metric, so it no longer needs to stay
+# single-season the way it did before those weights existed.
+shot_vol_hist <- tryCatch(load_all_shot_vol_rapm_multi(recent3), error = function(e) NULL)
+proj_shot_vol <- if (!is.null(shot_vol_hist) && nrow(shot_vol_hist) > 0) project_shot_vol_rapm(shot_vol_hist) else NULL
+cat("  proj_shot_vol rows:", if (is.null(proj_shot_vol)) 0 else nrow(proj_shot_vol), "\n")
+if (!is.null(proj_shot_vol)) {
+  skater_output <- skater_output %>% left_join(proj_shot_vol, by = "player_id")
 } else {
-  cat("  No shot-volume RAPM data available for season", season_year, "— proceeding without it.\n")
-  skater_output$shot_vol_off_per60 <- NA_real_
-  skater_output$shot_vol_def_per60 <- NA_real_
+  skater_output$shot_vol_off_3yr <- NA_real_
+  skater_output$shot_vol_def_3yr <- NA_real_
 }
 
 # ── Shot-based team offense/defense profile ──────────────────────────────────
@@ -1280,10 +1385,10 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     # QUALITY). Unlike finishing skill, this has both an offense AND
     # defense side, same as xG-RAPM — shot suppression is a real
     # defensive skill distinct from suppressing shot QUALITY.
-    shot_vol_off_delta = sum(coalesce(shot_vol_off_per60, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
-    shot_vol_def_delta = sum(coalesce(shot_vol_def_per60, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
-    n_with_shot_vol_off = sum(!is.na(shot_vol_off_per60)),
-    n_with_shot_vol_def = sum(!is.na(shot_vol_def_per60)),
+    shot_vol_off_delta = sum(coalesce(shot_vol_off_3yr, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    shot_vol_def_delta = sum(coalesce(shot_vol_def_3yr, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    n_with_shot_vol_off = sum(!is.na(shot_vol_off_3yr)),
+    n_with_shot_vol_def = sum(!is.na(shot_vol_def_3yr)),
     # WOWY is also a shared/context stat (it represents team-level effects
     # attributable to a player, not an individually-authored event like a
     # shot), so this gets the same TOI-weighted-average treatment as CA/CF
