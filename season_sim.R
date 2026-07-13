@@ -1970,17 +1970,41 @@ shot_vol_against_lu <- setNames(team_off_def$shot_vol_against_pg_new, team_off_d
 pp_goals_lu  <- setNames(team_off_def$pp_goals_pg, team_off_def$team_abbrev)
 pk_ga_lu     <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
 
-# ── Validation: implied per-shot probability, BEFORE the [0.01, 0.15]
+# ── TEMPORARY: NA-source diagnostic — the last simulation run produced
+# "NAs produced" warnings from rpois() in simulate_games(), meaning at
+# least one of these lookups has a missing value for some team that the
+# schedule actually uses. Checking every lookup directly here, rather
+# than guessing which one, since home_xg_5v5_adj/away_xg_5v5_adj depend
+# on FIVE separate lookups now (xgf/xga/shot_vol_for/shot_vol_against/
+# goalie_sv) — any single NA among them propagates through the whole
+# chain silently until rpois() finally surfaces it as a warning with no
+# indication of which team caused it.
+for (lu_name in c("xgf_lu", "xga_lu", "shot_vol_for_lu", "shot_vol_against_lu", "goalie_sv_lu")) {
+  lu <- get(lu_name)
+  bad_teams <- names(lu)[is.na(lu)]
+  if (length(bad_teams) > 0) {
+    cat("  *** NA FOUND in", lu_name, "for team(s):", paste(bad_teams, collapse=", "), "***\n")
+  }
+}
+# (The "team missing entirely from a lookup, vs. present-but-NA" check
+# needs last_schedule's list of actually-used team abbreviations, which
+# isn't loaded until later in this script — see the second half of this
+# diagnostic right after last_schedule itself gets loaded, below.)
+
+# ── Validation: implied per-shot probability, BEFORE the probability
 # clamp in simulate_games() — checked here across every real team's own
-# offense in isolation, so we can see whether that clamp is comfortably
-# wide or whether it's actually doing a lot of the work (which would
-# suggest the shot-volume/xG scales don't line up as cleanly as assumed
-# and need re-examining, not just trusting the clamp to paper over it).
+# offense in isolation. The clamp was originally guessed at [0.01, 0.15]
+# before seeing real data; the actual observed range came back 0.062 to
+# 0.2624, with 11 of 32 teams (over a third of the league) exceeding
+# 0.15 — meaning that guess was genuinely too narrow and cutting off
+# real signal, not just acting as a rare safety net. Widened to
+# [0.01, 0.30] to comfortably cover the real observed range with margin,
+# rather than another guess with no data behind it.
 implied_prob_check <- team_off_def$onice_xgf_pg_wtd / pmax(team_off_def$shot_vol_for_pg_new, 1)
 cat("  Implied per-shot probability check (pre-clamp, each team's own offense):",
     round(min(implied_prob_check, na.rm=TRUE), 4), "to", round(max(implied_prob_check, na.rm=TRUE), 4),
-    "| clamp range is [0.01, 0.15] — values outside this range are being clamped, not reflecting the real fitted relationship\n")
-n_clamped <- sum(implied_prob_check < 0.01 | implied_prob_check > 0.15, na.rm = TRUE)
+    "| clamp range is [0.01, 0.30] — values outside this range are being clamped, not reflecting the real fitted relationship\n")
+n_clamped <- sum(implied_prob_check < 0.01 | implied_prob_check > 0.30, na.rm = TRUE)
 cat("  Teams outside the clamp range:", n_clamped, "of", length(implied_prob_check),
     "— a large number here would mean the clamp is doing real work, not just a safety net\n\n")
 
@@ -2038,12 +2062,15 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
 
   # Implied per-shot probability — xG (quality + finishing, already
   # baked into xgf_lu/xga_lu) divided by shots (volume, from shot-volume
-  # RAPM). Safety-clamped to a plausible range (Corsi-scale shot attempts
-  # include many low-quality/no-chance attempts, so this runs lower than
-  # a shots-ON-GOAL-only conversion rate would) — guards against a
-  # nonsensical extreme if xG and shots land near opposite clamped ends.
-  home_implied_prob <- pmax(0.01, pmin(0.15, home_xg_5v5 / pmax(home_shots_5v5, 1)))
-  away_implied_prob <- pmax(0.01, pmin(0.15, away_xg_5v5 / pmax(away_shots_5v5, 1)))
+  # RAPM). Clamp widened to [0.01, 0.30] based on REAL observed data —
+  # the original [0.01, 0.15] guess was checked against actual team
+  # values and found to clamp 11 of 32 teams (over a third of the
+  # league), with the real range running up to 0.2624 — meaning that
+  # guess was cutting off real signal, not just acting as a rare safety
+  # net. 0.30 keeps a genuine safety margin above the observed max
+  # without guessing at another arbitrary number.
+  home_implied_prob <- pmax(0.01, pmin(0.30, home_xg_5v5 / pmax(home_shots_5v5, 1)))
+  away_implied_prob <- pmax(0.01, pmin(0.30, away_xg_5v5 / pmax(away_shots_5v5, 1)))
 
   # Goaltending — now an ADDITIVE nudge directly to the per-shot
   # probability, matching HockeyStats' own structure exactly (their
@@ -2162,6 +2189,25 @@ last_schedule <- last_schedule %>%
 if (nrow(last_schedule) == 0)
   stop("Schedule template has 0 usable games after filtering to known teams. Check name_to_abbrev mapping.")
 cat("  last_schedule rows:", nrow(last_schedule), "\n")
+
+# ── TEMPORARY: second half of the NA-source diagnostic — the schedule
+# above got filtered against net_lookup's team list (a DIFFERENT source
+# than team_off_def, which is what xgf_lu/shot_vol_for_lu/shot_vol_against_lu/
+# goalie_sv_lu are actually built from). If those two team lists differ
+# even slightly, a team could pass the schedule filter above yet still
+# return NA when simulate_games() indexes one of these lookups — this
+# checks for exactly that mismatch directly, rather than continuing to
+# guess at the cause of the earlier "NAs produced" warnings.
+all_sched_teams <- unique(c(last_schedule$home_abbrev, last_schedule$away_abbrev))
+for (lu_name in c("xgf_lu", "xga_lu", "shot_vol_for_lu", "shot_vol_against_lu", "goalie_sv_lu")) {
+  lu <- get(lu_name)
+  missing_teams <- setdiff(all_sched_teams, names(lu))
+  if (length(missing_teams) > 0) {
+    cat("  *** Team(s) in the schedule but MISSING ENTIRELY from", lu_name, ":", paste(missing_teams, collapse=", "), "***\n")
+  } else {
+    cat("  ", lu_name, "— every scheduled team is present, no mismatch here.\n")
+  }
+}
 
 # ── 7. Conference/division map for playoff seeding ──────────────────────────
 cd_map <- bind_rows(lapply(standings_now$standings, function(s) {
