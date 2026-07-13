@@ -10,6 +10,15 @@ on:
     # just arithmetic computed on the fly every time season_sim.R/app.R
     # run. Only re-fits the CURRENT season (--mode=current) — completed
     # historical seasons don't need repeated re-fitting once done.
+    # Skater finishing skill (GAx) and shot-volume RAPM share this exact
+    # same profile — same weekly cadence, same --mode=current-only scope
+    # — so both run as additional steps in this same workflow rather than
+    # separate ones. HONEST NOTE: shot-volume RAPM's design matrix runs
+    # roughly 10x larger than xG-RAPM's (two rows per STINT rather than
+    # one row per shot), so this workflow will take noticeably longer to
+    # complete each week than it used to — comfortably within GitHub
+    # Actions' default 6-hour job limit, but a real, worth-knowing change
+    # in how long a run takes, not free.
     - cron: '0 11 * * 0'   # Sundays at 11am UTC — adjust as you like
   workflow_dispatch: {}     # lets you trigger it manually from the Actions tab
 jobs:
@@ -29,21 +38,31 @@ jobs:
           Rscript -e 'install.packages(c("dplyr","Matrix","glmnet"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
         # NOTE: no xgboost install needed here, unlike onice_daily.yml —
         # fit_rapm.R only reads the ALREADY-SCORED xg column from
-        # shots_raw.csv, it never scores shots itself.
+        # shots_raw.csv, it never scores shots itself. fit_skater_finishing.R
+        # and fit_shot_volume_rapm.R are also both covered by this same
+        # install step (dplyr, and Matrix/glmnet for the latter).
       - name: Run RAPM refit for current season
         run: Rscript fit_rapm.R --mode=current
+      - name: Run skater finishing-skill refit for current season
+        run: Rscript fit_skater_finishing.R --mode=current
+      - name: Run shot-volume RAPM refit for current season
+        run: Rscript fit_shot_volume_rapm.R --mode=current
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if compgen -G "data/rapm/*/rapm.csv" > /dev/null; then
-            git add data/rapm/
-            git diff --cached --quiet || git commit -m "Weekly RAPM refit [skip ci]"
-            for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying..."
-              sleep 5
-            done
+          if compgen -G "data/rapm/*/rapm.csv" > /dev/null || compgen -G "data/finishing/*/skater_gax_current.csv" > /dev/null || compgen -G "data/shot_volume_rapm/*/shot_volume_rapm_current.csv" > /dev/null; then
+            git add data/rapm/ data/finishing/ data/shot_volume_rapm/
+            if git diff --cached --quiet; then
+              echo "Nothing changed since last run — nothing to commit."
+            else
+              git commit -m "Weekly RAPM + finishing-skill + shot-volume RAPM refit [skip ci]"
+              for i in 1 2 3; do
+                git pull --rebase origin main && git push && break
+                echo "Push attempt $i failed, retrying..."
+                sleep 5
+              done
+            fi
           else
-            echo "No RAPM output found yet — nothing to commit."
+            echo "No RAPM, finishing-skill, or shot-volume RAPM output found yet — nothing to commit."
           fi
