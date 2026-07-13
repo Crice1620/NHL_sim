@@ -1069,12 +1069,19 @@ if (!is.null(proj_rapm_pppk)) {
 }
 
 # ── Skater finishing skill (Goals Above Expected) — see fit_skater_finishing.R
-# for full methodology. Loaded for the TARGET season directly (season_year),
-# not recency-weighted across recent3 like RAPM — the file itself already
-# represents a pooled 3-year window internally, so this is already "as of
-# this target season," no additional blending needed here.
+# for full methodology. Loaded for season_year - 1 (the most recent
+# COMPLETED season), NOT season_year itself — season_year is the season
+# being PROJECTED and hasn't been played yet, so no shot data (and
+# therefore no skater_gax.csv) exists for it at all. This was a real bug:
+# loading season_year directly always 404'd, silently leaving gax_per60
+# NA for every player and making the finishing-skill adjustment a no-op
+# league-wide, exactly matching the "no meaningful change" symptom seen
+# after first wiring this in. season_year - 1's file already represents a
+# pooled 3-year window ending at that completed season (matching how
+# RAPM/WOWY also source their most recent data from season_year - 1), so
+# no additional blending is needed here beyond that existing internal pool.
 cat("Loading skater finishing skill (GAx) data...\n")
-gax_data <- tryCatch(load_all_gax(season_year), error = function(e) NULL)
+gax_data <- tryCatch(load_all_gax(season_year - 1L), error = function(e) NULL)
 if (!is.null(gax_data) && "gax_per60" %in% names(gax_data)) {
   cat("  gax_data rows:", nrow(gax_data), "\n")
   skater_output <- skater_output %>% left_join(gax_data %>% select(player_id, gax_per60), by = "player_id")
