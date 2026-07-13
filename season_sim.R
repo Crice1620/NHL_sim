@@ -1036,21 +1036,27 @@ if (!is.null(proj_rapm)) {
   skater_output$off_rapm_3yr <- NA_real_; skater_output$def_rapm_3yr <- NA_real_
 }
 
-# ── RAPM (PP/PK) — loaded but DELIBERATELY NOT joined into skater_output
-# or wired into any production coalesce chain. PP/PK currently bypasses
-# player-level data entirely (team_pp_pk_rates uses team-level historical
-# goals/game, built specifically because an earlier attempt at
-# player-level PP/PK WOWY was reverted for real instability — see the
-# note where team_pp_pk_rates is built). RAPM's ridge regularization
-# should handle PP/PK's small samples far better than WOWY's raw
-# with/without comparison could, but that's a real claim worth actually
-# checking, not assuming — so this is computed and printed as a
-# side-by-side DIAGNOSTIC COMPARISON only (see below, near the other
-# league-wide diagnostics), not fed into the simulation.
-cat("Loading RAPM (PP/PK) data for diagnostic comparison only (not used in simulation)...\n")
+# ── RAPM (PP/PK) — PROMOTED TO PRODUCTION. Initially loaded diagnostic-
+# only (see the comparison block further below, still present) — after
+# reviewing that comparison, the spread looked bounded and reasonable
+# (nothing like the -33 extreme instability that got the earlier
+# player-level WOWY attempt reverted), so this now feeds the actual
+# simulation. HONEST CAVEAT, not fully resolved: one team (MIN) disagreed
+# meaningfully in direction between RAPM and the team-level historical
+# approach in the comparison that motivated this — plausibly real roster
+# effects RAPM correctly picks up that a team-level historical rate can't,
+# but not fully investigated. Worth revisiting if MIN's game/series/
+# playoff-bracket results look off, or after this has run for a few more
+# refresh cycles.
+cat("Loading RAPM (PP/PK) data...\n")
 rapm_pppk_hist <- tryCatch(load_all_rapm_pppk(recent3), error = function(e) NULL)
 proj_rapm_pppk <- if (!is.null(rapm_pppk_hist) && nrow(rapm_pppk_hist) > 0) project_rapm_pppk(rapm_pppk_hist) else NULL
 cat("  proj_rapm_pppk rows:", if (is.null(proj_rapm_pppk)) 0 else nrow(proj_rapm_pppk), "\n")
+if (!is.null(proj_rapm_pppk)) {
+  skater_output <- skater_output %>% left_join(proj_rapm_pppk, by = "player_id")
+} else {
+  skater_output$pp_rapm_3yr <- NA_real_; skater_output$pk_rapm_3yr <- NA_real_
+}
 
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
@@ -1084,6 +1090,13 @@ league_avg_off_wowy <- mean(coalesce(skater_output$off_rapm_3yr, skater_output$e
 league_avg_def_wowy <- mean(coalesce(skater_output$def_rapm_3yr, skater_output$ev_defense_xgwowy_3yr, skater_output$ev_defense_wowy_3yr), na.rm = TRUE)
 if (is.na(league_avg_off_wowy)) league_avg_off_wowy <- 0
 if (is.na(league_avg_def_wowy)) league_avg_def_wowy <- 0
+# Same recentering, for PP/PK RAPM — no goals-WOWY/box-score fallback
+# here since PP/PK RAPM has no earlier-generation equivalent to fall back
+# to (that's the whole reason this was diagnostic-only until now).
+league_avg_pp_rapm <- mean(skater_output$pp_rapm_3yr, na.rm = TRUE)
+league_avg_pk_rapm <- mean(skater_output$pk_rapm_3yr, na.rm = TRUE)
+if (is.na(league_avg_pp_rapm)) league_avg_pp_rapm <- 0
+if (is.na(league_avg_pk_rapm)) league_avg_pk_rapm <- 0
 cat("  League-average WOWY (recentering baseline) — offense:", round(league_avg_off_wowy, 3), "| defense:", round(league_avg_def_wowy, 3), "\n")
 # NOTE: a parallel PP/PK adjustment layer was built and reverted here. The
 # recentering baseline itself came out at -2.8/+2.6 (mean) and -4.6/+2.9
@@ -1132,7 +1145,12 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     # than an all-or-nothing switch. Recentered against the league
     # average — see note above.
     ev_off_wowy_effective = coalesce(off_rapm_3yr, ev_offense_xgwowy_3yr, ev_offense_wowy_3yr) - league_avg_off_wowy,
-    ev_def_wowy_effective = coalesce(def_rapm_3yr, ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy
+    ev_def_wowy_effective = coalesce(def_rapm_3yr, ev_defense_xgwowy_3yr, ev_defense_wowy_3yr) - league_avg_def_wowy,
+    # PP/PK RAPM — recentered the same way, now feeding the actual
+    # simulation (see the note where proj_rapm_pppk gets joined above for
+    # the honest caveat this promotion still carries).
+    pp_rapm_effective = pp_rapm_3yr - league_avg_pp_rapm,
+    pk_rapm_effective = pk_rapm_3yr - league_avg_pk_rapm
   ) %>%
   summarise(
     shots_for_pg      = sum(coalesce(rate_shots, 0), na.rm = TRUE),
@@ -1187,6 +1205,17 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     wowy_ev_def_wtd = sum(coalesce(ev_def_wowy_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(ev_def_wowy_effective)], na.rm = TRUE),
     n_with_wowy_off = sum(!is.na(ev_off_wowy_effective)),
     n_with_wowy_def = sum(!is.na(ev_def_wowy_effective)),
+    # PP/PK RAPM — same TOI-weighted-average construction as 5v5 WOWY
+    # above (a shared/context stat, not an individually-authored event),
+    # using the SAME 12F/6D roster already selected by rate_toi_min —
+    # deliberately reusing the exact roster already validated in the
+    # earlier diagnostic comparison, rather than introducing a different,
+    # untested PP/PK-specific roster-selection method at the same time as
+    # promoting this to production.
+    pp_rapm_wtd = sum(coalesce(pp_rapm_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(pp_rapm_effective)], na.rm = TRUE),
+    pk_rapm_wtd = sum(coalesce(pk_rapm_effective, 0) * coalesce(rate_toi_min, 12), na.rm = TRUE) / sum(coalesce(rate_toi_min, 12)[!is.na(pk_rapm_effective)], na.rm = TRUE),
+    n_with_pp_rapm = sum(!is.na(pp_rapm_effective)),
+    n_with_pk_rapm = sum(!is.na(pk_rapm_effective)),
     n_with_xgwowy_off = sum(!is.na(ev_offense_xgwowy_3yr)),
     n_with_xgwowy_def = sum(!is.na(ev_defense_xgwowy_3yr)),
     .groups = "drop"
@@ -1210,6 +1239,12 @@ lg_avg_shooting_pct <- sum(team_offense$goals_for_pg, na.rm=TRUE) / sum(team_off
 # tiny, unreliable sample.
 AVG_5V5_MIN_PER_GAME <- 48  # rough share of a 60-min game played at 5v5
 MIN_WOWY_ROSTER_COVERAGE <- 15
+# Rough real-world average PP/PK time per team per game — symmetric,
+# since a team's PK time is essentially the same as their opponents' PP
+# time league-wide. Used the same way AVG_5V5_MIN_PER_GAME converts a
+# per-60 rate into a per-game adjustment.
+AVG_PP_MIN_PER_GAME <- 4.5
+AVG_PK_MIN_PER_GAME <- 4.5
 
 # Self-calibrating SOG-to-Corsi conversion: onice_ca_pg/onice_cf_pg are
 # CORSI (shots-on-goal + missed + blocked combined), a bigger number than
@@ -1267,7 +1302,20 @@ team_offense <- team_offense %>%
   left_join(team_pp_pk_rates, by = "team_abbrev") %>%
   mutate(
     pp_goals_pg = coalesce(pp_goals_pg, lg_avg_pp_goals_pg),
-    pk_ga_pg    = coalesce(pk_ga_pg, lg_avg_pk_ga_pg)
+    pk_ga_pg    = coalesce(pk_ga_pg, lg_avg_pk_ga_pg),
+    # PP/PK RAPM adjustment — same construction as the 5v5 WOWY adjustment
+    # above: converts the roster's TOI-weighted RAPM value into a per-game
+    # goals shift, clamped to guard against an extreme roster producing an
+    # implausible result, applied only when roster coverage clears the
+    # same bar used for 5v5. Added onto the real team-level historical
+    # rate (not replacing it), same relationship WOWY has to the
+    # box-score goals rate for 5v5.
+    pp_rapm_adj_per_game = ifelse(n_with_pp_rapm >= MIN_WOWY_ROSTER_COVERAGE,
+                                    pmax(-0.5, pmin(0.5, pp_rapm_wtd * (AVG_PP_MIN_PER_GAME / 60))), 0),
+    pk_rapm_adj_per_game = ifelse(n_with_pk_rapm >= MIN_WOWY_ROSTER_COVERAGE,
+                                    pmax(-0.5, pmin(0.5, pk_rapm_wtd * (AVG_PK_MIN_PER_GAME / 60))), 0),
+    pp_goals_pg = pmax(0.1, pp_goals_pg + pp_rapm_adj_per_game),
+    pk_ga_pg    = pmax(0.1, pk_ga_pg + pk_rapm_adj_per_game)
   )
 
 # League-average 5v5 xGA/shot — the denominator for the same kind of
@@ -1293,6 +1341,15 @@ team_offense <- team_offense %>%
                                     pmax(-1.5, pmin(1.5, wowy_ev_def_wtd * (AVG_5V5_MIN_PER_GAME / 60))), 0),
     goals_for_pg_wowy_adj     = goals_for_pg + wowy_off_adj_per_game,
     shooting_pct              = ifelse(shots_for_pg > 0, pmax(0.05, pmin(0.20, goals_for_pg_wowy_adj / shots_for_pg)), lg_avg_shooting_pct),
+    # ACTUAL FIX: apply the same adjustment to onice_xgf_pg_wtd/
+    # onice_xga_pg_wtd — this is what simulate_games() really reads
+    # (xgf_lu/xga_lu are built directly from these two columns). The
+    # goals_for_pg_wowy_adj/shooting_pct chain above feeds shots_against_lu/
+    # shooting_pct_lu, which are defined but never actually referenced again
+    # anywhere in this script — confirmed dead code, meaning RAPM/WOWY was
+    # only ever live for PP/PK, not 5v5, until this fix.
+    onice_xgf_pg_wtd = pmax(0.1, onice_xgf_pg_wtd + wowy_off_adj_per_game),
+    onice_xga_pg_wtd = pmax(0.1, onice_xga_pg_wtd + wowy_def_adj_per_game),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
     # 5v5-only on-ice shots-against PLUS real roster-driven PK shots-against
