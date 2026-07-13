@@ -1197,6 +1197,21 @@ team_offense <- bind_rows(team_offense_f, team_offense_d) %>%
     onice_xga_pg_wtd  = sum(coalesce(onice_xga_pg, 0), na.rm = TRUE) / 5,
     n_with_onice_xg   = sum(!is.na(onice_xgf_pg)),
     n_with_onice_def  = sum(!is.na(onice_ca_pg)),
+    # RAPM team deltas — SUM (not average) of each player's own RAPM value
+    # times their own ice time. This is the mathematically correct
+    # reconstruction: RAPM coefficients are already individually additive
+    # by construction (they came from a regression where each of the 5
+    # on-ice players' coefficients sum directly to a shot's total
+    # predicted deviation from average), unlike raw on-ice rates (which
+    # need the /5 correction above because every on-ice skater gets full
+    # credit for the same shot). Using a TOI-weighted AVERAGE here (as
+    # wowy_ev_off_wtd below still does, kept only for the dead
+    # goals_for_pg_wowy_adj path) would be the wrong operation for this
+    # purpose — sum is what correctly reconstructs the team total.
+    rapm_xgf_delta = sum(coalesce(off_rapm_3yr, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    rapm_xga_delta = sum(coalesce(def_rapm_3yr, 0) * coalesce(rate_toi_min, 12) / 60, na.rm = TRUE),
+    n_with_rapm_off = sum(!is.na(off_rapm_3yr)),
+    n_with_rapm_def = sum(!is.na(def_rapm_3yr)),
     # WOWY is also a shared/context stat (it represents team-level effects
     # attributable to a player, not an individually-authored event like a
     # shot), so this gets the same TOI-weighted-average treatment as CA/CF
@@ -1327,6 +1342,17 @@ team_offense <- team_offense %>%
 league_avg_xga_per_shot <- mean(team_offense$onice_xga_pg_wtd / pmax(team_offense$onice_cf_pg_wtd, 1), na.rm = TRUE)
 cat("  League-average 5v5 xGA-per-shot (xG-based goalie-adjustment baseline):", round(league_avg_xga_per_shot, 4), "\n")
 
+# League-average 5v5 xG baseline — computed from the RAW (pre-adjustment)
+# per-team on-ice rates, pooling offense and defense together since
+# leaguewide total xG-for must equal leaguewide total xG-against by
+# construction (every attempt "for" one team is "against" another) — this
+# gives one stable, empirically-real anchor point for both sides. Averaging
+# across all 32 teams also mostly washes out any single team's own
+# roster-context dependence, which is exactly the property individual
+# teams' raw onice_xgf_pg_wtd/onice_xga_pg_wtd DON'T have on their own.
+league_avg_xg_5v5 <- mean(c(team_offense$onice_xgf_pg_wtd, team_offense$onice_xga_pg_wtd), na.rm = TRUE)
+cat("  League-average 5v5 xG baseline (for RAPM-driven team rates):", round(league_avg_xg_5v5, 3), "\n")
+
 team_offense <- team_offense %>%
   mutate(
     # WOWY adjustment — converts each team's average context-adjusted
@@ -1341,15 +1367,31 @@ team_offense <- team_offense %>%
                                     pmax(-1.5, pmin(1.5, wowy_ev_def_wtd * (AVG_5V5_MIN_PER_GAME / 60))), 0),
     goals_for_pg_wowy_adj     = goals_for_pg + wowy_off_adj_per_game,
     shooting_pct              = ifelse(shots_for_pg > 0, pmax(0.05, pmin(0.20, goals_for_pg_wowy_adj / shots_for_pg)), lg_avg_shooting_pct),
-    # ACTUAL FIX: apply the same adjustment to onice_xgf_pg_wtd/
-    # onice_xga_pg_wtd — this is what simulate_games() really reads
-    # (xgf_lu/xga_lu are built directly from these two columns). The
-    # goals_for_pg_wowy_adj/shooting_pct chain above feeds shots_against_lu/
-    # shooting_pct_lu, which are defined but never actually referenced again
-    # anywhere in this script — confirmed dead code, meaning RAPM/WOWY was
-    # only ever live for PP/PK, not 5v5, until this fix.
-    onice_xgf_pg_wtd = pmax(0.1, onice_xgf_pg_wtd + wowy_off_adj_per_game),
-    onice_xga_pg_wtd = pmax(0.1, onice_xga_pg_wtd + wowy_def_adj_per_game),
+    # RAPM-driven team rate — clamped to guard against an extreme roster
+    # producing an implausible result, and coverage-gated (falls back to 0
+    # adjustment, i.e. pure league average, if too few of the roster have
+    # real RAPM data) the same way every other adjustment in this script
+    # already is.
+    rapm_xgf_adj = ifelse(n_with_rapm_off >= MIN_WOWY_ROSTER_COVERAGE,
+                            pmax(-1.5, pmin(1.5, rapm_xgf_delta)), 0),
+    rapm_xga_adj = ifelse(n_with_rapm_def >= MIN_WOWY_ROSTER_COVERAGE,
+                            pmax(-1.5, pmin(1.5, rapm_xga_delta)), 0),
+    # onice_xgf_pg_wtd/onice_xga_pg_wtd — this is what simulate_games()
+    # really reads (xgf_lu/xga_lu are built directly from these two
+    # columns) — are now made ENTIRELY RAPM-driven: a real league-average
+    # baseline plus the roster's summed RAPM deviation from it, replacing
+    # the old per-team raw on-ice rate outright rather than just adjusting
+    # it. RAPM's whole purpose is isolating a player's portable
+    # contribution, context-free — keeping the old context-dependent raw
+    # rate as the base and only nudging it with RAPM would undercut that
+    # purpose. Defense is SUBTRACTED (not added) — positive def_rapm means
+    # BETTER defense, which should REDUCE expected goals-against, not
+    # increase it.
+    # (The goals_for_pg_wowy_adj/shooting_pct chain above still feeds only
+    # shots_against_lu/shooting_pct_lu, confirmed dead code elsewhere in
+    # this script — left alone, not removed, but not what drives the sim.)
+    onice_xgf_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 + rapm_xgf_adj),
+    onice_xga_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 - rapm_xga_adj),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
     # 5v5-only on-ice shots-against PLUS real roster-driven PK shots-against
@@ -1367,6 +1409,33 @@ team_offense <- team_offense %>%
     # baseline, i.e. better defense = FEWER shots-against equivalent.
     shots_against_pg          = pmax(15, shots_against_pg_preWowy - (wowy_def_adj_per_game / lg_avg_shooting_pct))
   )
+
+# ── Comparison: old roster-summed raw xG vs new pure-RAPM xG ────────────────
+# Printed BEFORE the swap below finalizes it, so this reflects a genuine
+# before/after comparison — not the same column compared against itself.
+cat("\n  ── Comparison: old (roster-summed raw) vs new (pure RAPM) 5v5 xG ──\n")
+xg_compare <- team_offense %>%
+  select(team_abbrev, onice_xgf_pg_wtd, onice_xga_pg_wtd, onice_xgf_pg_wtd_new, onice_xga_pg_wtd_new) %>%
+  arrange(desc(onice_xgf_pg_wtd_new - onice_xga_pg_wtd_new))
+for (i in seq_len(nrow(xg_compare))) {
+  r <- xg_compare[i, ]
+  cat(sprintf("  %-4s | xgf: old=%.3f new=%.3f | xga: old=%.3f new=%.3f\n",
+              r$team_abbrev, r$onice_xgf_pg_wtd, r$onice_xgf_pg_wtd_new, r$onice_xga_pg_wtd, r$onice_xga_pg_wtd_new))
+}
+cat("  Range — new xgf:", round(min(xg_compare$onice_xgf_pg_wtd_new, na.rm=TRUE), 3), "to", round(max(xg_compare$onice_xgf_pg_wtd_new, na.rm=TRUE), 3),
+    "| new xga:", round(min(xg_compare$onice_xga_pg_wtd_new, na.rm=TRUE), 3), "to", round(max(xg_compare$onice_xga_pg_wtd_new, na.rm=TRUE), 3), "\n")
+cat("  (Compare this spread against the old columns' own range above — should look\n")
+cat("  similarly realistic, roughly 1.6-2.7ish, not collapsed or wildly blown out.)\n\n")
+
+# Finalize the swap — onice_xgf_pg_wtd/onice_xga_pg_wtd (what simulate_games()
+# actually reads) are now the pure-RAPM reconstruction, not the old roster-
+# summed raw rate.
+team_offense <- team_offense %>%
+  mutate(
+    onice_xgf_pg_wtd = onice_xgf_pg_wtd_new,
+    onice_xga_pg_wtd = onice_xga_pg_wtd_new
+  ) %>%
+  select(-onice_xgf_pg_wtd_new, -onice_xga_pg_wtd_new)
 
 for (tm in c("VGK", "MIN", "NSH", "SEA")) {
   tm_raw <- team_offense %>% filter(team_abbrev == tm)
