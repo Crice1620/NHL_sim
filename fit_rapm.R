@@ -123,7 +123,7 @@ build_design_matrix <- function(df, side, player_index) {
   n_per_row <- lengths(split_list)
   valid_rows <- which(n_per_row > 0)
   if (length(valid_rows) == 0) return(NULL)
-  
+
   row_idx <- rep(valid_rows, n_per_row[valid_rows])
   player_ids <- unlist(split_list[valid_rows], use.names = FALSE)
   col_idx <- player_index[player_ids]
@@ -131,10 +131,10 @@ build_design_matrix <- function(df, side, player_index) {
   if (!all(keep)) {
     row_idx <- row_idx[keep]; col_idx <- col_idx[keep]
   }
-  
+
   X <- sparseMatrix(i = row_idx, j = col_idx, x = 1,
-                    dims = c(nrow(df), length(player_index)),
-                    dimnames = list(NULL, names(player_index)))
+                     dims = c(nrow(df), length(player_index)),
+                     dimnames = list(NULL, names(player_index)))
   X
 }
 
@@ -142,10 +142,10 @@ fit_rapm_for_season <- function(season) {
   cat("\n=== Fitting RAPM for season", season, "===\n")
   d <- load_season_lineup_data(season)
   if (is.null(d)) return(NULL)
-  
+
   lineup <- d$lineup
   shots  <- d$shots
-  
+
   # situation_label (the authoritative field used everywhere else in this
   # pipeline for strength-state filtering) only exists on shots_raw.csv, not
   # shot_lineups.csv directly — so the actual 5v5 filter happens right after
@@ -154,13 +154,13 @@ fit_rapm_for_season <- function(season) {
     inner_join(shots %>% select(game_id, event_idx, xg, situation_label, is_goal),
                by = c("game_id", "event_idx")) %>%
     filter(situation_label == "5v5", !is.na(xg))
-  
+
   cat("  Merged", nrow(merged), "usable 5v5 shot-lineup rows (of", nrow(lineup), "total lineup rows).\n")
   if (nrow(merged) < 500) {
     cat("  Too few usable rows to fit a meaningful model — skipping season", season, ".\n")
     return(NULL)
   }
-  
+
   # Unique player universe for this season, indexed for the sparse matrix.
   all_players <- unique(c(
     unlist(strsplit(merged$for_players, ";", fixed = TRUE)),
@@ -169,9 +169,9 @@ fit_rapm_for_season <- function(season) {
   all_players <- all_players[!is.na(all_players) & all_players != ""]
   player_index <- setNames(seq_along(all_players), all_players)
   cat("  ", length(all_players), "unique players in this season's 5v5 shot data.\n")
-  
+
   y <- merged$xg
-  
+
   # ── Offense model: shooting team's players = +1, defending team zeroed ──
   cat("  Building offense design matrix...\n")
   X_off <- build_design_matrix(merged, "for", player_index)
@@ -179,7 +179,7 @@ fit_rapm_for_season <- function(season) {
   fit_off <- tryCatch(cv.glmnet(X_off, y, alpha = 0, standardize = FALSE), error = function(e) {
     cat("    Offense model fit failed:", conditionMessage(e), "\n"); NULL
   })
-  
+
   # ── Defense model: defending team's players = +1, shooting team zeroed ──
   cat("  Building defense design matrix...\n")
   X_def <- build_design_matrix(merged, "against", player_index)
@@ -187,15 +187,15 @@ fit_rapm_for_season <- function(season) {
   fit_def <- tryCatch(cv.glmnet(X_def, y, alpha = 0, standardize = FALSE), error = function(e) {
     cat("    Defense model fit failed:", conditionMessage(e), "\n"); NULL
   })
-  
+
   if (is.null(fit_off) || is.null(fit_def)) {
     cat("  Could not fit both models for season", season, "— skipping.\n")
     return(NULL)
   }
-  
+
   off_coefs <- as.matrix(coef(fit_off, s = "lambda.min"))[-1, 1]  # drop intercept
   def_coefs <- as.matrix(coef(fit_def, s = "lambda.min"))[-1, 1]
-  
+
   result <- data.frame(
     player_id = names(player_index),
     season = season,
@@ -206,7 +206,7 @@ fit_rapm_for_season <- function(season) {
     def_rapm_raw = -def_coefs[names(player_index)],
     stringsAsFactors = FALSE
   )
-  
+
   # Per-60 conversion: a RAPM coefficient represents the extra xG added to
   # a shot every time this player is on the ice for one. If they were on
   # the ice for N of their team's shots, their total added xG across those
@@ -236,10 +236,10 @@ fit_rapm_for_season <- function(season) {
     result$def_rapm_per60 <- NA_real_
     result$toi_5v5_sec <- NA_real_
   }
-  
+
   cat("  Done. Sample coefficients (top 5 by offense, per-60):\n")
   print(head(result %>% arrange(desc(off_rapm_per60)), 5))
-  
+
   result
 }
 
@@ -280,20 +280,20 @@ fit_pppk_rapm_for_season <- function(season) {
   cat("\n=== Fitting PP/PK RAPM for season", season, "===\n")
   d <- load_season_lineup_data(season)
   if (is.null(d)) return(NULL)
-  
+
   lineup <- d$lineup
   shots  <- d$shots
-  
+
   merged <- lineup %>%
     inner_join(shots %>% select(game_id, event_idx, xg, situation_label), by = c("game_id", "event_idx")) %>%
     filter(situation_label %in% c("home_pp", "away_pp"), !is.na(xg), !is.na(situation_code))
-  
+
   cat("  Merged", nrow(merged), "usable PP/PK shot-lineup rows.\n")
   if (nrow(merged) < 300) {
     cat("  Too few usable rows to fit a meaningful model — skipping season", season, ".\n")
     return(NULL)
   }
-  
+
   merged$strength_state <- derive_strength_state(merged$situation_code)
   merged <- merged %>% filter(!is.na(strength_state))
   state_counts <- table(merged$strength_state)
@@ -309,7 +309,7 @@ fit_pppk_rapm_for_season <- function(season) {
     return(NULL)
   }
   merged$strength_state <- factor(merged$strength_state)
-  
+
   all_players <- unique(c(
     unlist(strsplit(merged$for_players, ";", fixed = TRUE)),
     unlist(strsplit(merged$against_players, ";", fixed = TRUE))
@@ -317,29 +317,29 @@ fit_pppk_rapm_for_season <- function(season) {
   all_players <- all_players[!is.na(all_players) & all_players != ""]
   player_index <- setNames(seq_along(all_players), all_players)
   cat("  ", length(all_players), "unique players in this season's PP/PK shot data.\n")
-  
+
   y <- merged$xg
   strength_dummies <- Matrix(model.matrix(~ strength_state - 1, data = merged), sparse = TRUE)
   n_state_cols <- ncol(strength_dummies)
-  
+
   cat("  Building PP offense design matrix...\n")
   X_off <- cbind(build_design_matrix(merged, "for", player_index), strength_dummies)
   penalty_vec <- c(rep(1, length(player_index)), rep(0, n_state_cols))
   cat("  Fitting PP offense ridge regression (player coefficients penalized, strength-state not)...\n")
   fit_off <- tryCatch(cv.glmnet(X_off, y, alpha = 0, standardize = FALSE, penalty.factor = penalty_vec),
-                      error = function(e) { cat("    PP offense fit failed:", conditionMessage(e), "\n"); NULL })
-  
+                       error = function(e) { cat("    PP offense fit failed:", conditionMessage(e), "\n"); NULL })
+
   cat("  Building PK defense design matrix...\n")
   X_def <- cbind(build_design_matrix(merged, "against", player_index), strength_dummies)
   cat("  Fitting PK defense ridge regression (player coefficients penalized, strength-state not)...\n")
   fit_def <- tryCatch(cv.glmnet(X_def, y, alpha = 0, standardize = FALSE, penalty.factor = penalty_vec),
-                      error = function(e) { cat("    PK defense fit failed:", conditionMessage(e), "\n"); NULL })
-  
+                       error = function(e) { cat("    PK defense fit failed:", conditionMessage(e), "\n"); NULL })
+
   if (is.null(fit_off) || is.null(fit_def)) {
     cat("  Could not fit both PP/PK models for season", season, "— skipping.\n")
     return(NULL)
   }
-  
+
   off_coefs_all <- as.matrix(coef(fit_off, s = "lambda.min"))[-1, 1]
   def_coefs_all <- as.matrix(coef(fit_def, s = "lambda.min"))[-1, 1]
   # Only the PLAYER portion of the coefficients — the strength-state dummy
@@ -352,7 +352,7 @@ fit_pppk_rapm_for_season <- function(season) {
     pk_rapm_raw = -def_coefs_all[names(player_index)],  # negated — same higher-is-better convention as 5v5
     stringsAsFactors = FALSE
   )
-  
+
   # Same per-60 derivation as 5v5 (see fit_rapm_for_season), using each
   # player's own on-ice PP-shots-for / PK-shots-against rate rather than a
   # league-average rate.
@@ -371,7 +371,7 @@ fit_pppk_rapm_for_season <- function(season) {
     result$pp_rapm_per60 <- NA_real_
     result$pk_rapm_per60 <- NA_real_
   }
-  
+
   cat("  Done. Sample coefficients (top 5 by PP offense, per-60):\n")
   print(head(result %>% arrange(desc(pp_rapm_per60)), 5))
   result
