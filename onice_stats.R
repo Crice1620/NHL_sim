@@ -496,9 +496,24 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
   game_end_abs <- suppressWarnings(max(shifts_df$end_abs, na.rm = TRUE))
   seg_start <- sit_df$t_abs; seg_end <- c(sit_df$t_abs[-1], game_end_abs); seg_label <- sit_df$label
 
+  # "5v5" means 5 SKATERS per side — each team's own goalie is ALSO on the
+  # ice, making 6 total on-ice players per team. The diagnostic run
+  # confirmed this precisely: 98.4% of all rejections were exactly "6v6",
+  # meaning on_ice_at_local() was correctly finding 6 players and being
+  # WRONGLY rejected by a guard that expected 5. shots_raw_df already
+  # records goalie_id on every shot event, so known goalies for this game
+  # can be identified without any new data — excluding them here is the
+  # actual, correct fix (shot-volume RAPM should credit/blame the 5
+  # skaters for shot generation, not the goalie, who doesn't influence
+  # shot volume — only whether shots become goals, already covered by
+  # GSAx separately).
+  known_goalies <- if (!is.null(shots_df) && "goalie_id" %in% names(shots_df)) {
+    unique(na.omit(shots_df$goalie_id))
+  } else character(0)
+
   on_ice_at_local <- function(t_abs, team_id) {
     rows <- shifts_df[shifts_df$team_id == team_id & shifts_df$start_abs < t_abs & shifts_df$end_abs >= t_abs, ]
-    unique(rows$player_id)
+    setdiff(unique(rows$player_id), known_goalies)
   }
 
   stint_rows <- list()
