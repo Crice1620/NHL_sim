@@ -1,230 +1,230 @@
 {
   "season": 2027,
-  "generated_at": "2026-07-13 16:48:59 UTC",
+  "generated_at": "2026-07-13 17:13:03 UTC",
   "n_sims": 10000,
   "results": [
     {
       "team_abbrev": "DAL",
       "proj_points": 103.8,
-      "playoff_pct": 92.6,
-      "cup_pct": 10.6,
+      "playoff_pct": 92.2,
+      "cup_pct": 10.3,
       "_row": "DAL"
     },
     {
       "team_abbrev": "VGK",
-      "proj_points": 102.8,
-      "playoff_pct": 91.4,
-      "cup_pct": 9.1,
+      "proj_points": 102.7,
+      "playoff_pct": 91.2,
+      "cup_pct": 8.7,
       "_row": "VGK"
     },
     {
       "team_abbrev": "TBL",
-      "proj_points": 98.2,
-      "playoff_pct": 76.7,
-      "cup_pct": 5.5,
+      "proj_points": 98.1,
+      "playoff_pct": 76.8,
+      "cup_pct": 6.1,
       "_row": "TBL"
     },
     {
       "team_abbrev": "WSH",
-      "proj_points": 97.6,
-      "playoff_pct": 74.8,
-      "cup_pct": 5.5,
+      "proj_points": 97.5,
+      "playoff_pct": 75,
+      "cup_pct": 5,
       "_row": "WSH"
     },
     {
       "team_abbrev": "STL",
       "proj_points": 97.3,
-      "playoff_pct": 74.5,
-      "cup_pct": 6,
+      "playoff_pct": 75.4,
+      "cup_pct": 5.9,
       "_row": "STL"
     },
     {
       "team_abbrev": "TOR",
       "proj_points": 96.7,
       "playoff_pct": 71,
-      "cup_pct": 5,
+      "cup_pct": 5.1,
       "_row": "TOR"
     },
     {
       "team_abbrev": "PIT",
-      "proj_points": 96.5,
-      "playoff_pct": 71.7,
+      "proj_points": 96.6,
+      "playoff_pct": 71.3,
       "cup_pct": 5,
       "_row": "PIT"
     },
     {
       "team_abbrev": "CBJ",
-      "proj_points": 96.2,
-      "playoff_pct": 72.8,
-      "cup_pct": 4.9,
+      "proj_points": 96.3,
+      "playoff_pct": 73,
+      "cup_pct": 5.2,
       "_row": "CBJ"
     },
     {
       "team_abbrev": "COL",
       "proj_points": 95.7,
-      "playoff_pct": 70.6,
-      "cup_pct": 4.9,
+      "playoff_pct": 70.3,
+      "cup_pct": 4.6,
       "_row": "COL"
     },
     {
       "team_abbrev": "NYR",
-      "proj_points": 95.1,
-      "playoff_pct": 66.3,
-      "cup_pct": 4.1,
+      "proj_points": 95.2,
+      "playoff_pct": 66.5,
+      "cup_pct": 4.2,
       "_row": "NYR"
     },
     {
       "team_abbrev": "EDM",
-      "proj_points": 94.8,
-      "playoff_pct": 70.2,
-      "cup_pct": 4.5,
+      "proj_points": 94.6,
+      "playoff_pct": 70.1,
+      "cup_pct": 4.2,
       "_row": "EDM"
     },
     {
       "team_abbrev": "BOS",
-      "proj_points": 94.4,
-      "playoff_pct": 65.7,
-      "cup_pct": 4,
+      "proj_points": 94.2,
+      "playoff_pct": 64,
+      "cup_pct": 3.8,
       "_row": "BOS"
     },
     {
       "team_abbrev": "MTL",
-      "proj_points": 94.1,
-      "playoff_pct": 62.6,
-      "cup_pct": 3.3,
+      "proj_points": 94,
+      "playoff_pct": 61.7,
+      "cup_pct": 3.7,
       "_row": "MTL"
     },
     {
       "team_abbrev": "BUF",
       "proj_points": 92.9,
-      "playoff_pct": 58.4,
+      "playoff_pct": 58.2,
       "cup_pct": 3.2,
       "_row": "BUF"
     },
     {
       "team_abbrev": "WPG",
-      "proj_points": 92.2,
+      "proj_points": 92.3,
       "playoff_pct": 52.1,
-      "cup_pct": 2.8,
+      "cup_pct": 2.6,
       "_row": "WPG"
     },
     {
       "team_abbrev": "MIN",
       "proj_points": 91.3,
-      "playoff_pct": 50.2,
-      "cup_pct": 2.7,
+      "playoff_pct": 49.8,
+      "cup_pct": 2.8,
       "_row": "MIN"
     },
     {
       "team_abbrev": "NSH",
-      "proj_points": 90.5,
-      "playoff_pct": 45.8,
+      "proj_points": 90.7,
+      "playoff_pct": 46.2,
       "cup_pct": 2.4,
       "_row": "NSH"
     },
     {
       "team_abbrev": "LAK",
-      "proj_points": 89,
-      "playoff_pct": 44.9,
-      "cup_pct": 2,
+      "proj_points": 89.1,
+      "playoff_pct": 45.3,
+      "cup_pct": 2.2,
       "_row": "LAK"
     },
     {
       "team_abbrev": "SEA",
       "proj_points": 88.1,
-      "playoff_pct": 40.3,
-      "cup_pct": 1.9,
+      "playoff_pct": 39.7,
+      "cup_pct": 1.6,
       "_row": "SEA"
     },
     {
       "team_abbrev": "FLA",
-      "proj_points": 87.4,
-      "playoff_pct": 32.5,
-      "cup_pct": 1.2,
+      "proj_points": 87.3,
+      "playoff_pct": 33,
+      "cup_pct": 0.9,
       "_row": "FLA"
+    },
+    {
+      "team_abbrev": "NJD",
+      "proj_points": 87.1,
+      "playoff_pct": 31.3,
+      "cup_pct": 1,
+      "_row": "NJD"
     },
     {
       "team_abbrev": "VAN",
       "proj_points": 87.1,
-      "playoff_pct": 34.3,
+      "playoff_pct": 34.1,
       "cup_pct": 1.4,
       "_row": "VAN"
     },
     {
-      "team_abbrev": "NJD",
-      "proj_points": 86.9,
-      "playoff_pct": 30.6,
-      "cup_pct": 1.3,
-      "_row": "NJD"
+      "team_abbrev": "NYI",
+      "proj_points": 86.8,
+      "playoff_pct": 30.4,
+      "cup_pct": 1.2,
+      "_row": "NYI"
     },
     {
       "team_abbrev": "UTA",
       "proj_points": 86.8,
-      "playoff_pct": 28.5,
-      "cup_pct": 1.2,
+      "playoff_pct": 29.3,
+      "cup_pct": 1.3,
       "_row": "UTA"
     },
     {
-      "team_abbrev": "NYI",
-      "proj_points": 86.6,
-      "playoff_pct": 29.1,
-      "cup_pct": 1.3,
-      "_row": "NYI"
-    },
-    {
       "team_abbrev": "CHI",
-      "proj_points": 86.5,
-      "playoff_pct": 30.4,
+      "proj_points": 86.6,
+      "playoff_pct": 30.8,
       "cup_pct": 1.2,
       "_row": "CHI"
     },
     {
       "team_abbrev": "CAR",
-      "proj_points": 85.4,
-      "playoff_pct": 25.6,
-      "cup_pct": 0.8,
+      "proj_points": 85.3,
+      "playoff_pct": 25.5,
+      "cup_pct": 1.1,
       "_row": "CAR"
     },
     {
       "team_abbrev": "DET",
-      "proj_points": 85,
-      "playoff_pct": 23.8,
+      "proj_points": 85.1,
+      "playoff_pct": 24.3,
       "cup_pct": 0.8,
       "_row": "DET"
     },
     {
       "team_abbrev": "SJS",
       "proj_points": 84.9,
-      "playoff_pct": 26,
-      "cup_pct": 0.8,
+      "playoff_pct": 26.3,
+      "cup_pct": 1.1,
       "_row": "SJS"
     },
     {
       "team_abbrev": "OTT",
-      "proj_points": 84.7,
-      "playoff_pct": 21.4,
-      "cup_pct": 0.7,
+      "proj_points": 84.8,
+      "playoff_pct": 21.1,
+      "cup_pct": 0.8,
       "_row": "OTT"
     },
     {
       "team_abbrev": "CGY",
-      "proj_points": 84.3,
-      "playoff_pct": 25.5,
-      "cup_pct": 0.7,
+      "proj_points": 84,
+      "playoff_pct": 24.9,
+      "cup_pct": 1.1,
       "_row": "CGY"
     },
     {
       "team_abbrev": "ANA",
-      "proj_points": 83.2,
-      "playoff_pct": 22.8,
-      "cup_pct": 0.8,
+      "proj_points": 83.3,
+      "playoff_pct": 22.2,
+      "cup_pct": 0.7,
       "_row": "ANA"
     },
     {
       "team_abbrev": "PHI",
       "proj_points": 83.1,
-      "playoff_pct": 17,
-      "cup_pct": 0.4,
+      "playoff_pct": 16.8,
+      "cup_pct": 0.5,
       "_row": "PHI"
     }
   ],
