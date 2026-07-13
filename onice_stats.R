@@ -482,6 +482,15 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
 # return statement for why), and shots_raw_df's shot timestamps (built by
 # process_game()'s own play-by-play loop). This function just combines
 # those three, it doesn't re-derive any of them from scratch.
+stint_diag <- new.env()
+stint_diag$segments_considered <- 0L
+stint_diag$segments_skipped_bad_bounds <- 0L
+stint_diag$segments_skipped_no_cutpoints <- 0L
+stint_diag$candidate_stints <- 0L
+stint_diag$rejected_guard <- 0L
+stint_diag$rejected_player_counts <- list()  # tally of (home_count, away_count) pairs seen on rejection
+stint_diag$accepted_stints <- 0L
+
 build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id) {
   if (is.null(shifts_df) || nrow(shifts_df) == 0 || is.null(sit_df) || nrow(sit_df) == 0) return(NULL)
   game_end_abs <- suppressWarnings(max(shifts_df$end_abs, na.rm = TRUE))
@@ -496,7 +505,11 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
   for (i in seq_along(seg_start)) {
     if (is.na(seg_label[i]) || seg_label[i] != "5v5") next  # 5v5-only, matching xG-RAPM's own scope decision
     s_start <- seg_start[i]; s_end <- seg_end[i]
-    if (is.na(s_start) || is.na(s_end) || s_end <= s_start) next
+    stint_diag$segments_considered <- stint_diag$segments_considered + 1L
+    if (is.na(s_start) || is.na(s_end) || s_end <= s_start) {
+      stint_diag$segments_skipped_bad_bounds <- stint_diag$segments_skipped_bad_bounds + 1L
+      next
+    }
     # Shift-change points STRICTLY inside this 5v5 segment split it into
     # separate stints — a line change partway through a 5v5 segment means
     # the on-ice personnel changed even though the strength state didn't.
@@ -505,10 +518,14 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
       shifts_df$end_abs[shifts_df$end_abs > s_start & shifts_df$end_abs < s_end]
     ))
     cut_points <- sort(unique(c(s_start, boundaries, s_end)))
-    if (length(cut_points) < 2) next
+    if (length(cut_points) < 2) {
+      stint_diag$segments_skipped_no_cutpoints <- stint_diag$segments_skipped_no_cutpoints + 1L
+      next
+    }
     for (j in seq_len(length(cut_points) - 1)) {
       stint_start <- cut_points[j]; stint_end <- cut_points[j + 1]
       if (stint_end <= stint_start) next
+      stint_diag$candidate_stints <- stint_diag$candidate_stints + 1L
       # Probe strictly inside the stint (not exactly at a boundary) to
       # avoid ambiguity in on_ice_at_local's own strict-inequality check.
       probe_t <- stint_start + min(0.5, (stint_end - stint_start) / 2)
@@ -517,7 +534,13 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
       # Guard: only keep genuine, complete 5-on-5 stints — same quality
       # gate philosophy as shot_lineups.csv, so a shift-data gap doesn't
       # silently masquerade as a real (but incomplete) stint.
-      if (length(home_on) != 5 || length(away_on) != 5) next
+      if (length(home_on) != 5 || length(away_on) != 5) {
+        stint_diag$rejected_guard <- stint_diag$rejected_guard + 1L
+        key <- paste0(length(home_on), "v", length(away_on))
+        stint_diag$rejected_player_counts[[key]] <- (stint_diag$rejected_player_counts[[key]] %||% 0L) + 1L
+        next
+      }
+      stint_diag$accepted_stints <- stint_diag$accepted_stints + 1L
       duration <- stint_end - stint_start
       shots_home <- if (!is.null(shots_df)) sum(shots_df$owner_team_id == home_id & shots_df$t_abs >= stint_start & shots_df$t_abs < stint_end, na.rm = TRUE) else 0
       shots_away <- if (!is.null(shots_df)) sum(shots_df$owner_team_id == away_id & shots_df$t_abs >= stint_start & shots_df$t_abs < stint_end, na.rm = TRUE) else 0
@@ -1023,6 +1046,28 @@ if (length(stint_rows_new) > 0) {
   write.csv(combined_stints_df, STINTS_OUT, row.names = FALSE)
   cat("Wrote", STINTS_OUT, "-", nrow(combined_stints_df), "stint rows total (", nrow(new_stints_df), "new)\n")
 }
+
+# ── TEMPORARY: stint-building diagnostic summary — remove once the stint
+# reconstruction is confirmed working correctly. Reveals exactly where
+# candidate stints are being lost, rather than just showing a suspiciously
+# low final count with no visibility into why.
+cat("\n=== Stint-building diagnostic summary (this run) ===\n")
+cat("5v5 segments considered:", stint_diag$segments_considered, "\n")
+cat("  Skipped (bad/zero-length bounds):", stint_diag$segments_skipped_bad_bounds, "\n")
+cat("  Skipped (no cut points found, i.e. length(cut_points) < 2):", stint_diag$segments_skipped_no_cutpoints, "\n")
+cat("Candidate stints generated (after cut-point splitting):", stint_diag$candidate_stints, "\n")
+cat("  Rejected by 5-player guard:", stint_diag$rejected_guard,
+    sprintf("(%.1f%% of candidates)", if (stint_diag$candidate_stints > 0) 100 * stint_diag$rejected_guard / stint_diag$candidate_stints else NA), "\n")
+cat("  Accepted:", stint_diag$accepted_stints, "\n")
+cat("Breakdown of REJECTED (home_count x away_count) combinations seen:\n")
+if (length(stint_diag$rejected_player_counts) > 0) {
+  rc <- stint_diag$rejected_player_counts
+  rc_df <- data.frame(combo = names(rc), count = unlist(rc), stringsAsFactors = FALSE)
+  print(rc_df[order(-rc_df$count), ], row.names = FALSE)
+} else {
+  cat("  (none — every candidate stint passed the guard)\n")
+}
+cat("=== END diagnostic summary ===\n\n")
 
 writeLines(unique(c(processed_ids, processed_this_run)), STATE_FILE)
 cat("Wrote", TEAM_OUT, "-", nrow(team_df), "teams |", GOALIE_OUT, "-", nrow(goalie_df), "goalies", "\n")
