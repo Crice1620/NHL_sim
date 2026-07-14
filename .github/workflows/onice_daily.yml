@@ -29,7 +29,7 @@ jobs:
 
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("dplyr","httr","jsonlite"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
+          Rscript -e 'install.packages(c("dplyr","httr","jsonlite","xgboost"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
 
       - name: Run daily on-ice stats update
         run: Rscript onice_stats.R --mode=daily
