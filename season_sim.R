@@ -2040,6 +2040,16 @@ goalie_sv_lu     <- setNames(team_off_def$goalie_sv_pct, team_off_def$team_abbre
 # fixed-roster, full-season simulation structurally can't capture at all;
 # treating the ENTIRE measured gap as pure bias risks overcorrecting.
 COMPRESSION_AMPLIFICATION <- 1.4  # dialed back down from 1.75 — a direct backtest against REAL final standings for 3 completed seasons (2023-2025, via season_sim_backtest.R's calibration sweep) found 1.4 minimized RMSE on average, with 1.75 performing noticeably worse, especially in the one backtest season with a full, proper 3-year prior-data window (which alone preferred 1.0, no correction at all). This is direct outcome evidence, a stronger signal than the indirect Pythagorean-correlation tuning that originally justified 1.75 — 1.4 is a middle point that respects both the real backtest evidence (which leans lower) and the independently-validated Jensen's-inequality rationale for some correction (which argues against dropping to 1.0 entirely based on one data point).
+# NOTE: this standings-level correction now applies ONLY to pp_goals_pg/
+# pk_ga_pg — the 5v5 xG amplification that used to happen here has been
+# REMOVED, since validate_win_prob_curve.R directly confirmed the actual
+# root cause (the 5v5 shots x probability mechanism itself under-reacting
+# to a given xG gap, fitted at 1.31x against real historical outcomes) and
+# that fix is now applied properly, once, inside simulate_games() itself
+# — leaving the old amplification here too would double-amplify the same
+# thing. PP/PK was NOT part of what was tested/fixed there, so its own
+# amplification stays here unchanged until/unless it gets the same direct
+# validation treatment.
 amplify_around_mean <- function(x) {
   m <- mean(x, na.rm = TRUE)
   m + COMPRESSION_AMPLIFICATION * (x - m)
@@ -2055,13 +2065,13 @@ pp_goals_lu_orig <- setNames(team_off_def$pp_goals_pg, team_off_def$team_abbrev)
 pk_ga_lu_orig    <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
 team_off_def <- team_off_def %>%
   mutate(
-    onice_xgf_pg_wtd = amplify_around_mean(onice_xgf_pg_wtd),
-    onice_xga_pg_wtd = amplify_around_mean(onice_xga_pg_wtd),
     pp_goals_pg      = amplify_around_mean(pp_goals_pg),
     pk_ga_pg         = amplify_around_mean(pk_ga_pg)
   )
-cat("\n  Standings-compression correction applied (amplification factor =", COMPRESSION_AMPLIFICATION,
-    ") — all diagnostics below reflect POST-correction inputs (except the Pythagorean\n")
+cat("\n  PP/PK standings-compression correction applied (amplification factor =", COMPRESSION_AMPLIFICATION,
+    ") — 5v5 xG is no longer amplified here; that correction now happens directly\n")
+cat("  inside simulate_games() itself, fitted against real historical outcomes (see validate_win_prob_curve.R).\n")
+cat("  All diagnostics below reflect POST-correction PP/PK inputs (except the Pythagorean\n")
 cat("  check, which deliberately uses TRUE pre-correction values as the benchmark).\n")
 
 # xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
@@ -2160,8 +2170,41 @@ simulate_games <- function(home_abbrevs, away_abbrevs) {
   # cancels out most of that correlation — adding shot-volume RAPM as a
   # separate additive term without this division would have risked
   # double-counting the same underlying skill twice.
-  home_xg_5v5 <- (xgf_lu[home_abbrevs] + xga_lu[away_abbrevs]) / 2
-  away_xg_5v5 <- (xgf_lu[away_abbrevs] + xga_lu[home_abbrevs]) / 2
+  home_xg_5v5_raw <- (xgf_lu[home_abbrevs] + xga_lu[away_abbrevs]) / 2
+  away_xg_5v5_raw <- (xgf_lu[away_abbrevs] + xga_lu[home_abbrevs]) / 2
+  # GAP AMPLIFICATION — fitted directly against real historical win-
+  # probability outcomes (see validate_win_prob_curve.R): pooling real
+  # games by their real, same-season xG gap and comparing real win rates
+  # to what this exact mechanism (in isolation, shot volume held constant)
+  # predicted for the same gaps showed our win-probability curve is
+  # roughly 31% flatter than reality's for a given xG gap — a real,
+  # specific, well-fit correction (residuals from the linear fit were
+  # small and unsystematic on both curves), not a hand-tuned guess.
+  # Applied to the DEVIATION from league average, not the raw value, so
+  # the league-wide mean stays anchored at league_avg_xg_5v5 and only the
+  # SPREAD around it gets amplified — this is a root-cause fix to the
+  # actual mechanism that produces game outcomes, replacing the earlier,
+  # standings-level "amplification factor" applied after the fact, which
+  # is no longer needed.
+  GAP_AMPLIFICATION <- 1.31
+  home_xg_5v5 <- league_avg_xg_5v5 + GAP_AMPLIFICATION * (home_xg_5v5_raw - league_avg_xg_5v5)
+  away_xg_5v5 <- league_avg_xg_5v5 + GAP_AMPLIFICATION * (away_xg_5v5_raw - league_avg_xg_5v5)
+  # HOME-ICE ADVANTAGE — confirmed via direct search that this was
+  # entirely absent from the simulation before now (real hockey's own
+  # win-probability curve showed a real ~54.4% baseline win rate for
+  # evenly-matched teams, not 50%, which this simulation's own isolated
+  # mechanism test also confirmed producing ~50.1% with nothing added).
+  # HONEST CAVEAT: unlike the amplification factor above, this specific
+  # xG-equivalent size (0.09 per side) is a DERIVED estimate, not directly
+  # fitted the way the amplification factor was — worked out by taking
+  # the real curve's ~4.4 percentage-point edge at parity and dividing by
+  # the fitted curve's own slope (~0.245 win% per unit gap) to convert it
+  # into an equivalent xG shift. Worth validating directly against the
+  # full simulation's own results once wired in, not just trusting this
+  # derivation blindly.
+  HOME_ICE_XG_BOOST <- 0.09
+  home_xg_5v5 <- home_xg_5v5 + HOME_ICE_XG_BOOST
+  away_xg_5v5 <- away_xg_5v5 - HOME_ICE_XG_BOOST
   home_shots_5v5 <- (shot_vol_for_lu[home_abbrevs] + shot_vol_against_lu[away_abbrevs]) / 2
   away_shots_5v5 <- (shot_vol_for_lu[away_abbrevs] + shot_vol_against_lu[home_abbrevs]) / 2
 
