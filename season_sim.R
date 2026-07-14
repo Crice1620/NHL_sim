@@ -1218,6 +1218,72 @@ if (!is.null(proj_shot_vol)) {
   skater_output$shot_vol_def_3yr <- NA_real_
 }
 
+# ── Aging curve — applied here, now that all 7 relevant blended metrics ────
+# (off_rapm_3yr, def_rapm_3yr, pp_rapm_3yr, pk_rapm_3yr, gax_per60,
+# shot_vol_off_3yr, shot_vol_def_3yr) exist in skater_output. Built from
+# fit_aging_curves.R's real, fitted delta-method curves (trimmed to only
+# the categories that actually feed this mechanism — see that script's own
+# header for the full reasoning and honest caveats, especially the
+# RAPM-vs-goals-based compression cross-check it runs).
+#
+# METHOD: age_at_season_start is already computed for exactly the target
+# projected season (see above) — the adjustment is simply ONE step in the
+# curve, from the player's age at their most recent completed season
+# (age_at_season_start - 1) to their age entering the season being
+# projected (age_at_season_start), added once to the already-blended
+# value. This matches HockeyStats' own documented sequence — blend first,
+# then apply the aging curve to the blended output — rather than age-
+# adjusting each individual past season before blending.
+GH_AGING <- "https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/aging_curves"
+aging_curves_data <- tryCatch(gh_read(paste0(GH_AGING, "/aging_curves_output.csv")), error = function(e) NULL)
+if (is.null(aging_curves_data)) {
+  cat("WARNING: No fitted aging curves found — proceeding without any age adjustment.\n")
+} else {
+  cat("  Loaded aging curves:", nrow(aging_curves_data), "rows across",
+      length(unique(aging_curves_data$category)), "categories.\n")
+}
+
+# Vectorized lookup: for a given metric's fitted category, returns one age
+# adjustment per row of skater_output, using a two-step join (age_int and
+# age_int-1) rather than a per-player loop. Falls back to 0 (no adjustment)
+# for any player/age/category combination the curve doesn't cover — a
+# missing curve value should never silently NA out an otherwise-valid
+# projection.
+get_age_adjustment_vec <- function(pos_group_vec, age_int_vec, cat_name) {
+  if (is.null(aging_curves_data)) return(rep(0, length(pos_group_vec)))
+  cat_curves <- aging_curves_data %>% filter(category == cat_name) %>% select(pos_group, age_int, curve_value)
+  lookup_df <- data.frame(pos_group = pos_group_vec, age_int = age_int_vec, row_id = seq_along(age_int_vec), stringsAsFactors = FALSE)
+  cur  <- lookup_df %>% left_join(cat_curves, by = c("pos_group", "age_int")) %>% arrange(row_id) %>% pull(curve_value)
+  prev_lookup <- data.frame(pos_group = pos_group_vec, age_int = age_int_vec - 1L, row_id = seq_along(age_int_vec), stringsAsFactors = FALSE)
+  prev <- prev_lookup %>% left_join(cat_curves, by = c("pos_group", "age_int")) %>% arrange(row_id) %>% pull(curve_value)
+  coalesce(cur, 0) - coalesce(prev, 0)
+}
+
+skater_output <- skater_output %>%
+  mutate(
+    # position_group from the roster API is lowercase ("forwards",
+    # "defensemen") — fit_aging_curves.R's own pos_group is capitalized
+    # ("Forwards", "Defensemen") — mapped here rather than assuming they
+    # already match.
+    pos_group_mapped = ifelse(coalesce(position_group, "") == "defensemen", "Defensemen", "Forwards"),
+    age_int_for_curve = floor(coalesce(age_at_season_start, 27))  # players with no usable birth date fall back to the curve's own reference age, giving a 0 adjustment rather than propagating an NA
+  )
+
+if (!is.null(aging_curves_data)) {
+  skater_output <- skater_output %>%
+    mutate(
+      off_rapm_3yr     = off_rapm_3yr     + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "offence_xg"),
+      def_rapm_3yr     = def_rapm_3yr     + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "defence_xg"),
+      pp_rapm_3yr      = pp_rapm_3yr      + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "pp"),
+      pk_rapm_3yr      = pk_rapm_3yr      + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "pk"),
+      gax_per60        = gax_per60        + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "finishing"),
+      shot_vol_off_3yr = shot_vol_off_3yr + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "shot_vol_off"),
+      shot_vol_def_3yr = shot_vol_def_3yr + get_age_adjustment_vec(pos_group_mapped, age_int_for_curve, "shot_vol_def")
+    )
+  cat("  Applied aging-curve adjustments to off_rapm_3yr, def_rapm_3yr, pp_rapm_3yr, pk_rapm_3yr,\n")
+  cat("  gax_per60, shot_vol_off_3yr, shot_vol_def_3yr.\n")
+}
+
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
 # actual per-shot outcomes (shot happens -> is it a goal?) rather than
@@ -1751,9 +1817,29 @@ if (nrow(goalie_onice_hist) > 0) {
 if (!is.null(goalie_gsax_pooled)) goalie_output <- goalie_output %>% left_join(goalie_gsax_pooled %>% select(player_id, gsax_adj_sv_pct), by = "player_id")
 if (!"gsax_adj_sv_pct" %in% names(goalie_output)) goalie_output$gsax_adj_sv_pct <- NA_real_
 
+# Goaltending aging-curve adjustment — separate from the skater pipeline
+# above since goalies aren't in skater_output at all. Converts the fitted
+# curve (in "GSAx per 100 shots faced" units, matching how
+# fit_aging_curves.R's goaltending pipeline built it) directly into an
+# sv%-scale adjustment: 1 goal saved per 100 shots IS a 0.01 sv%
+# improvement, exactly, so dividing by 100 is a direct unit conversion,
+# not an approximation. Same single-year-step method as skaters — age at
+# the target projected season minus age at the most recent completed
+# season, applied once to the already-computed sv_pct_for_sim.
+if (!is.null(aging_curves_data)) {
+  goalie_output <- goalie_output %>%
+    mutate(
+      age_int_for_curve = floor(coalesce(age_at_season_start, 27)),
+      goalie_age_adj = get_age_adjustment_vec(rep("Goalies", dplyr::n()), age_int_for_curve, "goaltending") / 100
+    )
+  cat("  Applying goaltending aging-curve adjustment (converted from GSAx-per-100-shots to sv% units).\n")
+} else {
+  goalie_output$goalie_age_adj <- 0
+}
+
 team_goaltending <- goalie_output %>%
   filter(has_history, coalesce(proj_gp, 0) > 0) %>%
-  mutate(sv_pct_for_sim = coalesce(gsax_adj_sv_pct, proj_sv_pct)) %>%
+  mutate(sv_pct_for_sim = coalesce(gsax_adj_sv_pct, proj_sv_pct) + coalesce(goalie_age_adj, 0)) %>%
   group_by(team_abbrev) %>%
   summarise(goalie_sv_pct = sum(sv_pct_for_sim * proj_gp, na.rm = TRUE) / sum(proj_gp, na.rm = TRUE), .groups = "drop")
 
@@ -2185,7 +2271,16 @@ compute_pyth_wp <- function(xgf, xga) xgf^PYTH_EXPONENT / (xgf^PYTH_EXPONENT + x
 # team_off_def row order.
 common_teams <- intersect(names(xgf_lu), names(pp_goals_lu))
 total_xgf_lu <- xgf_lu[common_teams] + pp_goals_lu[common_teams]
-total_xga_lu <- xga_lu[common_teams] + pk_ga_lu[common_teams]
+# FIX — goaltending (GSAx-adjusted save%) was silently dropped from the
+# win-probability calculation entirely when simulate_games() got rewritten
+# to Log5 — goalie_sv_lu was still computed and diagnosed, but never
+# actually used by the new mechanism. Folded back in here using the same
+# formula app.R's own compute_matchup_params() already uses for combining
+# xG with goaltending (xga_adjusted = xga_raw * (1-sv%)/(1-league_avg_sv%))
+# — a real, already-validated pattern in this project, not a new guess.
+goalie_sv_common <- goalie_sv_lu[common_teams]
+xga_goalie_adj <- xga_lu[common_teams] * (1 - coalesce(goalie_sv_common, league_avg_sv_pct)) / (1 - league_avg_sv_pct)
+total_xga_lu <- xga_goalie_adj + pk_ga_lu[common_teams]
 pyth_wp_lu <- setNames(compute_pyth_wp(total_xgf_lu, total_xga_lu), common_teams)
 cat("  Combined (5v5 + PP/PK) Pythagorean win% range:",
     round(min(pyth_wp_lu, na.rm = TRUE), 4), "to", round(max(pyth_wp_lu, na.rm = TRUE), 4),
