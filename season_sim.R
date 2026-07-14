@@ -1234,7 +1234,7 @@ if (!is.null(proj_shot_vol)) {
 LEAGUE_AVG_SHOTS_PG <- 30    # typical NHL team shots/game — used as the shots-against baseline
 LEAGUE_AVG_SV_PCT_FALLBACK <- 0.905  # used only if a team has literally no goalie data
 DEF_PROXY_SCALE <- 3         # max approx +/- shots/game swing from the blocks/hits defensive proxy — only used as a fallback now, for skaters without on-ice history
-HOME_XG_BOOST <- 0.1         # extra expected goals/game for the home team — approximates the OLD model's combined home-ice edge (HOME_SHOT_BOOST's extra shot volume + HOME_GOAL_BOOST's per-shot probability bump, ~0.09 + ~0.04 goals/game), now expressed directly since goals no longer come from a shots*per-shot-probability chain
+HOME_XG_BOOST <- 0.1         # NO LONGER USED — simulate_games() was rewritten to use Log5 + HOME_ICE_ODDS_MULT instead (see that function's own definition further down); left defined here, unused, rather than risk removing something without being fully certain nothing else still references it
 
 # League-wide average WOWY (xG-preferred, same fallback chain used
 # everywhere else), computed across the FULL population before restricting
@@ -2106,22 +2106,11 @@ for (lu_name in c("xgf_lu", "xga_lu", "shot_vol_for_lu", "shot_vol_against_lu", 
 # isn't loaded until later in this script — see the second half of this
 # diagnostic right after last_schedule itself gets loaded, below.)
 
-# ── Validation: implied per-shot probability, BEFORE the probability
-# clamp in simulate_games() — checked here across every real team's own
-# offense in isolation. The clamp was originally guessed at [0.01, 0.15]
-# before seeing real data; the actual observed range came back 0.062 to
-# 0.2624, with 11 of 32 teams (over a third of the league) exceeding
-# 0.15 — meaning that guess was genuinely too narrow and cutting off
-# real signal, not just acting as a rare safety net. Widened to
-# [0.01, 0.30] to comfortably cover the real observed range with margin,
-# rather than another guess with no data behind it.
-implied_prob_check <- team_off_def$onice_xgf_pg_wtd / pmax(team_off_def$shot_vol_for_pg_new, 1)
-cat("  Implied per-shot probability check (pre-clamp, each team's own offense):",
-    round(min(implied_prob_check, na.rm=TRUE), 4), "to", round(max(implied_prob_check, na.rm=TRUE), 4),
-    "| clamp range is [0.01, 0.30] — values outside this range are being clamped, not reflecting the real fitted relationship\n")
-n_clamped <- sum(implied_prob_check < 0.01 | implied_prob_check > 0.30, na.rm = TRUE)
-cat("  Teams outside the clamp range:", n_clamped, "of", length(implied_prob_check),
-    "— a large number here would mean the clamp is doing real work, not just a safety net\n\n")
+# (The old "implied per-shot probability, pre-clamp" diagnostic that used
+# to live here has been removed — that clamp was specific to the shots x
+# probability mechanism, which no longer exists. A replacement check on
+# pyth_wp_lu's own range now lives right after it gets defined, further
+# down, where that lookup actually exists.)
 
 # Simulates games for parallel vectors of home/away team abbrevs (works for
 # a single pair too — used for both the full season schedule, vectorized in
@@ -2157,129 +2146,83 @@ cat("  Teams outside the clamp range:", n_clamped, "of", length(implied_prob_che
 # roster-weighted, trade-aware onice_pp_sf/onice_pk_sa; only the
 # conversion rate falls back to a team-level number (see the note where
 # team_pp_pk_rates is built for why).
+# TWO NOTES BEFORE THE FUNCTION ITSELF — the PYTH_EXPONENT constant, home-ice
+# odds multiplier, and league OT/SO rate, plus the combined (5v5 + PP/PK)
+# per-team Pythagorean win% this whole approach is built on:
+#
+# WHY THIS EXISTS: score effects turned out real and measurable (see
+# check_score_effects.R) — trailing teams shoot more, leading teams
+# convert at a higher rate — but a POOLED, cross-team estimate of the
+# effect size came back at 3.5-4x, implausibly large, likely because
+# good teams simply lead more often (a compositional confound, not
+# purely a score effect). Rather than wire in an untrusted number,
+# season_sim.R sidesteps the whole problem: it never needs an actual
+# scoreline, only win/loss + OT/SO outcomes for standings and playoff
+# odds. That means it can skip goal-by-goal simulation ENTIRELY and use
+# a Pythagorean/Log5 approach instead — DIRECTLY validated: real NHL
+# win% tracks the Pythagorean formula (from real, same-season xGF/xGA)
+# almost exactly (correlation ~ -0.045, essentially zero compression,
+# see validate_real_pythagorean_compression.R). This sidesteps the score-
+# effects problem rather than solving it — Game Sim/Series Sim in app.R
+# still need actual scorelines and still carry that open problem.
+# HONEST CAVEAT: the STANDALONE Pythagorean formula is what got directly
+# validated against real data. Log5 (combining two teams' standalone
+# win%s into a matchup probability) is a standard, well-established
+# method, but hasn't itself been separately tested against real
+# historical head-to-head outcomes this session — treat it as well-
+# supported, not as rigorously proven as the standalone formula was.
+PYTH_EXPONENT <- 2
+HOME_ICE_ODDS_MULT <- 0.544 / 0.456  # from validate_win_prob_curve.R's real, measured ~54.4% baseline win rate at parity
+LEAGUE_OT_SO_RATE <- 0.215  # matches this project's own earlier diagnostics (~20-23% real range)
+
+compute_pyth_wp <- function(xgf, xga) xgf^PYTH_EXPONENT / (xgf^PYTH_EXPONENT + xga^PYTH_EXPONENT)
+
+# Combined all-situations xGF/xGA per team — 5v5 (already in xgf_lu/xga_lu)
+# plus PP/PK (pp_goals_lu/pk_ga_lu) — matched explicitly BY NAME, not by
+# raw vector position, since a plain `+` on named vectors in R aligns by
+# position and would silently misalign if the two vectors' name orders
+# ever drifted apart, even though today they're built from the same
+# team_off_def row order.
+common_teams <- intersect(names(xgf_lu), names(pp_goals_lu))
+total_xgf_lu <- xgf_lu[common_teams] + pp_goals_lu[common_teams]
+total_xga_lu <- xga_lu[common_teams] + pk_ga_lu[common_teams]
+pyth_wp_lu <- setNames(compute_pyth_wp(total_xgf_lu, total_xga_lu), common_teams)
+cat("  Combined (5v5 + PP/PK) Pythagorean win% range:",
+    round(min(pyth_wp_lu, na.rm = TRUE), 4), "to", round(max(pyth_wp_lu, na.rm = TRUE), 4),
+    "| a real, believable range should sit comfortably within roughly 0.35-0.65 for full-strength teams,\n")
+cat("  not close to 0 or 1 — a value near either extreme here would mean an input further upstream is broken.\n")
+
+# Combines two teams' own standalone win%s (each vs a league-average
+# opponent) into a matchup-specific probability, then layers home-ice on
+# top as an ODDS-RATIO adjustment (not a flat percentage-point add, which
+# could push a probability past 1 at the extremes for very lopsided
+# matchups).
+log5_home_win_prob <- function(p_home, p_away) {
+  odds_home <- p_home / (1 - p_home)
+  odds_away <- p_away / (1 - p_away)
+  odds_combined <- (odds_home / odds_away) * HOME_ICE_ODDS_MULT
+  odds_combined / (1 + odds_combined)
+}
+
+# REPLACES the old shots x probability simulate_games() — same call
+# signature, same output shape ($home_goals, $away_goals, $went_ot), so
+# every existing caller (simulate_one_season_pts(), the internal playoff-
+# bracket approximation, and all the diagnostic checks below) keeps
+# working without further changes. IMPORTANT: home_goals/away_goals here
+# are NOT real scorelines — they're placeholder 1/0 win indicators, kept
+# only so `g$home_goals > g$away_goals` comparisons elsewhere in this
+# script still correctly determine the winner. They must never be
+# displayed or interpreted as an actual expected scoreline — several
+# diagnostic prints below still reference "avg goals" from the old
+# mechanism and need updating to reflect this, not left as-is.
 simulate_games <- function(home_abbrevs, away_abbrevs) {
-  n <- length(home_abbrevs)
-
-  # ── 5v5: RESTRUCTURED to match HockeyStats' actual architecture —
-  # shots (volume) × per-shot scoring probability (quality + finishing +
-  # goaltending) — rather than applying goaltending as a multiplicative
-  # adjustment directly to xG. This matters for a real reason, not just
-  # style: shot-volume RAPM and xG-RAPM are correlated by construction
-  # (more shots directly means more cumulative xG, all else equal).
-  # Dividing xG by shots to get an IMPLIED per-shot probability actively
-  # cancels out most of that correlation — adding shot-volume RAPM as a
-  # separate additive term without this division would have risked
-  # double-counting the same underlying skill twice.
-  home_xg_5v5_raw <- (xgf_lu[home_abbrevs] + xga_lu[away_abbrevs]) / 2
-  away_xg_5v5_raw <- (xgf_lu[away_abbrevs] + xga_lu[home_abbrevs]) / 2
-  # GAP AMPLIFICATION — fitted directly against real historical win-
-  # probability outcomes (see validate_win_prob_curve.R): pooling real
-  # games by their real, same-season xG gap and comparing real win rates
-  # to what this exact mechanism (in isolation, shot volume held constant)
-  # predicted for the same gaps showed our win-probability curve is
-  # roughly 31% flatter than reality's for a given xG gap — a real,
-  # specific, well-fit correction (residuals from the linear fit were
-  # small and unsystematic on both curves), not a hand-tuned guess.
-  # Applied to the DEVIATION from league average, not the raw value, so
-  # the league-wide mean stays anchored at league_avg_xg_5v5 and only the
-  # SPREAD around it gets amplified — this is a root-cause fix to the
-  # actual mechanism that produces game outcomes, replacing the earlier,
-  # standings-level "amplification factor" applied after the fact, which
-  # is no longer needed.
-  GAP_AMPLIFICATION <- 1.31
-  home_xg_5v5 <- league_avg_xg_5v5 + GAP_AMPLIFICATION * (home_xg_5v5_raw - league_avg_xg_5v5)
-  away_xg_5v5 <- league_avg_xg_5v5 + GAP_AMPLIFICATION * (away_xg_5v5_raw - league_avg_xg_5v5)
-  # HOME-ICE ADVANTAGE — confirmed via direct search that this was
-  # entirely absent from the simulation before now (real hockey's own
-  # win-probability curve showed a real ~54.4% baseline win rate for
-  # evenly-matched teams, not 50%, which this simulation's own isolated
-  # mechanism test also confirmed producing ~50.1% with nothing added).
-  # HONEST CAVEAT: unlike the amplification factor above, this specific
-  # xG-equivalent size (0.09 per side) is a DERIVED estimate, not directly
-  # fitted the way the amplification factor was — worked out by taking
-  # the real curve's ~4.4 percentage-point edge at parity and dividing by
-  # the fitted curve's own slope (~0.245 win% per unit gap) to convert it
-  # into an equivalent xG shift. Worth validating directly against the
-  # full simulation's own results once wired in, not just trusting this
-  # derivation blindly.
-  HOME_ICE_XG_BOOST <- 0.09
-  home_xg_5v5 <- home_xg_5v5 + HOME_ICE_XG_BOOST
-  away_xg_5v5 <- away_xg_5v5 - HOME_ICE_XG_BOOST
-  home_shots_5v5 <- (shot_vol_for_lu[home_abbrevs] + shot_vol_against_lu[away_abbrevs]) / 2
-  away_shots_5v5 <- (shot_vol_for_lu[away_abbrevs] + shot_vol_against_lu[home_abbrevs]) / 2
-
-  # Implied per-shot probability — xG (quality + finishing, already
-  # baked into xgf_lu/xga_lu) divided by shots (volume, from shot-volume
-  # RAPM). Clamp widened to [0.01, 0.30] based on REAL observed data —
-  # the original [0.01, 0.15] guess was checked against actual team
-  # values and found to clamp 11 of 32 teams (over a third of the
-  # league), with the real range running up to 0.2624 — meaning that
-  # guess was cutting off real signal, not just acting as a rare safety
-  # net. 0.30 keeps a genuine safety margin above the observed max
-  # without guessing at another arbitrary number.
-  home_implied_prob <- pmax(0.01, pmin(0.30, home_xg_5v5 / pmax(home_shots_5v5, 1)))
-  away_implied_prob <- pmax(0.01, pmin(0.30, away_xg_5v5 / pmax(away_shots_5v5, 1)))
-
-  # Goaltending — now an ADDITIVE nudge directly to the per-shot
-  # probability, matching HockeyStats' own structure exactly (their
-  # example applies goaltending/shooting as a direct percentage-point
-  # adjustment AFTER the xG/shots ratio, not as a ratio multiplied
-  # against the whole xG value the way this used to work here).
-  home_adj_prob <- pmax(0.005, home_implied_prob + (league_avg_sv_pct - goalie_sv_lu[away_abbrevs]))
-  away_adj_prob <- pmax(0.005, away_implied_prob + (league_avg_sv_pct - goalie_sv_lu[home_abbrevs]))
-
-  home_xg_5v5_adj <- home_shots_5v5 * home_adj_prob
-  away_xg_5v5_adj <- away_shots_5v5 * away_adj_prob
-
-  # ── PP/PK: direct goals-per-game (Poisson), not shots*rate ──────────────
-  # Deliberately not shots*conversion-rate (what this replaced) — that
-  # structure separated shot volume from scoring rate, the same flaw xG
-  # fixed for 5v5 (a team's shot-suppression barely affecting the
-  # opponent's actual scoring probability). No stable player-level PP/PK
-  # xG exists yet to do the identical fix here, so this uses team-level
-  # PP-goals-for/PK-goals-against per game directly instead — already one
-  # number combining volume and efficiency, same spirit as xG, just real
-  # goals instead of expected goals.
-  home_pp_xg <- (pp_goals_lu[home_abbrevs] + pk_ga_lu[away_abbrevs]) / 2
-  away_pp_xg <- (pp_goals_lu[away_abbrevs] + pk_ga_lu[home_abbrevs]) / 2
-
-  # ── Combine: 5v5 (Poisson, xG-driven) + PP/PK (Poisson, goals-driven) ───
-  # HOME_XG_BOOST replaces the old per-shot HOME_GOAL_BOOST — same home-
-  # ice-advantage concept, just expressed as a direct expected-goals bump
-  # now that goals aren't built from a shots*per-shot-probability chain.
-  home_goals_5v5 <- rpois(n, pmax(0.05, home_xg_5v5_adj + HOME_XG_BOOST))
-  away_goals_5v5 <- rpois(n, pmax(0.05, away_xg_5v5_adj))
-  home_pp_goals  <- rpois(n, pmax(0.01, home_pp_xg))
-  away_pp_goals  <- rpois(n, pmax(0.01, away_pp_xg))
-
-  home_goals <- home_goals_5v5 + home_pp_goals
-  away_goals <- away_goals_5v5 + away_pp_goals
-
-  tied <- home_goals == away_goals
-  if (any(tied)) {
-    nt <- sum(tied)
-    # ~5 minutes of OT ~ 1/12 of a full game's expected-goals volume.
-    total_home_xg <- (home_xg_5v5_adj[tied] + home_pp_xg[tied]) / 12
-    total_away_xg <- (away_xg_5v5_adj[tied] + away_pp_xg[tied]) / 12
-    ot_h_score <- rpois(nt, pmax(0.01, total_home_xg)) > 0
-    ot_a_score <- rpois(nt, pmax(0.01, total_away_xg)) > 0
-    home_wins_ot <- ot_h_score & !ot_a_score
-    away_wins_ot <- ot_a_score & !ot_h_score
-    needs_so <- !(home_wins_ot | away_wins_ot)
-    # Same spirit as before (a small, clamped edge based on relative team
-    # quality), now built from the xG differential instead of shooting%/
-    # save% differences — 0.5 scaling keeps this in a similar ±0.15 range
-    # given xG differentials typically run roughly -0.18 to +0.16.
-    so_edge <- 0.5 + pmin(0.15, pmax(-0.15,
-      ((xgf_lu[home_abbrevs[tied]] - xga_lu[home_abbrevs[tied]]) -
-       (xgf_lu[away_abbrevs[tied]] - xga_lu[away_abbrevs[tied]])) * 0.5))
-    so_home_wins <- runif(nt) < so_edge
-    home_wins_final <- home_wins_ot | (needs_so & so_home_wins)
-    idx <- which(tied)
-    home_goals[idx[home_wins_final]]  <- home_goals[idx[home_wins_final]] + 1
-    away_goals[idx[!home_wins_final]] <- away_goals[idx[!home_wins_final]] + 1
-  }
-  list(home_goals = home_goals, away_goals = away_goals, went_ot = tied)
+  p_home <- pyth_wp_lu[home_abbrevs]
+  p_away <- pyth_wp_lu[away_abbrevs]
+  home_win_prob <- log5_home_win_prob(p_home, p_away)
+  n <- length(home_win_prob)
+  home_win <- runif(n) < home_win_prob
+  went_ot <- runif(n) < LEAGUE_OT_SO_RATE
+  list(home_goals = as.integer(home_win), away_goals = as.integer(!home_win), went_ot = went_ot)
 }
 
 # ── 6. Schedule template (reuse last season's, remapped to this year's teams) ─
@@ -2412,10 +2355,8 @@ tryCatch({
   wp_home <- simulate_games(rep(tm_best, n_check), rep(tm_worst, n_check))
   wp_away <- simulate_games(rep(tm_worst, n_check), rep(tm_best, n_check))
   cat("  Win-prob sanity check —", tm_best, "(best 5v5 xG) vs", tm_worst, "(worst 5v5 xG):\n")
-  cat("   ", tm_best, "at home:", round(mean(wp_home$home_goals > wp_home$away_goals) * 100, 1), "%", tm_best, "win |",
-      round(mean(wp_home$home_goals) , 2), "vs", round(mean(wp_home$away_goals), 2), "avg goals\n")
-  cat("   ", tm_worst, "at home:", round(mean(wp_away$away_goals > wp_away$home_goals) * 100, 1), "%", tm_best, "win |",
-      round(mean(wp_away$home_goals), 2), "vs", round(mean(wp_away$away_goals), 2), "avg goals\n")
+  cat("   ", tm_best, "at home:", round(mean(wp_home$home_goals > wp_home$away_goals) * 100, 1), "%", tm_best, "win\n")
+  cat("   ", tm_worst, "at home:", round(mean(wp_away$away_goals > wp_away$home_goals) * 100, 1), "%", tm_best, "win\n")
 }, error = function(e) cat("  Diagnostic error:", conditionMessage(e), "\n"))
 
 # tm_best-vs-tm_worst is the single most extreme matchup possible (best vs
@@ -2428,26 +2369,26 @@ tryCatch({
 tryCatch({
   xgf_lu["AVG"]      <- mean(team_off_def$onice_xgf_pg_wtd, na.rm = TRUE)
   xga_lu["AVG"]      <- mean(team_off_def$onice_xga_pg_wtd, na.rm = TRUE)
-  # shot_vol_for_lu/shot_vol_against_lu didn't exist yet when this
-  # diagnostic was first written, and never got updated when they were
-  # added — this was the actual, confirmed source of the "NAs produced"
-  # warnings: simulate_games() needs both of these for ANY team it's
-  # given, including "AVG", and indexing a name that was never added to
-  # a named vector returns NA in R, which then silently propagates
-  # through home_shots_5v5 -> home_implied_prob -> home_xg_5v5_adj.
+  # shot_vol_for_lu/shot_vol_against_lu/goalie_sv_lu are no longer used by
+  # simulate_games() at all (see the Log5 rewrite above) — left assigned
+  # here mainly for any other diagnostic that might still reference them,
+  # but pyth_wp_lu["AVG"] below is the one that actually matters now: the
+  # exact same class of bug that caused the original "NAs produced"
+  # warnings (a name never added to a lookup silently returning NA, then
+  # propagating through everything downstream) would recur here for the
+  # NEW mechanism if this is skipped.
   shot_vol_for_lu["AVG"]     <- mean(team_off_def$shot_vol_for_pg_new, na.rm = TRUE)
   shot_vol_against_lu["AVG"] <- mean(team_off_def$shot_vol_against_pg_new, na.rm = TRUE)
   pp_goals_lu["AVG"] <- mean(team_off_def$pp_goals_pg, na.rm = TRUE)
   pk_ga_lu["AVG"]    <- mean(team_off_def$pk_ga_pg, na.rm = TRUE)
   goalie_sv_lu["AVG"]<- mean(team_off_def$goalie_sv_pct, na.rm = TRUE)
+  pyth_wp_lu["AVG"]  <- compute_pyth_wp(xgf_lu["AVG"] + pp_goals_lu["AVG"], xga_lu["AVG"] + pk_ga_lu["AVG"])
   n_check <- 20000
   wp_home2 <- simulate_games(rep("AVG", n_check), rep(tm_worst, n_check))
   wp_away2 <- simulate_games(rep(tm_worst, n_check), rep("AVG", n_check))
   cat("  Win-prob sanity check — league-AVERAGE team vs", tm_worst, "(worst 5v5 xG):\n")
-  cat("    AVG at home:", round(mean(wp_home2$home_goals > wp_home2$away_goals) * 100, 1), "% AVG win |",
-      round(mean(wp_home2$home_goals), 2), "vs", round(mean(wp_home2$away_goals), 2), "avg goals\n")
-  cat("   ", tm_worst, "at home:", round(mean(wp_away2$away_goals > wp_away2$home_goals) * 100, 1), "% AVG win |",
-      round(mean(wp_away2$home_goals), 2), "vs", round(mean(wp_away2$away_goals), 2), "avg goals\n")
+  cat("    AVG at home:", round(mean(wp_home2$home_goals > wp_home2$away_goals) * 100, 1), "% AVG win\n")
+  cat("   ", tm_worst, "at home:", round(mean(wp_away2$away_goals > wp_away2$home_goals) * 100, 1), "% AVG win\n")
   # Rough season-points-implied check: if CHI's true win rate against a
   # neutral-quality schedule is p, season points ~ p*2*82 + otl bonus.
   chi_wr <- mean(c(mean(wp_home2$away_goals > wp_home2$home_goals), mean(wp_away2$home_goals > wp_away2$away_goals)))
