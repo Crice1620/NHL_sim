@@ -800,6 +800,12 @@ load_all_shot_vol_rapm_multi <- function(seasons) {
 # available for some reason, rather than failing outright.
 GH_RECENCY_WEIGHTS <- "https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/recency_weights"
 recency_weights_fitted <- tryCatch(gh_read(paste0(GH_RECENCY_WEIGHTS, "/recency_weights.csv")), error = function(e) NULL)
+# NOTE: this loading step, and weighted_avg_fitted() below (now entirely
+# unused — project_rapm()/project_rapm_pppk()/project_shot_vol_rapm() all
+# switched to get_most_recent_valid() instead, further down this file),
+# are both left in place but harmless rather than removed — nothing
+# actually calls weighted_avg_fitted() anymore. data/recency_weights/
+# recency_weights.csv is no longer needed for THIS script specifically.
 finishing_shrinkage_fitted <- tryCatch(gh_read(paste0(GH_RECENCY_WEIGHTS, "/finishing_shrinkage.csv")), error = function(e) NULL)
 if (is.null(recency_weights_fitted)) {
   cat("WARNING: No fitted recency weights found — falling back to the assumed decay formula for RAPM/shot-volume/PP/PK metrics.\n")
@@ -978,16 +984,53 @@ project_skater_onice <- function(hist_df) {
 # input, since RAPM output is per-season (not per-game) and doesn't have
 # its own gp_onice column — toi_5v5_sec serves the identical purpose
 # recency_weights_gp() needs (a sample-size proxy per season).
+# ── Most-recent-season-with-fallback — REPLACES the 3-year fitted-
+# regression blend for off_rapm/def_rapm/shot_vol_off/shot_vol_def/pp_rapm/
+# pk_rapm. See conversation: validate_real_pythagorean_compression.R and
+# the "Direct team-level xG comparison" diagnostic both directly,
+# repeatedly confirmed that REAL, single-season team xG data produces
+# realistic standings (correlation ~ -0.045 against real win%, essentially
+# zero compression) — the thing that was never validated as producing
+# realistic standings was the 3-year blend itself, which multiple direct
+# tests this session showed compresses real team-to-team differences,
+# most visibly for a team with a sharp recent trajectory change (a team's
+# blended value staying close to average despite a real, most-recent
+# season among the worst in the league — exactly what a 3-year blend
+# anchored on older, no-longer-representative seasons would produce).
+# HONEST TRADEOFF: this trades away multi-year smoothing for single-season
+# noise on any one player — but this project's own components aggregate
+# 18+ players per team, and team-level aggregation is exactly the level
+# this approach was validated at, not the individual-player level.
+# Function kept named "_3yr" downstream purely so nothing else in this
+# script that references those column names needs to change — the values
+# themselves are no longer a 3-year blend.
+get_most_recent_valid <- function(vals, season, sample_size, min_sample) {
+  keep <- !is.na(vals) & !is.na(season)
+  if (!any(keep)) return(NA_real_)
+  v <- vals[keep]; s <- season[keep]; g <- sample_size[keep]
+  ord <- order(s, decreasing = TRUE)  # most recent first
+  v <- v[ord]; g <- g[ord]
+  adequate <- which(g >= min_sample)
+  if (length(adequate) > 0) return(v[adequate[1]])
+  # Nobody meets the sample bar (e.g. every available season was injury-
+  # shortened) — fall back to the most recent value anyway rather than
+  # NA, matching this project's general "use what's real over nothing"
+  # convention elsewhere.
+  v[1]
+}
+MIN_TOI_5V5_SEC_RECENT <- 400 * 60  # ~400 minutes at 5v5 — same bar fit_aging_curves.R uses for a season to count at all
+MIN_TOI_PP_SEC_RECENT  <- 60 * 60
+MIN_TOI_PK_SEC_RECENT  <- 60 * 60
+
 project_rapm <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"off_rapm_per60" %in% names(hist_df)) return(NULL)
   hist_df %>%
     filter(!is.na(toi_5v5_sec), toi_5v5_sec > 0) %>%
     group_by(player_id) %>%
-    arrange(season, .by_group = TRUE) %>%
     summarise(
-      off_rapm_3yr = weighted_avg_fitted(off_rapm_per60, season, toi_5v5_sec, "off_rapm_per60"),
-      def_rapm_3yr = weighted_avg_fitted(def_rapm_per60, season, toi_5v5_sec, "def_rapm_per60"),
+      off_rapm_3yr = get_most_recent_valid(off_rapm_per60, season, toi_5v5_sec, MIN_TOI_5V5_SEC_RECENT),
+      def_rapm_3yr = get_most_recent_valid(def_rapm_per60, season, toi_5v5_sec, MIN_TOI_5V5_SEC_RECENT),
       .groups = "drop"
     )
 }
@@ -995,37 +1038,26 @@ project_rapm_pppk <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"pp_rapm_per60" %in% names(hist_df)) return(NULL)
   # Uses own_pp_shots_per60/own_pk_sa_per60 (already in rapm_pppk.csv) as
-  # a rough activity proxy for recency weighting, since PP/PK doesn't have
-  # its own dedicated TOI column joined in at this stage — a genuine
-  # approximation, acceptable here since this feeds a diagnostic
-  # comparison, not the production simulation (see the note below where
-  # this gets used).
+  # a rough activity proxy, since PP/PK doesn't have its own dedicated TOI
+  # column joined in at this stage — a genuine approximation, same caveat
+  # as before this change.
   hist_df %>%
     mutate(pp_weight_proxy = coalesce(own_pp_shots_per60, 1), pk_weight_proxy = coalesce(own_pk_sa_per60, 1)) %>%
     group_by(player_id) %>%
-    arrange(season, .by_group = TRUE) %>%
     summarise(
-      pp_rapm_3yr = weighted_avg_fitted(pp_rapm_per60, season, pp_weight_proxy, "pp_rapm_per60"),
-      pk_rapm_3yr = weighted_avg_fitted(pk_rapm_per60, season, pk_weight_proxy, "pk_rapm_per60"),
+      pp_rapm_3yr = get_most_recent_valid(pp_rapm_per60, season, pp_weight_proxy, MIN_TOI_PP_SEC_RECENT),
+      pk_rapm_3yr = get_most_recent_valid(pk_rapm_per60, season, pk_weight_proxy, MIN_TOI_PK_SEC_RECENT),
       .groups = "drop"
     )
 }
-# NEW — shot-volume RAPM previously used a single season directly
-# (season_year - 1) with no blending at all, since fit_recency_weights.R
-# hadn't produced real fitted weights for it yet. Now that it has, this
-# gives it the same real 3-year blend as the other metrics. No TOI needed
-# here — the fitted weights already encode the optimal combination
-# directly; TOI only mattered as an observation weight during FITTING,
-# not at prediction time.
 project_shot_vol_rapm <- function(hist_df) {
   if (is.null(hist_df) || nrow(hist_df) == 0) return(NULL)
   if (!"shot_vol_off_per60" %in% names(hist_df)) return(NULL)
   hist_df %>%
     group_by(player_id) %>%
-    arrange(season, .by_group = TRUE) %>%
     summarise(
-      shot_vol_off_3yr = weighted_avg_fitted(shot_vol_off_per60, season, rep(1, dplyr::n()), "shot_vol_off_per60"),
-      shot_vol_def_3yr = weighted_avg_fitted(shot_vol_def_per60, season, rep(1, dplyr::n()), "shot_vol_def_per60"),
+      shot_vol_off_3yr = get_most_recent_valid(shot_vol_off_per60, season, rep(Inf, dplyr::n()), 0),
+      shot_vol_def_3yr = get_most_recent_valid(shot_vol_def_per60, season, rep(Inf, dplyr::n()), 0),
       .groups = "drop"
     )
 }
@@ -2315,38 +2347,29 @@ goalie_sv_common <- goalie_sv_lu[common_teams]
 xga_goalie_adj <- xga_lu[common_teams] * (1 - coalesce(goalie_sv_common, league_avg_sv_pct)) / (1 - league_avg_sv_pct)
 total_xga_lu <- xga_goalie_adj + pk_ga_lu[common_teams]
 
-# VARIANCE-RESTORING SCALE — directly, empirically validated via
-# validate_team_level_shrinkage.R, NOT tuned against an indirect proxy the
-# way every earlier "amplification factor" this session was (all of which
-# were tuned against the Pythagorean formula, later proven to need no
-# correction at all). This one is different in kind: it comes from
-# genuinely forecasting real historical seasons from their own real prior
-# 3 years (leave-one-out style) and directly measuring how the predicted
-# team-level xG-diff spread compared to what actually happened. Mean
-# ratio across 11 held-out seasons: 0.6813 — meaning the SAME kind of
-# regression-based shrinkage this project's recency-weight fitting uses,
-# even applied at the team level with NO roster-aggregation step at all,
-# already produces a spread measurably narrower than reality. Scaling
-# each of xgf/xga separately around its own league mean by this same
-# factor is mathematically equivalent to scaling their DIFFERENCE
-# directly — confirmed algebraically, not just assumed — which is
-# exactly what validate_team_level_shrinkage.R measured.
-# HONEST CAVEAT: the full pipeline (with player-level fitting AND roster
-# aggregation) showed an even narrower ~0.47 ratio than this team-level-
-# only test's 0.68 — meaning this correction addresses the DOMINANT
-# component directly confirmed by this test, but probably won't fully
-# close the gap on its own. Worth re-running the full diagnostic after
-# this to see how much of the remaining gap, if any, is left.
-VARIANCE_RESTORE_FACTOR <- 1 / 0.6813
-scale_around_mean <- function(x, factor) {
-  m <- mean(x, na.rm = TRUE)
-  m + factor * (x - m)
-}
-total_xgf_lu <- scale_around_mean(total_xgf_lu, VARIANCE_RESTORE_FACTOR)
-total_xga_lu <- scale_around_mean(total_xga_lu, VARIANCE_RESTORE_FACTOR)
-cat("  Applied variance-restoring scale (factor =", round(VARIANCE_RESTORE_FACTOR, 4),
-    ") to total_xgf_lu/total_xga_lu, directly validated via validate_team_level_shrinkage.R.\n")
-
+# REVERTED — this scale was validated against validate_team_level_shrinkage.R,
+# which tested the wrong unit of analysis: each team's OWN historical
+# xG-diff blended against its own future outcome, with no player-level
+# RAPM fitting or roster aggregation involved at all. But that is NOT
+# what this mechanism actually does — it aggregates the CURRENT roster's
+# individual players' own blended histories via TOI-weighted sum, a
+# fundamentally different thing whenever a roster has turned over
+# meaningfully (e.g. Vancouver: real most-recent-season xg_diff of -0.588,
+# among the worst in the league, but a 3-year BLENDED value of only
+# -0.023 — barely below average). A uniform scale-around-the-mean, even
+# validated correctly, could not have fixed a case like this anyway: the
+# problem there isn't that the OVERALL spread is too narrow, it's that
+# THIS SPECIFIC team's blend is anchored too heavily on older, no-longer-
+# representative seasons relative to a sharp recent decline — a uniform
+# stretch of an already-near-zero deviation just produces a slightly
+# different near-zero deviation, not a corrected one. Left un-scaled here
+# pending a properly-scoped validation (real historical roster
+# reconstruction, aggregating actual rostered players' own fitted-
+# regression values the same way this mechanism does in production) and,
+# separately, a look at whether the recency-weight regression itself
+# needs to respond to trajectory/trend rather than using one fixed,
+# pooled weight set for every team regardless of how sharply their
+# performance has changed year to year.
 pyth_wp_lu <- setNames(compute_pyth_wp(total_xgf_lu, total_xga_lu), common_teams)
 cat("  Combined (5v5 + PP/PK) Pythagorean win% range:",
     round(min(pyth_wp_lu, na.rm = TRUE), 4), "to", round(max(pyth_wp_lu, na.rm = TRUE), 4),
