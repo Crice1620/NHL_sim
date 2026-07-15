@@ -1814,7 +1814,7 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
 # than check pieces one at a time, this traces every stage of the pipeline
 # for one team so a problem (if there is one) is visible directly rather
 # than inferred from the final number.
-DEEP_CHECK_TEAMS <- c("VGK", "SEA", "SJS", "EDM", "PIT")
+DEEP_CHECK_TEAMS <- c("ANA", "SEA", "VGK")
 for (DEEP_CHECK_TEAM in DEEP_CHECK_TEAMS) {
 dc <- team_offense %>% filter(team_abbrev == DEEP_CHECK_TEAM)
 if (nrow(dc) > 0) {
