@@ -1813,7 +1813,7 @@ for (tm in c("VGK", "MIN", "NSH", "SEA")) {
 # than check pieces one at a time, this traces every stage of the pipeline
 # for one team so a problem (if there is one) is visible directly rather
 # than inferred from the final number.
-DEEP_CHECK_TEAMS <- c("ANA", "SEA", "VGK")
+DEEP_CHECK_TEAMS <- c("CAR", "COL", "VGK")
 for (DEEP_CHECK_TEAM in DEEP_CHECK_TEAMS) {
 dc <- team_offense %>% filter(team_abbrev == DEEP_CHECK_TEAM)
 if (nrow(dc) > 0) {
@@ -1835,6 +1835,8 @@ if (nrow(dc) > 0) {
   cat("    wowy_def_adj_per_game (EV)        =", round(dc$wowy_def_adj_per_game, 3), "| roster coverage:", dc$n_with_wowy_def, "/ 18\n")
   cat("    shots_against_pg (final)          =", round(dc$shots_against_pg, 3), "| league avg range was ~15-35\n")
   cat("  DEFENSE — player-level breakdown (same 12F/6D roster feeding the average above)\n")
+  cat("  (off_rapm/def_rapm are what actually drive onice_xgf_pg_wtd/onice_xga_pg_wtd —\n")
+  cat("   onice_ca_pg/onice_cf_pg below are the separate, smaller WOWY adjustment, not the main signal)\n")
   dc_roster_f <- skater_output %>% filter(has_history, team_abbrev == DEEP_CHECK_TEAM, position != "D") %>%
     arrange(desc(rate_toi_min)) %>% slice_head(n = 12)
   dc_roster_d <- skater_output %>% filter(has_history, team_abbrev == DEEP_CHECK_TEAM, position == "D") %>%
@@ -1844,7 +1846,10 @@ if (nrow(dc) > 0) {
     p <- dc_roster[i, ]
     cat("    ", sprintf("%-20s", substr(coalesce(p$player_name, "?"), 1, 20)),
         "| toi_pg_min=", round(coalesce(p$rate_toi_min, NA), 1),
-        "onice_ca_pg=", ifelse(is.na(p$onice_ca_pg), "NA", round(p$onice_ca_pg, 2)),
+        "off_rapm=", ifelse(is.na(p$off_rapm_3yr), "NA", round(p$off_rapm_3yr, 4)),
+        "def_rapm=", ifelse(is.na(p$def_rapm_3yr), "NA", round(p$def_rapm_3yr, 4)),
+        "n_seasons=", ifelse(is.na(p$n_seasons), "NA", p$n_seasons),
+        "| onice_ca_pg=", ifelse(is.na(p$onice_ca_pg), "NA", round(p$onice_ca_pg, 2)),
         "onice_cf_pg=", ifelse(is.na(p$onice_cf_pg), "NA", round(p$onice_cf_pg, 2)), "\n")
   }
 } else {
