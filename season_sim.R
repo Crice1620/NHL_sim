@@ -1284,6 +1284,54 @@ if (!is.null(aging_curves_data)) {
   cat("  gax_per60, shot_vol_off_3yr, shot_vol_def_3yr.\n")
 }
 
+# ── REPLACEMENT-LEVEL IMPUTATION for players with ZERO NHL history ──────────
+# Confirmed as a real, direct bug, not a guess: the team-aggregation step
+# further below uses coalesce(off_rapm_3yr, 0) (and the same pattern for
+# shot-volume) — meaning a player with NO valid seasons at all (a true,
+# brand-new rookie who's never played an NHL game before) contributes
+# EXACTLY 0 to the team sum. Since these RAPM/shot-volume metrics are
+# deviation-from-league-average by construction, 0 literally means
+# "exactly average NHL player" — which silently credits every roster spot
+# filled by a genuine unknown as if it were league-average, when a real
+# rookie is typically BELOW average, at least initially. This
+# systematically inflates any team icing more such players — exactly the
+# rebuilding-team pattern (trading away established veterans for young,
+# unproven players) that would produce the "rebuilding teams project too
+# high" symptom.
+# FIX: rather than guess a replacement-level number, compute it directly
+# from real, already-available data — the 20th percentile of each metric
+# among ALL players who DO have a valid blended value this same season.
+# This gives a genuine "below-average but still NHL-roster-caliber"
+# baseline, not an arbitrary guess, and updates naturally as league talent
+# distribution shifts over time rather than needing to be re-tuned by hand.
+# gax_per60 (finishing skill) deliberately NOT included here — there's no
+# strong reason to assume a true rookie is a systematically worse SHOOTER
+# on a per-shot-quality basis the way overall two-way RAPM reflects
+# broader experience; 0 (average shooting talent) stays the reasonable
+# default for that one specific metric.
+compute_replacement_level <- function(x) {
+  valid <- x[!is.na(x)]
+  if (length(valid) < 20) return(0)  # too few real values to trust a percentile — fall back to the old behavior rather than a noisy estimate
+  as.numeric(quantile(valid, 0.20, na.rm = TRUE))
+}
+REPL_OFF_RAPM      <- compute_replacement_level(skater_output$off_rapm_3yr)
+REPL_DEF_RAPM      <- compute_replacement_level(skater_output$def_rapm_3yr)
+REPL_SHOT_VOL_OFF  <- compute_replacement_level(skater_output$shot_vol_off_3yr)
+REPL_SHOT_VOL_DEF  <- compute_replacement_level(skater_output$shot_vol_def_3yr)
+cat("  Replacement-level values (20th percentile among real players) — off_rapm:", round(REPL_OFF_RAPM, 4),
+    "| def_rapm:", round(REPL_DEF_RAPM, 4), "| shot_vol_off:", round(REPL_SHOT_VOL_OFF, 4),
+    "| shot_vol_def:", round(REPL_SHOT_VOL_DEF, 4), "\n")
+cat("  Used for any rostered player with ZERO valid NHL seasons, instead of defaulting to 0 (exactly league-average).\n")
+n_needing_replacement <- sum(is.na(skater_output$off_rapm_3yr) | is.na(skater_output$shot_vol_off_3yr))
+cat("  Players with zero valid NHL history needing this fill-in:", n_needing_replacement, "of", nrow(skater_output), "\n")
+skater_output <- skater_output %>%
+  mutate(
+    off_rapm_3yr     = coalesce(off_rapm_3yr, REPL_OFF_RAPM),
+    def_rapm_3yr     = coalesce(def_rapm_3yr, REPL_DEF_RAPM),
+    shot_vol_off_3yr = coalesce(shot_vol_off_3yr, REPL_SHOT_VOL_OFF),
+    shot_vol_def_3yr = coalesce(shot_vol_def_3yr, REPL_SHOT_VOL_DEF)
+  )
+
 # ── Shot-based team offense/defense profile ──────────────────────────────────
 # Adapted from HockeyStats.com's win-odds methodology: simulate goals as
 # actual per-shot outcomes (shot happens -> is it a goal?) rather than
