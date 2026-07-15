@@ -1108,30 +1108,29 @@ if (!"ev_offense_xgwowy" %in% names(skater_onice_hist)) {
   skater_onice_hist$ev_offense_xgwowy <- NA_real_; skater_onice_hist$ev_defense_xgwowy <- NA_real_
 }
 
-# Team-level PP/PK goals-per-game — recency-weighted across the same
-# 3-season window as everything else. Deliberately NOT shots*conversion-
-# rate (the structure this replaces): that approach separated shot volume
-# from scoring rate, meaning a team's PK shot-suppression barely affected
-# the opponent's actual scoring probability — the same structural flaw
-# just proven wrong for 5v5 (fixed there via xG, which combines volume
-# and quality into one number). No stable player-level PP/PK xG exists
-# yet to do the same fix here (last session's attempt at player-level
-# PP/PK WOWY showed severe instability, values as extreme as -33 — PP/PK
-# ice time is roughly 10x smaller per game than 5v5, and that thin a
-# sample doesn't hold up to this kind of decomposition). Team-level goals-
-# per-game sidesteps the specific flaw without needing new data: it's
-# already one number combining volume and efficiency, same as xG's
-# spirit, just built from real goals instead of expected goals. Shot
-# VOLUME for PP/PK still comes from the existing roster-weighted, trade-
-# aware onice_pp_sf_pg/onice_pk_sa_pg — only used for diagnostics now,
-# not to decompose the goal rate.
+# Team-level PP/PK goals-per-game — REPOINTED from a recency_weights_gp()
+# 3-year blend to the same most-recent-season-with-fallback approach used
+# everywhere else in this script now. This was a genuinely SEPARATE
+# mechanism from the player-level RAPM/shot-volume blending switched
+# earlier — team_pp_pk_rates is built directly from team-level
+# team_onice_by_season data, with its own independent blend, and never got
+# updated alongside the rest of the pipeline. Confirmed as a real,
+# concrete cause of a real problem: Anaheim's pk_ga_pg came back as the
+# single worst value in the entire league (0.776 vs 0.595 league average)
+# under the old 3-year blend, dragging down a team whose real, most-recent
+# 5v5 performance and playoff appearance didn't suggest anything close to
+# that extreme. Deliberately NOT shots*conversion-rate (see the original
+# note below on why real team-level goals-per-game is used instead of
+# decomposing shot volume from scoring rate).
+MIN_GP_PP_PK_RECENT <- 20  # same floor as fit_aging_curves.R's own MIN_GP_BOXSCORE — a season with fewer games than this is too thin a sample to trust as "the real, current level"
 team_pp_pk_rates <- if (length(team_onice_by_season) > 0) {
   bind_rows(team_onice_by_season) %>%
+    mutate(pp_goals_per_gp = coalesce(pp_goals, 0) / pmax(coalesce(gp_onice, 1), 1),
+           pk_ga_per_gp    = coalesce(pk_goals_against, 0) / pmax(coalesce(gp_onice, 1), 1)) %>%
     group_by(team_abbrev) %>%
-    arrange(season, .by_group = TRUE) %>%
     summarise(
-      pp_goals_pg = { w <- recency_weights_gp(season, pmax(coalesce(gp_onice, 0), 1)); sum(w * (coalesce(pp_goals, 0) / pmax(coalesce(gp_onice, 1), 1))) },
-      pk_ga_pg    = { w <- recency_weights_gp(season, pmax(coalesce(gp_onice, 0), 1)); sum(w * (coalesce(pk_goals_against, 0) / pmax(coalesce(gp_onice, 1), 1))) },
+      pp_goals_pg = get_most_recent_valid(pp_goals_per_gp, season, gp_onice, MIN_GP_PP_PK_RECENT),
+      pk_ga_pg    = get_most_recent_valid(pk_ga_per_gp, season, gp_onice, MIN_GP_PP_PK_RECENT),
       .groups = "drop"
     )
 } else {
