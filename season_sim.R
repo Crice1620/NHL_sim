@@ -2125,40 +2125,25 @@ goalie_sv_lu     <- setNames(team_off_def$goalie_sv_pct, team_off_def$team_abbre
 # in-season talent drift (trades, injuries, motivation swings) that a
 # fixed-roster, full-season simulation structurally can't capture at all;
 # treating the ENTIRE measured gap as pure bias risks overcorrecting.
-COMPRESSION_AMPLIFICATION <- 1.4  # dialed back down from 1.75 — a direct backtest against REAL final standings for 3 completed seasons (2023-2025, via season_sim_backtest.R's calibration sweep) found 1.4 minimized RMSE on average, with 1.75 performing noticeably worse, especially in the one backtest season with a full, proper 3-year prior-data window (which alone preferred 1.0, no correction at all). This is direct outcome evidence, a stronger signal than the indirect Pythagorean-correlation tuning that originally justified 1.75 — 1.4 is a middle point that respects both the real backtest evidence (which leans lower) and the independently-validated Jensen's-inequality rationale for some correction (which argues against dropping to 1.0 entirely based on one data point).
-# NOTE: this standings-level correction now applies ONLY to pp_goals_pg/
-# pk_ga_pg — the 5v5 xG amplification that used to happen here has been
-# REMOVED, since validate_win_prob_curve.R directly confirmed the actual
-# root cause (the 5v5 shots x probability mechanism itself under-reacting
-# to a given xG gap, fitted at 1.31x against real historical outcomes) and
-# that fix is now applied properly, once, inside simulate_games() itself
-# — leaving the old amplification here too would double-amplify the same
-# thing. PP/PK was NOT part of what was tested/fixed there, so its own
-# amplification stays here unchanged until/unless it gets the same direct
-# validation treatment.
-amplify_around_mean <- function(x) {
-  m <- mean(x, na.rm = TRUE)
-  m + COMPRESSION_AMPLIFICATION * (x - m)
-}
-# Save the ORIGINAL (true, un-amplified) values before correcting — needed
-# so the Pythagorean validation check below can compare the CORRECTED
-# simulation against TRUE talent, not against an already-amplified number
-# (comparing amplified-vs-amplified would test something else entirely and
-# give a misleading read on whether the correction actually worked).
+# REMOVED — this correction (previously 1.4x on pp_goals_pg/pk_ga_pg) is
+# now confirmed obsolete, not just untested. The most recent diagnostic
+# run showed the Pythagorean-vs-simulation correlation flip to a POSITIVE
+# +0.537 — the opposite direction from the old compression problem,
+# meaning the simulation was now OVER-reacting relative to true talent.
+# That's exactly what leaving an amplification factor active on top of a
+# mechanism that's already been directly validated as needing no
+# correction at all (Log5, validated against real historical win% —
+# correlation ~ -0.045, see validate_real_pythagorean_compression.R)
+# would produce. Keeping the ORIGINAL (now identical to current, since
+# nothing is being amplified anymore) values below — still needed by the
+# Pythagorean validation check further down as the TRUE-talent benchmark.
 xgf_lu_orig      <- setNames(team_off_def$onice_xgf_pg_wtd, team_off_def$team_abbrev)
 xga_lu_orig      <- setNames(team_off_def$onice_xga_pg_wtd, team_off_def$team_abbrev)
 pp_goals_lu_orig <- setNames(team_off_def$pp_goals_pg, team_off_def$team_abbrev)
 pk_ga_lu_orig    <- setNames(team_off_def$pk_ga_pg, team_off_def$team_abbrev)
-team_off_def <- team_off_def %>%
-  mutate(
-    pp_goals_pg      = amplify_around_mean(pp_goals_pg),
-    pk_ga_pg         = amplify_around_mean(pk_ga_pg)
-  )
-cat("\n  PP/PK standings-compression correction applied (amplification factor =", COMPRESSION_AMPLIFICATION,
-    ") — 5v5 xG is no longer amplified here; that correction now happens directly\n")
-cat("  inside simulate_games() itself, fitted against real historical outcomes (see validate_win_prob_curve.R).\n")
-cat("  All diagnostics below reflect POST-correction PP/PK inputs (except the Pythagorean\n")
-cat("  check, which deliberately uses TRUE pre-correction values as the benchmark).\n")
+cat("\n  No standings-level amplification applied anywhere now — both the old 5v5 correction\n")
+cat("  (removed earlier, replaced by the validated Log5 mechanism) and this PP/PK correction\n")
+cat("  (removed here) are gone. All diagnostics below use the same, single set of values.\n")
 
 # xG-based 5v5 inputs (roster-weighted, trade-aware — see the note where
 # onice_xgf_pg/onice_xga_pg are built) plus team-level PP/PK goals-per-
@@ -2281,6 +2266,39 @@ total_xgf_lu <- xgf_lu[common_teams] + pp_goals_lu[common_teams]
 goalie_sv_common <- goalie_sv_lu[common_teams]
 xga_goalie_adj <- xga_lu[common_teams] * (1 - coalesce(goalie_sv_common, league_avg_sv_pct)) / (1 - league_avg_sv_pct)
 total_xga_lu <- xga_goalie_adj + pk_ga_lu[common_teams]
+
+# VARIANCE-RESTORING SCALE — directly, empirically validated via
+# validate_team_level_shrinkage.R, NOT tuned against an indirect proxy the
+# way every earlier "amplification factor" this session was (all of which
+# were tuned against the Pythagorean formula, later proven to need no
+# correction at all). This one is different in kind: it comes from
+# genuinely forecasting real historical seasons from their own real prior
+# 3 years (leave-one-out style) and directly measuring how the predicted
+# team-level xG-diff spread compared to what actually happened. Mean
+# ratio across 11 held-out seasons: 0.6813 — meaning the SAME kind of
+# regression-based shrinkage this project's recency-weight fitting uses,
+# even applied at the team level with NO roster-aggregation step at all,
+# already produces a spread measurably narrower than reality. Scaling
+# each of xgf/xga separately around its own league mean by this same
+# factor is mathematically equivalent to scaling their DIFFERENCE
+# directly — confirmed algebraically, not just assumed — which is
+# exactly what validate_team_level_shrinkage.R measured.
+# HONEST CAVEAT: the full pipeline (with player-level fitting AND roster
+# aggregation) showed an even narrower ~0.47 ratio than this team-level-
+# only test's 0.68 — meaning this correction addresses the DOMINANT
+# component directly confirmed by this test, but probably won't fully
+# close the gap on its own. Worth re-running the full diagnostic after
+# this to see how much of the remaining gap, if any, is left.
+VARIANCE_RESTORE_FACTOR <- 1 / 0.6813
+scale_around_mean <- function(x, factor) {
+  m <- mean(x, na.rm = TRUE)
+  m + factor * (x - m)
+}
+total_xgf_lu <- scale_around_mean(total_xgf_lu, VARIANCE_RESTORE_FACTOR)
+total_xga_lu <- scale_around_mean(total_xga_lu, VARIANCE_RESTORE_FACTOR)
+cat("  Applied variance-restoring scale (factor =", round(VARIANCE_RESTORE_FACTOR, 4),
+    ") to total_xgf_lu/total_xga_lu, directly validated via validate_team_level_shrinkage.R.\n")
+
 pyth_wp_lu <- setNames(compute_pyth_wp(total_xgf_lu, total_xga_lu), common_teams)
 cat("  Combined (5v5 + PP/PK) Pythagorean win% range:",
     round(min(pyth_wp_lu, na.rm = TRUE), 4), "to", round(max(pyth_wp_lu, na.rm = TRUE), 4),
