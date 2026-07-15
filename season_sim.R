@@ -1171,6 +1171,44 @@ if (!is.null(proj_rapm)) {
   skater_output$off_rapm_3yr <- NA_real_; skater_output$def_rapm_3yr <- NA_real_
 }
 
+# ── TARGETED DIAGNOSTIC — K'Andre Miller and Jalen Chatfield ────────────────
+# Both showed up as extreme, isolated outliers in CAR's roster breakdown
+# (Miller's def_rapm the single worst defensive value across 3 teams'
+# worth of players, despite being a well-regarded top-pairing defenseman;
+# Chatfield's off_rapm similarly extreme). Real, concrete hypothesis: both
+# were part of the same trade (Miller/Stankoven, NYR<->CAR) — if that
+# happened mid-season, "most recent season" may be resolving to a small,
+# noisy POST-TRADE partial sample rather than either player's real,
+# full-season level. Printing every available season's raw data (not just
+# whatever got_most_recent_valid() picked) to see this directly rather
+# than guessing further.
+cat("\n── TARGETED CHECK: full RAPM history for Miller and Chatfield ──\n")
+if (!is.null(rapm_hist)) {
+  target_names <- c("Miller", "Chatfield")
+  for (nm in target_names) {
+    match_ids <- skater_output %>% filter(grepl(nm, roster_name, ignore.case = TRUE)) %>% pull(player_id) %>% unique()
+    if (length(match_ids) == 0) { cat("  (no roster match found for '", nm, "')\n"); next }
+    for (pid in match_ids) {
+      full_name <- skater_output %>% filter(player_id == pid) %>% pull(roster_name) %>% first()
+      cat("\n  --", full_name, "(player_id =", pid, ") --\n")
+      rows <- rapm_hist %>% filter(player_id == pid) %>% arrange(desc(season))
+      if (nrow(rows) == 0) { cat("    (no rapm_hist rows found for this player_id at all)\n"); next }
+      for (i in seq_len(nrow(rows))) {
+        r <- rows[i, ]
+        toi_min <- round(coalesce(r$toi_5v5_sec, 0) / 60, 1)
+        adequate <- coalesce(r$toi_5v5_sec, 0) >= MIN_TOI_5V5_SEC_RECENT
+        cat(sprintf("    season=%s | off_rapm_per60=%+.4f def_rapm_per60=%+.4f | toi_5v5_min=%.1f | meets recency-min (400min)? %s\n",
+                    r$season, coalesce(r$off_rapm_per60, NA_real_), coalesce(r$def_rapm_per60, NA_real_), toi_min, adequate))
+      }
+      picked <- skater_output %>% filter(player_id == pid) %>% select(off_rapm_3yr, def_rapm_3yr) %>% slice(1)
+      cat("    -> get_most_recent_valid() ACTUALLY PICKED: off_rapm_3yr=", round(picked$off_rapm_3yr, 4),
+          "def_rapm_3yr=", round(picked$def_rapm_3yr, 4), "\n")
+    }
+  }
+} else {
+  cat("  (rapm_hist is NULL — can't run this check)\n")
+}
+
 # ── RAPM (PP/PK) — PROMOTED TO PRODUCTION. Initially loaded diagnostic-
 # only (see the comparison block further below, still present) — after
 # reviewing that comparison, the spread looked bounded and reasonable
