@@ -20,6 +20,19 @@
 # comparing R² with vs without shot-volume tells us whether it adds
 # genuine, new information or is mostly redundant with quality RAPM.
 
+# RE-RUN TRIGGER — read this before assuming these numbers are still valid:
+# this validation should be re-run any time fit_rapm.R or
+# fit_shot_volume_rapm.R changes in a way that could affect off_rapm/
+# def_rapm or shot_vol_off/def output (a new regression design, a
+# different penalty structure, a bug fix to either script, etc.) — NOT on
+# a calendar schedule. The relationship between shot volume and shot
+# quality is a stable, real-hockey relationship that doesn't meaningfully
+# drift season to season on its own; what actually invalidates the fitted
+# coefficients below is validating against one version of the upstream
+# RAPM output and then quietly using a different version in production.
+# If you've changed either fitting script, re-run this file and update
+# season_sim.R's hardcoded blend coefficients (currently 1.9283/1.1754/
+# 0.0401 for offense, 2.0379/-1.4136/-0.0427 for defense) to match.
 suppressMessages({ library(dplyr); library(httr) })
 
 GH_ONICE <- "https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice"
@@ -32,7 +45,7 @@ gh_read <- function(url, timeout_s = 90, max_retries = 3) {
     resp <- tryCatch(GET(url, timeout(timeout_s)), error = function(e) NULL)
     if (!is.null(resp) && status_code(resp) == 200) {
       return(tryCatch(read.csv(text = content(resp, "text", encoding = "UTF-8"), stringsAsFactors = FALSE),
-                      error = function(e) NULL))
+                       error = function(e) NULL))
     }
     if (!is.null(resp) && status_code(resp) == 404) return(NULL)
     if (attempt < max_retries) Sys.sleep(2 * attempt)
@@ -43,15 +56,15 @@ gh_read <- function(url, timeout_s = 90, max_retries = 3) {
 compute_team_season_row <- function(team, season, skater_onice, team_onice, rapm, shot_vol) {
   team_row <- team_onice %>% filter(team_abbrev == team)
   if (nrow(team_row) == 0 || is.na(team_row$gp_onice[1]) || team_row$gp_onice[1] <= 0) return(NULL)
-  
+
   roster <- skater_onice %>%
     filter(team_abbrev == team, coalesce(toi_5v5_sec, 0) > 0) %>%
     left_join(rapm %>% select(player_id, off_rapm_per60, def_rapm_per60), by = "player_id") %>%
     left_join(shot_vol %>% select(player_id, shot_vol_off_per60, shot_vol_def_per60), by = "player_id")
   if (nrow(roster) == 0) return(NULL)
-  
+
   roster <- roster %>% mutate(toi_pg_min = (toi_5v5_sec / team_row$gp_onice[1]) / 60)
-  
+
   data.frame(
     team = team, season = season,
     rapm_xgf_delta = sum(coalesce(roster$off_rapm_per60, 0) * roster$toi_pg_min / 60, na.rm = TRUE),
@@ -78,7 +91,7 @@ for (s in SEASONS) {
   skater_onice$player_id <- as.character(skater_onice$player_id)
   rapm$player_id <- as.character(rapm$player_id)
   shot_vol$player_id <- as.character(shot_vol$player_id)
-  
+
   teams_this_season <- unique(team_onice$team_abbrev)
   cat("  ", length(teams_this_season), "teams found.\n")
   for (tm in teams_this_season) {
