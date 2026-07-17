@@ -1722,14 +1722,6 @@ cat("  League-average 5v5 xG baseline (for RAPM-driven team rates):", round(leag
 league_avg_shots_5v5 <- mean(c(team_offense$onice_cf_pg_wtd, team_offense$onice_ca_pg_wtd), na.rm = TRUE)
 cat("  League-average 5v5 shot-attempt baseline (for shot-volume-RAPM-driven team rates):", round(league_avg_shots_5v5, 3), "\n")
 
-# Conversion rate used to fold shot-VOLUME RAPM into the xG-QUALITY-based
-# onice_xgf_pg_wtd_new/onice_xga_pg_wtd_new below — the same combination
-# the comment above already anticipated ("needs to be on the same scale...
-# or the two won't combine sensibly") but never actually finished wiring
-# in. An extra shot at league-average quality adds this many xG.
-league_avg_xg_per_shot <- league_avg_xg_5v5 / league_avg_shots_5v5
-cat("  League-average xG-per-shot (conversion rate for folding shot-volume RAPM into xG):", round(league_avg_xg_per_shot, 4), "\n")
-
 team_offense <- team_offense %>%
   mutate(
     # WOWY adjustment — converts each team's average context-adjusted
@@ -1797,28 +1789,38 @@ team_offense <- team_offense %>%
     # shots_against_lu/shooting_pct_lu, confirmed dead code elsewhere in
     # this script — left alone, not removed, but not what drives the sim.)
     #
-    # FIX — shot-volume RAPM now folded in too, converted into xG units via
-    # the league's own average xG-per-shot rate. Confirmed as a real, live
-    # gap via direct investigation: off_rapm/def_rapm measure per-SHOT
-    # QUALITY only (is each individual shot more/less dangerous than
-    # average when this player's on the ice) — they say nothing about how
-    # MANY shots a team generates or allows. A team like Carolina, built
-    # around generating a high VOLUME of shots via a structured, patient
-    # system rather than unusually dangerous individual chances, showed a
-    # summed off_rapm/def_rapm near zero for their real, actual roster —
-    # while their summed shot_vol_off/shot_vol_def RAPM for that SAME
-    # roster came back clearly, strongly positive (+13 combined), matching
-    # their real, measured performance (2nd-best xG differential in the
-    # league that season). shot_vol_off_adj/shot_vol_def_adj were already
-    # being computed above (for shot_vol_for_pg_new, which only ever fed
-    # the confirmed-dead shot_vol_for_lu/shot_vol_against_lu path) — they
-    # simply never reached the number that actually drives the simulation.
-    # Converting shots-per-game deviation into xG units: extra shots at
-    # league-average quality per shot add league_avg_xg_per_shot of xG
-    # each — same conversion-rate logic already used elsewhere in this
-    # script (e.g. sog_to_corsi_ratio) rather than a made-up scale factor.
-    onice_xgf_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 + rapm_xgf_adj + finishing_adj),
-    onice_xga_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 - rapm_xga_adj),
+    # FIX — shot-volume RAPM folded in using EMPIRICALLY VALIDATED weights,
+    # not the earlier, broken weight=1 conversion (which used a naive
+    # league-average-xG-per-shot conversion factor and blew the league's
+    # xG range out to an impossible 0.5-3.8, some teams projecting 150+
+    # point seasons). Confirmed as a real, live gap: off_rapm/def_rapm
+    # measure per-SHOT QUALITY only — they say nothing about how MANY
+    # shots a team generates or allows. But shot_vol_off/def_delta and
+    # rapm_xgf/xga_delta are correlated (fit_shot_volume_rapm.R's own
+    # header already flagged this exact risk), so simply adding both at
+    # full strength double-counts a lot of the same underlying signal.
+    #
+    # Resolved via direct empirical validation (validate_shot_vol_blend.R):
+    # for every team, in every season 2021-2026 (191 team-seasons), using
+    # each team's REAL, actual roster and ice time, regressed real,
+    # measured team_onice.csv xG against BOTH signals together. Confirmed
+    # shot volume adds genuine, substantial predictive power — R-squared
+    # nearly tripled for offense (0.233 -> 0.742) and more than doubled for
+    # defense (0.355 -> 0.748) — it is NOT redundant with quality RAPM.
+    # But the correct weight is much smaller than the naive conversion
+    # assumed: 0.0401 (offense) / -0.0427 (defense), versus the earlier,
+    # broken ~0.153 — roughly 3.8x too large. Quality RAPM's own weight
+    # also isn't exactly 1.0 once volume is properly separated out — 1.175
+    # (offense) / -1.414 (defense), since quality RAPM alone was partly
+    # standing in for missing volume information. These are the fitted
+    # regression's own intercept and coefficients directly (not re-derived
+    # from league_avg_xg_5v5 — kept as its own, internally-consistent
+    # constant so the two don't drift out of sync if recalibrated later).
+    # Finishing skill (offense only) still added on top, unchanged — a
+    # separate signal not part of this validation, for how well a team
+    # converts the chances xG already values.
+    onice_xgf_pg_wtd_new = pmax(0.1, 1.9283 + 1.1754 * rapm_xgf_adj + 0.0401 * shot_vol_off_adj + finishing_adj),
+    onice_xga_pg_wtd_new = pmax(0.1, 2.0379 - 1.4136 * rapm_xga_adj - 0.0427 * shot_vol_def_adj),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
     # 5v5-only on-ice shots-against PLUS real roster-driven PK shots-against
