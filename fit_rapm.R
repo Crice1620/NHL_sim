@@ -157,32 +157,45 @@ redistribute_team_effect <- function(lineup_df, team_abbrev, side, team_effect_v
   team_rows <- lineup_df[lineup_df[[team_col]] == team_abbrev & !is.na(lineup_df[[team_col]]), ]
   if (nrow(team_rows) == 0 || is.na(team_effect_value) || team_effect_value == 0) return(NULL)
 
-  player_shift_rows <- list()
-  n_rejected <- 0
-  for (i in seq_len(nrow(team_rows))) {
-    players <- strsplit(team_rows[[players_col]][i], ";", fixed = TRUE)[[1]]
-    # NOTE: this does NOT require exactly 5. Confirmed via direct debug
-    # trace (Carolina, 2026 season) that for_players/against_players
-    # consistently list 6 real skaters, not 5 — verified all 6 IDs are
-    # genuine skaters (present in skater_onice.csv), ruling out a goalie
-    # explanation. Most likely a shift-overlap artifact from line changes
-    # in the underlying shift-chart data, upstream of this file. Requiring
-    # EXACTLY 5 (an earlier version of this function did) silently
-    # rejected effectively 100% of real shot events for at least one team/
-    # season — build_design_matrix(), the actual RAPM-fitting code, never
-    # made this assumption in the first place and just uses whatever count
-    # is listed. Matching that same tolerance here — reject only rows with
-    # an implausible count (fewer than 3, or more than 8) that almost
-    # certainly indicate genuinely broken data, not a normal line-change
-    # artifact.
-    if (length(players) < 3 || length(players) > 8) { n_rejected <- n_rejected + 1; next }
-    for (p in players) {
-      others_key <- paste(sort(setdiff(players, p)), collapse = ";")
-      player_shift_rows[[length(player_shift_rows) + 1]] <- data.frame(player_id = p, others_key = others_key, stringsAsFactors = FALSE)
-    }
+  # NOTE: does NOT require exactly 5 players per row. Confirmed via direct
+  # debug trace (Carolina, 2026 season) that for_players/against_players
+  # consistently list 6 real skaters, not 5 — verified all 6 IDs are
+  # genuine skaters (present in skater_onice.csv), ruling out a goalie
+  # explanation. Most likely a shift-overlap artifact from line changes in
+  # the underlying shift-chart data, upstream of this file. Requiring
+  # EXACTLY 5 (an earlier version of this function did) silently rejected
+  # effectively 100% of real shot events for at least one team/season —
+  # build_design_matrix(), the actual RAPM-fitting code, never made this
+  # assumption in the first place. Rejecting only an implausible count
+  # (fewer than 3, or more than 8) here instead, which almost certainly
+  # indicates genuinely broken data, not a normal line-change artifact.
+  player_lists <- strsplit(team_rows[[players_col]], ";", fixed = TRUE)
+  n_per_row <- lengths(player_lists)
+  player_lists <- player_lists[n_per_row >= 3 & n_per_row <= 8]
+  if (length(player_lists) == 0) return(NULL)
+
+  # PERFORMANCE FIX: the original version built ONE data.frame() per
+  # player per shot event (potentially tens of thousands of calls per
+  # team/side) — data.frame() construction overhead, not the actual
+  # string work, was the real bottleneck, making a full historical
+  # backfill take an impractically long time. This builds plain
+  # character-vector lists across all rows first (cheap, no data.frame
+  # overhead per iteration) and constructs exactly ONE data.frame() at
+  # the very end. Same result, dramatically faster.
+  player_id_list <- vector("list", length(player_lists))
+  others_key_list <- vector("list", length(player_lists))
+  for (i in seq_along(player_lists)) {
+    plist <- sort(player_lists[[i]])
+    np <- length(plist)
+    player_id_list[[i]] <- plist
+    others_key_list[[i]] <- if (np <= 1) rep("", np) else vapply(seq_len(np), function(j) paste(plist[-j], collapse = ";"), character(1))
   }
-  if (length(player_shift_rows) == 0) return(NULL)
-  psd <- bind_rows(player_shift_rows)
+  psd <- data.frame(
+    player_id = unlist(player_id_list, use.names = FALSE),
+    others_key = unlist(others_key_list, use.names = FALSE),
+    stringsAsFactors = FALSE
+  )
+  if (nrow(psd) == 0) return(NULL)
 
   stability <- psd %>%
     group_by(player_id) %>%
