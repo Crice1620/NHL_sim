@@ -1817,8 +1817,8 @@ team_offense <- team_offense %>%
     # league-average quality per shot add league_avg_xg_per_shot of xG
     # each — same conversion-rate logic already used elsewhere in this
     # script (e.g. sog_to_corsi_ratio) rather than a made-up scale factor.
-    onice_xgf_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 + rapm_xgf_adj + finishing_adj + shot_vol_off_adj * league_avg_xg_per_shot),
-    onice_xga_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 - rapm_xga_adj - shot_vol_def_adj * league_avg_xg_per_shot),
+    onice_xgf_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 + rapm_xgf_adj + finishing_adj),
+    onice_xga_pg_wtd_new = pmax(0.1, league_avg_xg_5v5 - rapm_xga_adj),
     def_z                     = (def_proxy - def_mean) / def_sd,
     shots_against_pg_fallback = pmax(15, LEAGUE_AVG_SHOTS_PG - def_z * DEF_PROXY_SCALE),
     # 5v5-only on-ice shots-against PLUS real roster-driven PK shots-against
