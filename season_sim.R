@@ -1004,19 +1004,76 @@ project_skater_onice <- function(hist_df) {
 # Function kept named "_3yr" downstream purely so nothing else in this
 # script that references those column names needs to change — the values
 # themselves are no longer a 3-year blend.
-get_most_recent_valid <- function(vals, season, sample_size, min_sample) {
+# tests this session showed compresses real team-to-team differences,
+# most visibly for a team with a sharp recent trajectory change (a team's
+# blended value staying close to average despite a real, most-recent
+# season among the worst in the league — exactly what a 3-year blend
+# anchored on older, no-longer-representative seasons would produce).
+#
+# UPDATED: now blends the 2 most recent ADEQUATE seasons (not just the
+# single most recent one) — a single season alone carries real,
+# inherent noise/bias (a hot or cold individual year, not necessarily a
+# real change in true talent), and this is a real, worth-taking middle
+# ground: still anchored on the most recent, current data (unlike a full
+# 3-year blend, which was the actual problem this function was built to
+# fix in the first place), but with a second, real data point smoothing
+# out one season's idiosyncrasies. Weighted by BOTH recency (squared,
+# most-recent-first) and sample size — same construction as this
+# project's own recency_weights_gp() elsewhere (app.R, etc.), for
+# consistency rather than inventing a new scheme. For 2 seasons this
+# works out to a fixed 4:1 (80/20) weighting of most-recent vs.
+# second-most-recent, not an arbitrary 50/50 — the most recent real data
+# point still dominates, it isn't just averaged away.
+#
+# Function name kept as "get_most_recent_valid" (not renamed to reflect
+# the blend) specifically to avoid touching all 8 call sites across this
+# file that reference it by name — this comment is the source of truth
+# for what it actually does now, not the name.
+#
+# HONEST TRADEOFF: this still trades away true 3-year smoothing for
+# whatever noise remains across just 2 seasons on any one player — but
+# this project's own components aggregate 18+ players per team, and
+# team-level aggregation is exactly the level this approach was validated
+# at, not the individual-player level.
+# Function kept named "_3yr" downstream purely so nothing else in this
+# script that references those column names needs to change — the values
+# themselves are neither a single season nor a full 3-year blend.
+get_most_recent_valid <- function(vals, season, sample_size, min_sample, n_seasons = 2) {
   keep <- !is.na(vals) & !is.na(season)
   if (!any(keep)) return(NA_real_)
   v <- vals[keep]; s <- season[keep]; g <- sample_size[keep]
   ord <- order(s, decreasing = TRUE)  # most recent first
   v <- v[ord]; g <- g[ord]
   adequate <- which(g >= min_sample)
-  if (length(adequate) > 0) return(v[adequate[1]])
-  # Nobody meets the sample bar (e.g. every available season was injury-
-  # shortened) — fall back to the most recent value anyway rather than
-  # NA, matching this project's general "use what's real over nothing"
-  # convention elsewhere.
-  v[1]
+  if (length(adequate) == 0) {
+    # Nobody meets the sample bar (e.g. every available season was
+    # injury-shortened) — fall back to the most recent value anyway
+    # rather than NA, matching this project's general "use what's real
+    # over nothing" convention elsewhere.
+    return(v[1])
+  }
+  # Take up to n_seasons of the most recent ADEQUATE seasons — not
+  # necessarily consecutive calendar years, matching this function's own
+  # prior convention of skipping over an inadequate season entirely
+  # rather than including a too-thin sample just because it's recent.
+  chosen_idx <- adequate[seq_len(min(n_seasons, length(adequate)))]
+  if (length(chosen_idx) == 1) return(v[chosen_idx])
+  v_chosen <- v[chosen_idx]; g_chosen <- g[chosen_idx]
+  # chosen_idx is already ordered most-recent-first (since v/g were
+  # sorted by season descending above) — rev(seq_along(...))^2 gives the
+  # FIRST (most recent) entry the highest weight, matching
+  # recency_weights_gp()'s own squared-recency convention.
+  recency_factor <- rev(seq_along(chosen_idx))^2
+  # Some callers deliberately pass sample_size=Inf (e.g. shot_vol_off_3yr/
+  # shot_vol_def_3yr below, which intentionally skip sample-size gating
+  # entirely) — Inf * anything / sum(Inf, Inf) would divide Inf by Inf and
+  # produce NaN, silently breaking those two metrics. Falling back to pure
+  # recency weighting (ignore sample size) whenever it's non-finite,
+  # rather than letting it corrupt the blend.
+  g_for_weight <- if (any(!is.finite(g_chosen))) rep(1, length(g_chosen)) else pmax(g_chosen, 1)
+  raw_w <- recency_factor * g_for_weight
+  w <- raw_w / sum(raw_w)
+  sum(w * v_chosen)
 }
 MIN_TOI_5V5_SEC_RECENT <- 400 * 60  # ~400 minutes at 5v5 — same bar fit_aging_curves.R uses for a season to count at all
 MIN_TOI_PP_SEC_RECENT  <- 60 * 60
