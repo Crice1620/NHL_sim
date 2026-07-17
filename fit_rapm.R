@@ -115,6 +115,93 @@ load_season_lineup_data <- function(season) {
 # out entirely for that row — this is the actual mechanism that keeps
 # offense and defense signals separate (see the header note above).
 
+# ── Team-effect redistribution — TOI-weighted, per-player lineup stability ──
+# Rather than leave the team-effect term entirely separate from player
+# output (which would mean every downstream consumer — season_sim.R AND
+# app.R's Player Cards — has to separately fetch and add it back in), or
+# split it evenly across the whole roster (which would wrongly credit
+# low-usage, frequently-rotated players for a static top line's success),
+# this distributes each team's effect coefficient across ITS OWN players,
+# weighted by how STATIC each individual player's own deployment was, not
+# just by ice time alone.
+#
+# For a given player, "stability" is measured the same way as the team-wide
+# Herfindahl check that first confirmed this problem — but scoped to just
+# this ONE player: across every shift they were on the ice for, how
+# concentrated was the specific set of other teammates they shared it
+# with? A player who's almost always paired with the same teammates gets
+# a HIGH stability score — exactly the case where the regression had the
+# least ability to isolate their own individual signal, and where a share
+# of the team effect legitimately belongs. A player who rotated through
+# many different combinations gets a LOW score, since RAPM already had
+# enough variation to identify their own contribution without the team
+# term's help — they don't need (and shouldn't receive) a slice of it.
+#
+# Weighted by TOI as well as stability, so a low-minute player who
+# happened to always share the ice with the same teammates (purely
+# because they had so few shifts to begin with) doesn't get an outsized
+# share off a tiny, noisy sample.
+#
+# HONEST LIMITATION, stated plainly rather than hidden: this is still an
+# approximation. It doesn't resolve which SPECIFIC player within a static
+# group deserves credit (nothing can, given the underlying data) — it
+# distributes proportional to deployment pattern, not proportional to
+# some independently-verified measure of individual skill. A player's
+# resulting share still travels with them if traded, which assumes that
+# share was genuinely portable individual skill rather than chemistry
+# specific to the exact teammates they're leaving behind.
+redistribute_team_effect <- function(lineup_df, team_abbrev, side, team_effect_value, toi_lookup) {
+  # side: "for" (offense-side redistribution) or "against" (defense-side)
+  team_col <- if (side == "for") "for_team_abbrev" else "against_team_abbrev"
+  players_col <- if (side == "for") "for_players" else "against_players"
+  team_rows <- lineup_df[lineup_df[[team_col]] == team_abbrev & !is.na(lineup_df[[team_col]]), ]
+  if (nrow(team_rows) == 0 || is.na(team_effect_value) || team_effect_value == 0) return(NULL)
+
+  player_shift_rows <- list()
+  n_rejected <- 0
+  for (i in seq_len(nrow(team_rows))) {
+    players <- strsplit(team_rows[[players_col]][i], ";", fixed = TRUE)[[1]]
+    # NOTE: this does NOT require exactly 5. Confirmed via direct debug
+    # trace (Carolina, 2026 season) that for_players/against_players
+    # consistently list 6 real skaters, not 5 — verified all 6 IDs are
+    # genuine skaters (present in skater_onice.csv), ruling out a goalie
+    # explanation. Most likely a shift-overlap artifact from line changes
+    # in the underlying shift-chart data, upstream of this file. Requiring
+    # EXACTLY 5 (an earlier version of this function did) silently
+    # rejected effectively 100% of real shot events for at least one team/
+    # season — build_design_matrix(), the actual RAPM-fitting code, never
+    # made this assumption in the first place and just uses whatever count
+    # is listed. Matching that same tolerance here — reject only rows with
+    # an implausible count (fewer than 3, or more than 8) that almost
+    # certainly indicate genuinely broken data, not a normal line-change
+    # artifact.
+    if (length(players) < 3 || length(players) > 8) { n_rejected <- n_rejected + 1; next }
+    for (p in players) {
+      others_key <- paste(sort(setdiff(players, p)), collapse = ";")
+      player_shift_rows[[length(player_shift_rows) + 1]] <- data.frame(player_id = p, others_key = others_key, stringsAsFactors = FALSE)
+    }
+  }
+  if (length(player_shift_rows) == 0) return(NULL)
+  psd <- bind_rows(player_shift_rows)
+
+  stability <- psd %>%
+    group_by(player_id) %>%
+    summarise(
+      n_shifts = dplyr::n(),
+      hhi = { tab <- table(others_key); sum((as.numeric(tab) / sum(tab))^2) },
+      .groups = "drop"
+    )
+  stability$player_id <- as.character(stability$player_id)
+  stability <- stability %>% left_join(toi_lookup, by = "player_id") %>%
+    mutate(toi_5v5_sec = coalesce(toi_5v5_sec, 0))
+
+  stability$raw_weight <- stability$hhi * stability$toi_5v5_sec
+  total_weight <- sum(stability$raw_weight, na.rm = TRUE)
+  if (total_weight <= 0) return(NULL)  # no usable stability signal — leave the team effect undistributed for this team/side rather than guess
+  stability$player_share <- (stability$raw_weight / total_weight) * team_effect_value
+  stability %>% select(player_id, player_share)
+}
+
 build_design_matrix <- function(df, side, player_index) {
   player_col <- if (side == "for") "for_players" else "against_players"
   # Split each row's semicolon-joined player list into individual
@@ -199,14 +286,46 @@ fit_rapm_for_season <- function(season) {
   # place) — it just estimates both simultaneously, in a single model,
   # so each can properly control for the other rather than being blind to
   # the opposing team entirely.
+  #
+  # ── TEAM-EFFECT TERM — a team that runs very static, repeated 5-man
+  # combinations (little variation in who plays with whom) gives RAPM's
+  # regression very little to work with when trying to isolate INDIVIDUAL
+  # credit — ridge's response to that kind of collinearity is to shrink
+  # all of those correlated players toward zero together, even when the
+  # group's real, measured output was excellent. Confirmed directly, not
+  # assumed: Carolina's real 2025-26 team xG (from team_onice.csv, no
+  # shift/lineup dependency at all) was +0.573/game, 2nd-best in the
+  # league — but summing RAPM across their real roster produced a
+  # strongly negative result, and Carolina independently ranked 2nd of 32
+  # teams in lineup-combination concentration (Herfindahl index), nearly
+  # double the league median.
+  #
+  # FIX: one additional column per team on each side (shooting-team-effect,
+  # defending-team-effect), PENALIZED THE SAME as the player coefficients
+  # (same ridge lambda, same penalty group — not left unpenalized like the
+  # PP/PK strength-state dummies elsewhere in this file, which exist for a
+  # different reason). This matters: ridge's L2 penalty makes it cheaper to
+  # explain a signal shared by an entire, static lineup group through ONE
+  # team coefficient than by forcing that same signal onto ~18 individual,
+  # highly-correlated player coefficients — so this naturally absorbs
+  # exactly the "team system/structure" effect a static-lines team produces,
+  # leaving player coefficients to reflect only each player's OWN,
+  # above-team-baseline contribution. A team with normal lineup variation
+  # (most of the league) should see this term shrink close to zero, since
+  # there's nothing shared left for it to usefully explain once individual
+  # players are already accounting for the variation.
   cat("  Building joint offense+defense design matrix (both teams' players, every shot)...\n")
   X_off_side <- build_design_matrix(merged, "for", player_index)
   X_def_side <- build_design_matrix(merged, "against", player_index)
   colnames(X_off_side) <- paste0("OFF_", colnames(X_off_side))
   colnames(X_def_side) <- paste0("DEF_", colnames(X_def_side))
-  X_joint <- cbind(X_off_side, X_def_side)
+  team_off_dummies <- Matrix(model.matrix(~ for_team_abbrev - 1, data = merged), sparse = TRUE)
+  team_def_dummies <- Matrix(model.matrix(~ against_team_abbrev - 1, data = merged), sparse = TRUE)
+  colnames(team_off_dummies) <- paste0("TEAMOFF_", sub("^for_team_abbrev", "", colnames(team_off_dummies)))
+  colnames(team_def_dummies) <- paste0("TEAMDEF_", sub("^against_team_abbrev", "", colnames(team_def_dummies)))
+  X_joint <- cbind(X_off_side, X_def_side, team_off_dummies, team_def_dummies)
   cat("  Fitting joint ridge regression (cv.glmnet, alpha=0,", ncol(X_joint), "columns —",
-      length(player_index), "players x 2 sides)...\n")
+      length(player_index), "players x 2 sides + team-effect terms, all equally penalized)...\n")
   fit_joint <- tryCatch(cv.glmnet(X_joint, y, alpha = 0, standardize = FALSE), error = function(e) {
     cat("    Joint model fit failed:", conditionMessage(e), "\n"); NULL
   })
@@ -219,6 +338,69 @@ fit_rapm_for_season <- function(season) {
   joint_coefs <- as.matrix(coef(fit_joint, s = "lambda.min"))[-1, 1]  # drop intercept
   off_coefs <- joint_coefs[paste0("OFF_", names(player_index))]
   def_coefs <- joint_coefs[paste0("DEF_", names(player_index))]
+
+  # Team-effect coefficients — separate, team-level granularity (not per-
+  # player), saved to its own file below rather than joined into `result`.
+  team_names_off <- sub("^TEAMOFF_", "", grep("^TEAMOFF_", names(joint_coefs), value = TRUE))
+  team_off_effect_raw <- setNames(joint_coefs[paste0("TEAMOFF_", team_names_off)], team_names_off)
+  team_def_effect_raw <- setNames(-joint_coefs[paste0("TEAMDEF_", team_names_off)], team_names_off)  # negated, same higher-is-better convention
+  team_effects_result <- data.frame(
+    team_abbrev = team_names_off, season = season,
+    team_off_effect_raw = team_off_effect_raw[team_names_off],
+    team_def_effect_raw = team_def_effect_raw[team_names_off],
+    stringsAsFactors = FALSE
+  ) %>% arrange(desc(team_off_effect_raw + team_def_effect_raw))
+  cat("  Team-effect coefficients (all teams, sorted best to worst combined):\n")
+  print(team_effects_result %>% mutate(across(where(is.numeric), ~round(.x, 5))))
+  team_effects_out_path <- save_rapm_output(team_effects_result, season, "team_effects.csv")
+  cat("  Saved team-effect output to", team_effects_out_path, "\n")
+
+  # ── Redistribute each team's effect across its own players, weighted by
+  # each player's own TOI-weighted lineup stability. See
+  # redistribute_team_effect()'s own header for the full reasoning. This
+  # means EVERY consumer of rapm.csv (season_sim.R AND app.R's Player
+  # Cards) gets the fix automatically — the team's system effect is
+  # already folded into each player's own coefficient, proportional to
+  # how much that specific player's own signal was entangled with a
+  # static deployment.
+  cat("  Redistributing team effects across players (TOI-weighted lineup stability)...\n")
+  toi_lookup_for_redist <- if (!is.null(d$onice) && "toi_5v5_sec" %in% names(d$onice)) {
+    d$onice %>% mutate(player_id = as.character(player_id)) %>% select(player_id, toi_5v5_sec)
+  } else data.frame(player_id = character(0), toi_5v5_sec = numeric(0))
+
+  off_shares_all <- list(); def_shares_all <- list()
+  for (tm in team_names_off) {
+    off_share <- redistribute_team_effect(merged, tm, "for", team_off_effect_raw[tm], toi_lookup_for_redist)
+    def_share <- redistribute_team_effect(merged, tm, "against", team_def_effect_raw[tm], toi_lookup_for_redist)
+    if (!is.null(off_share)) off_shares_all[[tm]] <- off_share
+    if (!is.null(def_share)) def_shares_all[[tm]] <- def_share
+  }
+  off_shares_combined <- if (length(off_shares_all) > 0) bind_rows(off_shares_all) %>% rename(off_share = player_share) else data.frame(player_id = character(0), off_share = numeric(0))
+  def_shares_combined <- if (length(def_shares_all) > 0) bind_rows(def_shares_all) %>% rename(def_share = player_share) else data.frame(player_id = character(0), def_share = numeric(0))
+
+  off_coefs_df <- data.frame(player_id = names(off_coefs), off_rapm_raw = as.numeric(off_coefs), stringsAsFactors = FALSE) %>%
+    left_join(off_shares_combined, by = "player_id") %>%
+    mutate(off_rapm_raw = off_rapm_raw + coalesce(off_share, 0))
+  # NOTE the SUBTRACTION here, not addition — def_coefs at this point is
+  # still in the RAW, higher-is-worse convention (it only gets negated
+  # once, below, in result's own construction), while def_share (from
+  # team_def_effect_raw, passed into redistribute_team_effect() above) is
+  # already in the higher-is-better convention. Subtracting here means
+  # the eventual, single negation below produces the correct, final sum:
+  # -(def_coefs_raw - def_share) = -def_coefs_raw + def_share, i.e. the
+  # player's own (correctly-signed) coefficient PLUS their higher-is-
+  # better team share, added the way it should be. Adding instead of
+  # subtracting here would have silently flipped the sign of every
+  # player's own share of the team effect.
+  def_coefs_df <- data.frame(player_id = names(def_coefs), def_rapm_raw_pre = as.numeric(def_coefs), stringsAsFactors = FALSE) %>%
+    left_join(def_shares_combined, by = "player_id") %>%
+    mutate(def_rapm_raw_pre = def_rapm_raw_pre - coalesce(def_share, 0))
+  cat("  Redistribution complete —", sum(!is.na(off_shares_combined$off_share[match(names(off_coefs), off_shares_combined$player_id)])),
+      "players received an offense-side share,",
+      nrow(def_shares_combined), "players received a defense-side share.\n")
+
+  off_coefs <- setNames(off_coefs_df$off_rapm_raw, off_coefs_df$player_id)[names(off_coefs)]
+  def_coefs <- setNames(def_coefs_df$def_rapm_raw_pre, def_coefs_df$player_id)[names(def_coefs)]
 
   result <- data.frame(
     player_id = names(player_index),
@@ -364,9 +546,20 @@ fit_pppk_rapm_for_season <- function(season) {
   X_def_side <- build_design_matrix(merged, "against", player_index)
   colnames(X_off_side) <- paste0("OFF_", colnames(X_off_side))
   colnames(X_def_side) <- paste0("DEF_", colnames(X_def_side))
-  X_joint <- cbind(X_off_side, X_def_side, strength_dummies)
-  penalty_vec <- c(rep(1, 2 * length(player_index)), rep(0, n_state_cols))
-  cat("  Fitting joint PP+PK ridge regression (player coefficients penalized, strength-state not,",
+  # Team-effect terms — same fix and reasoning as 5v5's identical addition
+  # (see fit_rapm_for_season() for the full explanation and the direct,
+  # measured confirmation via Carolina's lineup-concentration numbers).
+  # Penalized the SAME as player coefficients (part of the penalized
+  # group, penalty=1) — kept separate from strength_dummies, which stay
+  # unpenalized (penalty=0) for their own, different reason.
+  team_off_dummies <- Matrix(model.matrix(~ for_team_abbrev - 1, data = merged), sparse = TRUE)
+  team_def_dummies <- Matrix(model.matrix(~ against_team_abbrev - 1, data = merged), sparse = TRUE)
+  colnames(team_off_dummies) <- paste0("TEAMOFF_", sub("^for_team_abbrev", "", colnames(team_off_dummies)))
+  colnames(team_def_dummies) <- paste0("TEAMDEF_", sub("^against_team_abbrev", "", colnames(team_def_dummies)))
+  n_team_cols <- ncol(team_off_dummies) + ncol(team_def_dummies)
+  X_joint <- cbind(X_off_side, X_def_side, team_off_dummies, team_def_dummies, strength_dummies)
+  penalty_vec <- c(rep(1, 2 * length(player_index)), rep(1, n_team_cols), rep(0, n_state_cols))
+  cat("  Fitting joint PP+PK ridge regression (player + team-effect coefficients penalized, strength-state not,",
       ncol(X_joint), "columns)...\n")
   fit_joint <- tryCatch(cv.glmnet(X_joint, y, alpha = 0, standardize = FALSE, penalty.factor = penalty_vec),
                         error = function(e) { cat("    Joint PP/PK fit failed:", conditionMessage(e), "\n"); NULL })
@@ -377,14 +570,57 @@ fit_pppk_rapm_for_season <- function(season) {
   }
 
   joint_coefs_all <- as.matrix(coef(fit_joint, s = "lambda.min"))[-1, 1]
+  # Team-effect coefficients — saved separately, same as 5v5's version.
+  team_names_pppk <- sub("^TEAMOFF_", "", grep("^TEAMOFF_", names(joint_coefs_all), value = TRUE))
+  team_pp_effect_raw <- setNames(joint_coefs_all[paste0("TEAMOFF_", team_names_pppk)], team_names_pppk)
+  team_pk_effect_raw <- setNames(-joint_coefs_all[paste0("TEAMDEF_", team_names_pppk)], team_names_pppk)
+  team_effects_pppk_result <- data.frame(
+    team_abbrev = team_names_pppk, season = season,
+    team_pp_effect_raw = team_pp_effect_raw[team_names_pppk],
+    team_pk_effect_raw = team_pk_effect_raw[team_names_pppk],
+    stringsAsFactors = FALSE
+  ) %>% arrange(desc(team_pp_effect_raw + team_pk_effect_raw))
+  team_effects_pppk_out_path <- save_rapm_output(team_effects_pppk_result, season, "team_effects_pppk.csv")
+  cat("  Saved PP/PK team-effect output to", team_effects_pppk_out_path, "\n")
+
+  # Same redistribution as 5v5 (see redistribute_team_effect()'s header) —
+  # PP needs no sign correction (neither side is negated for PP), PK needs
+  # the same subtract-before-negation handling as 5v5's defense side.
+  cat("  Redistributing PP/PK team effects across players...\n")
+  toi_lookup_pppk <- if (!is.null(d$onice) && all(c("toi_pp_sec", "toi_pk_sec") %in% names(d$onice))) {
+    d$onice %>% mutate(player_id = as.character(player_id), toi_5v5_sec = coalesce(toi_pp_sec, 0) + coalesce(toi_pk_sec, 0)) %>%
+      select(player_id, toi_5v5_sec)  # reusing the same column name redistribute_team_effect() expects
+  } else data.frame(player_id = character(0), toi_5v5_sec = numeric(0))
+
+  pp_shares_all <- list(); pk_shares_all <- list()
+  for (tm in team_names_pppk) {
+    pp_share <- redistribute_team_effect(merged, tm, "for", team_pp_effect_raw[tm], toi_lookup_pppk)
+    pk_share <- redistribute_team_effect(merged, tm, "against", team_pk_effect_raw[tm], toi_lookup_pppk)
+    if (!is.null(pp_share)) pp_shares_all[[tm]] <- pp_share
+    if (!is.null(pk_share)) pk_shares_all[[tm]] <- pk_share
+  }
+  pp_shares_combined <- if (length(pp_shares_all) > 0) bind_rows(pp_shares_all) %>% rename(pp_share = player_share) else data.frame(player_id = character(0), pp_share = numeric(0))
+  pk_shares_combined <- if (length(pk_shares_all) > 0) bind_rows(pk_shares_all) %>% rename(pk_share = player_share) else data.frame(player_id = character(0), pk_share = numeric(0))
+
+  pp_coefs_raw <- joint_coefs_all[paste0("OFF_", names(player_index))]
+  pk_coefs_raw <- joint_coefs_all[paste0("DEF_", names(player_index))]  # still un-negated here, matching 5v5's def_coefs convention at this same stage
+  pp_coefs_df <- data.frame(player_id = names(pp_coefs_raw), pp_rapm_raw = as.numeric(pp_coefs_raw), stringsAsFactors = FALSE) %>%
+    left_join(pp_shares_combined, by = "player_id") %>%
+    mutate(pp_rapm_raw = pp_rapm_raw + coalesce(pp_share, 0))
+  pk_coefs_df <- data.frame(player_id = names(pk_coefs_raw), pk_rapm_raw_pre = as.numeric(pk_coefs_raw), stringsAsFactors = FALSE) %>%
+    left_join(pk_shares_combined, by = "player_id") %>%
+    mutate(pk_rapm_raw_pre = pk_rapm_raw_pre - coalesce(pk_share, 0))  # subtract, same reasoning as 5v5's def side
+  pp_coefs_final <- setNames(pp_coefs_df$pp_rapm_raw, pp_coefs_df$player_id)[names(pp_coefs_raw)]
+  pk_coefs_final <- setNames(pk_coefs_df$pk_rapm_raw_pre, pk_coefs_df$player_id)[names(pk_coefs_raw)]
+
   # Only the PLAYER portion of the coefficients — the strength-state dummy
   # coefficients aren't per-player output, they existed only to absorb
   # that confound out of the player coefficients.
   result <- data.frame(
     player_id = names(player_index),
     season = season,
-    pp_rapm_raw = joint_coefs_all[paste0("OFF_", names(player_index))],
-    pk_rapm_raw = -joint_coefs_all[paste0("DEF_", names(player_index))],  # negated — same higher-is-better convention as 5v5
+    pp_rapm_raw = pp_coefs_final,
+    pk_rapm_raw = -pk_coefs_final,  # negated — same higher-is-better convention as 5v5
     stringsAsFactors = FALSE
   )
 
