@@ -1,6 +1,5 @@
 season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per60_mi,dist_total_mi,dist_max_game_mi,avg_shot_speed_faced_mph,top_shot_speed_faced_mph,shots_faced_over100,shots_faced_90_100,shots_faced_80_90,dz_pct,oz_pct
 2026,2,8476883,G,Andrei,Vasilevskiy,TBL,58,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2026,2,8478872,G,Karel,Vejmelka,UTA,64,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8479979,G,Jake,Oettinger,DAL,54,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8475809,G,Scott,Wedgewood,COL,45,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8480280,G,Jeremy,Swayman,BOS,55,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -31,17 +30,13 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2026,2,8481519,G,Spencer,Knight,CHI,55,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8481668,G,Arturs,Silovs,PIT,39,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8477465,G,Tristan,Jarry,EDM,33,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2026,2,8477968,G,Alex,Nedeljkovic,SJS,40,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8482661,G,Jesper,Wallstedt,MIN,35,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2026,2,8474596,G,Jake,Allen,NJD,37,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8475883,G,Frederik,Andersen,CAR,35,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8476341,G,Anton,Forsberg,LAK,36,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8478971,G,Connor,Ingram,EDM,32,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8481033,G,Akira,Schmid,VGK,34,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8479193,G,Casey,DeSmith,DAL,30,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8479361,G,Joseph,Woll,TOR,39,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2026,2,8476914,G,Joonas,Korpisalo,BOS,31,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2026,2,8478007,G,Elvis,Merzlikins,CBJ,30,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8479496,G,David,Rittich,NYI,30,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8481035,G,Samuel,Ersson,PHI,33,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8475831,G,Philipp,Grubauer,SEA,32,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -83,7 +78,6 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2026,2,8481544,G,Mads,Sogaard,OTT,2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8482949,G,Arsenii,Sergeev,CGY,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8483668,G,Nikke,Kokko,SEA,3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2026,2,8483703,G,Sergei,Murashov,PIT,5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8476316,G,Laurent,Brossoit,SJS,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8476899,G,Matt,Murray,SEA,5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2026,2,8477405,G,Marcus,Hogberg,NYI,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
