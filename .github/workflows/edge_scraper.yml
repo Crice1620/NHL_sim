@@ -25,7 +25,7 @@ jobs:
           Rscript -e "
             yr <- as.integer(format(Sys.Date(), '%Y'))
             mo <- as.integer(format(Sys.Date(), '%m'))
-            szn <- if (mo >= 9) yr + 1L else yr
+            szn <- if (mo >= 10) yr + 1L else yr
 
             source('NHL_stats_scraper.R')
             run_stats_scraper(seasons_override = c(szn))
