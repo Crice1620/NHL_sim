@@ -1,231 +1,231 @@
 {
   "season": 2027,
-  "generated_at": "2026-09-15 14:18:26 UTC",
+  "generated_at": "2026-09-16 14:10:21 UTC",
   "n_sims": 10000,
   "results": [
     {
       "team_abbrev": "COL",
-      "proj_points": 116,
-      "playoff_pct": 99.6,
-      "cup_pct": 16.4,
+      "proj_points": 112.3,
+      "playoff_pct": 99.1,
+      "cup_pct": 16.3,
       "_row": "COL"
     },
     {
       "team_abbrev": "TBL",
-      "proj_points": 112,
-      "playoff_pct": 97.5,
+      "proj_points": 111,
+      "playoff_pct": 96.8,
       "cup_pct": 10.6,
       "_row": "TBL"
     },
     {
       "team_abbrev": "VGK",
-      "proj_points": 109.7,
-      "playoff_pct": 98.6,
-      "cup_pct": 9.9,
+      "proj_points": 108.6,
+      "playoff_pct": 98.1,
+      "cup_pct": 10.2,
       "_row": "VGK"
     },
     {
-      "team_abbrev": "NJD",
-      "proj_points": 107.6,
-      "playoff_pct": 93.3,
-      "cup_pct": 7,
-      "_row": "NJD"
-    },
-    {
       "team_abbrev": "CAR",
-      "proj_points": 106.6,
-      "playoff_pct": 92.9,
-      "cup_pct": 7.5,
+      "proj_points": 107.2,
+      "playoff_pct": 93.2,
+      "cup_pct": 7.7,
       "_row": "CAR"
     },
     {
-      "team_abbrev": "MIN",
-      "proj_points": 103.2,
-      "playoff_pct": 89.8,
+      "team_abbrev": "NJD",
+      "proj_points": 106.6,
+      "playoff_pct": 90.8,
       "cup_pct": 6.8,
-      "_row": "MIN"
+      "_row": "NJD"
     },
     {
       "team_abbrev": "DAL",
-      "proj_points": 100.9,
-      "playoff_pct": 84.1,
-      "cup_pct": 5.2,
+      "proj_points": 101.4,
+      "playoff_pct": 87.4,
+      "cup_pct": 6.1,
       "_row": "DAL"
     },
     {
-      "team_abbrev": "OTT",
-      "proj_points": 100.6,
-      "playoff_pct": 75.7,
-      "cup_pct": 3.6,
-      "_row": "OTT"
-    },
-    {
       "team_abbrev": "NYR",
-      "proj_points": 100.4,
-      "playoff_pct": 75.8,
-      "cup_pct": 3.9,
+      "proj_points": 101,
+      "playoff_pct": 74.8,
+      "cup_pct": 3.8,
       "_row": "NYR"
     },
     {
+      "team_abbrev": "PIT",
+      "proj_points": 99.8,
+      "playoff_pct": 70.9,
+      "cup_pct": 4,
+      "_row": "PIT"
+    },
+    {
       "team_abbrev": "BUF",
-      "proj_points": 99.1,
-      "playoff_pct": 72.8,
+      "proj_points": 99.6,
+      "playoff_pct": 73.1,
       "cup_pct": 3.4,
       "_row": "BUF"
     },
     {
-      "team_abbrev": "EDM",
-      "proj_points": 98.2,
-      "playoff_pct": 85.1,
-      "cup_pct": 4.4,
-      "_row": "EDM"
-    },
-    {
-      "team_abbrev": "PIT",
-      "proj_points": 96.6,
-      "playoff_pct": 59.3,
-      "cup_pct": 3.3,
-      "_row": "PIT"
-    },
-    {
       "team_abbrev": "FLA",
-      "proj_points": 96.5,
-      "playoff_pct": 60.9,
-      "cup_pct": 2.5,
+      "proj_points": 99.2,
+      "playoff_pct": 70.1,
+      "cup_pct": 3.2,
       "_row": "FLA"
     },
     {
-      "team_abbrev": "WPG",
-      "proj_points": 95.1,
-      "playoff_pct": 59.4,
-      "cup_pct": 2.4,
-      "_row": "WPG"
+      "team_abbrev": "MIN",
+      "proj_points": 98.7,
+      "playoff_pct": 80.9,
+      "cup_pct": 5.5,
+      "_row": "MIN"
+    },
+    {
+      "team_abbrev": "OTT",
+      "proj_points": 98.1,
+      "playoff_pct": 64.7,
+      "cup_pct": 2.8,
+      "_row": "OTT"
+    },
+    {
+      "team_abbrev": "EDM",
+      "proj_points": 97.6,
+      "playoff_pct": 82.2,
+      "cup_pct": 4.6,
+      "_row": "EDM"
     },
     {
       "team_abbrev": "UTA",
-      "proj_points": 95,
-      "playoff_pct": 60.6,
-      "cup_pct": 2.6,
+      "proj_points": 96.3,
+      "playoff_pct": 68.7,
+      "cup_pct": 3,
       "_row": "UTA"
     },
     {
       "team_abbrev": "CBJ",
-      "proj_points": 92.5,
-      "playoff_pct": 42.6,
+      "proj_points": 93.9,
+      "playoff_pct": 45.9,
       "cup_pct": 1.4,
       "_row": "CBJ"
     },
     {
       "team_abbrev": "WSH",
-      "proj_points": 92.2,
-      "playoff_pct": 37.3,
+      "proj_points": 92.4,
+      "playoff_pct": 35.3,
       "cup_pct": 1.1,
       "_row": "WSH"
     },
     {
-      "team_abbrev": "NSH",
+      "team_abbrev": "WPG",
       "proj_points": 92,
-      "playoff_pct": 47.2,
-      "cup_pct": 1.4,
+      "playoff_pct": 48.7,
+      "cup_pct": 2.1,
+      "_row": "WPG"
+    },
+    {
+      "team_abbrev": "SJS",
+      "proj_points": 90,
+      "playoff_pct": 49.2,
+      "cup_pct": 1.3,
+      "_row": "SJS"
+    },
+    {
+      "team_abbrev": "STL",
+      "proj_points": 89.9,
+      "playoff_pct": 39.6,
+      "cup_pct": 1.2,
+      "_row": "STL"
+    },
+    {
+      "team_abbrev": "NSH",
+      "proj_points": 89.3,
+      "playoff_pct": 38.3,
+      "cup_pct": 1.2,
       "_row": "NSH"
     },
     {
       "team_abbrev": "MTL",
-      "proj_points": 89.8,
-      "playoff_pct": 30,
-      "cup_pct": 0.7,
+      "proj_points": 89,
+      "playoff_pct": 25.4,
+      "cup_pct": 0.6,
       "_row": "MTL"
     },
     {
-      "team_abbrev": "STL",
-      "proj_points": 89.5,
-      "playoff_pct": 35.1,
-      "cup_pct": 1.1,
-      "_row": "STL"
-    },
-    {
       "team_abbrev": "LAK",
-      "proj_points": 89.4,
-      "playoff_pct": 48.8,
-      "cup_pct": 1.7,
+      "proj_points": 88.7,
+      "playoff_pct": 44.3,
+      "cup_pct": 1.1,
       "_row": "LAK"
     },
     {
       "team_abbrev": "TOR",
-      "proj_points": 89.4,
-      "playoff_pct": 26.8,
-      "cup_pct": 0.5,
+      "proj_points": 88.4,
+      "playoff_pct": 21.8,
+      "cup_pct": 0.6,
       "_row": "TOR"
     },
     {
-      "team_abbrev": "SJS",
-      "proj_points": 88.4,
-      "playoff_pct": 43.2,
-      "cup_pct": 1.4,
-      "_row": "SJS"
-    },
-    {
-      "team_abbrev": "BOS",
-      "proj_points": 85.4,
-      "playoff_pct": 16.3,
-      "cup_pct": 0.2,
-      "_row": "BOS"
-    },
-    {
       "team_abbrev": "DET",
-      "proj_points": 83.1,
-      "playoff_pct": 10.4,
+      "proj_points": 85.7,
+      "playoff_pct": 15,
       "cup_pct": 0.2,
       "_row": "DET"
     },
     {
-      "team_abbrev": "NYI",
-      "proj_points": 81.9,
-      "playoff_pct": 7.4,
-      "cup_pct": 0.1,
-      "_row": "NYI"
+      "team_abbrev": "BOS",
+      "proj_points": 85.3,
+      "playoff_pct": 14.7,
+      "cup_pct": 0.2,
+      "_row": "BOS"
     },
     {
       "team_abbrev": "ANA",
-      "proj_points": 80.7,
-      "playoff_pct": 15.1,
-      "cup_pct": 0.3,
+      "proj_points": 83.3,
+      "playoff_pct": 23,
+      "cup_pct": 0.5,
       "_row": "ANA"
     },
     {
       "team_abbrev": "SEA",
-      "proj_points": 79.9,
-      "playoff_pct": 12,
-      "cup_pct": 0.2,
+      "proj_points": 82.2,
+      "playoff_pct": 18.4,
+      "cup_pct": 0.3,
       "_row": "SEA"
     },
     {
+      "team_abbrev": "NYI",
+      "proj_points": 82.1,
+      "playoff_pct": 6.8,
+      "cup_pct": 0.1,
+      "_row": "NYI"
+    },
+    {
       "team_abbrev": "VAN",
-      "proj_points": 79.8,
-      "playoff_pct": 11.7,
+      "proj_points": 80.3,
+      "playoff_pct": 11.6,
       "cup_pct": 0.2,
       "_row": "VAN"
     },
     {
       "team_abbrev": "CGY",
-      "proj_points": 76.4,
-      "playoff_pct": 7.1,
+      "proj_points": 77.4,
+      "playoff_pct": 7.9,
       "cup_pct": 0.1,
       "_row": "CGY"
     },
     {
-      "team_abbrev": "CHI",
-      "proj_points": 75.4,
-      "playoff_pct": 2.8,
-      "cup_pct": 0,
-      "_row": "CHI"
-    },
-    {
       "team_abbrev": "PHI",
-      "proj_points": 73.5,
+      "proj_points": 74.8,
       "playoff_pct": 0.9,
       "cup_pct": 0,
       "_row": "PHI"
+    },
+    {
+      "team_abbrev": "CHI",
+      "proj_points": 74.5,
+      "playoff_pct": 2.5,
+      "cup_pct": 0,
+      "_row": "CHI"
     }
   ],
   "skaters": [
@@ -19149,6 +19149,57 @@
       "shot_vol_def_3yr": -1.9081,
       "pos_group_mapped": "Forwards",
       "age_int_for_curve": 21
+    },
+    {
+      "team_abbrev": "DET",
+      "player_id": "8484425",
+      "position_group": "forwards",
+      "roster_name": "Sutter Muzzatti",
+      "birth_date": "2003-06-28",
+      "birth_date_parsed": "2003-06-28",
+      "age_at_season_start": 23.2608,
+      "years_in_nhl": null,
+      "player_name": "Sutter Muzzatti",
+      "position": null,
+      "n_seasons": null,
+      "proj_gp": null,
+      "rate_goals": null,
+      "rate_assists": null,
+      "rate_shots": null,
+      "rate_hits": null,
+      "rate_blocks": null,
+      "rate_pim": null,
+      "rate_toi_min": null,
+      "has_history": false,
+      "age_mult": 1,
+      "proj_goals": null,
+      "proj_assists": null,
+      "proj_points": null,
+      "proj_shots": null,
+      "proj_hits": null,
+      "proj_blocks": null,
+      "proj_pim": null,
+      "onice_ca_pg": null,
+      "onice_cf_pg": null,
+      "onice_pk_sa_pg": null,
+      "onice_pp_sf_pg": null,
+      "onice_xgf_pg": null,
+      "onice_xga_pg": null,
+      "ev_offense_wowy_3yr": null,
+      "ev_defense_wowy_3yr": null,
+      "pp_offense_wowy_3yr": null,
+      "pk_defense_wowy_3yr": null,
+      "ev_offense_xgwowy_3yr": null,
+      "ev_defense_xgwowy_3yr": null,
+      "off_rapm_3yr": -0.0334,
+      "def_rapm_3yr": -0.0289,
+      "pp_rapm_3yr": null,
+      "pk_rapm_3yr": null,
+      "gax_per60": null,
+      "shot_vol_off_3yr": -1.9295,
+      "shot_vol_def_3yr": -1.9081,
+      "pos_group_mapped": "Forwards",
+      "age_int_for_curve": 23
     },
     {
       "team_abbrev": "DET",
@@ -45723,57 +45774,6 @@
     },
     {
       "team_abbrev": "STL",
-      "player_id": "8484792",
-      "position_group": "forwards",
-      "roster_name": "Adam Jecho",
-      "birth_date": "2006-03-24",
-      "birth_date_parsed": "2006-03-24",
-      "age_at_season_start": 20.5229,
-      "years_in_nhl": null,
-      "player_name": "Adam Jecho",
-      "position": null,
-      "n_seasons": null,
-      "proj_gp": null,
-      "rate_goals": null,
-      "rate_assists": null,
-      "rate_shots": null,
-      "rate_hits": null,
-      "rate_blocks": null,
-      "rate_pim": null,
-      "rate_toi_min": null,
-      "has_history": false,
-      "age_mult": 1,
-      "proj_goals": null,
-      "proj_assists": null,
-      "proj_points": null,
-      "proj_shots": null,
-      "proj_hits": null,
-      "proj_blocks": null,
-      "proj_pim": null,
-      "onice_ca_pg": null,
-      "onice_cf_pg": null,
-      "onice_pk_sa_pg": null,
-      "onice_pp_sf_pg": null,
-      "onice_xgf_pg": null,
-      "onice_xga_pg": null,
-      "ev_offense_wowy_3yr": null,
-      "ev_defense_wowy_3yr": null,
-      "pp_offense_wowy_3yr": null,
-      "pk_defense_wowy_3yr": null,
-      "ev_offense_xgwowy_3yr": null,
-      "ev_defense_xgwowy_3yr": null,
-      "off_rapm_3yr": -0.0334,
-      "def_rapm_3yr": -0.0289,
-      "pp_rapm_3yr": null,
-      "pk_rapm_3yr": null,
-      "gax_per60": null,
-      "shot_vol_off_3yr": -1.9295,
-      "shot_vol_def_3yr": -1.9081,
-      "pos_group_mapped": "Forwards",
-      "age_int_for_curve": 20
-    },
-    {
-      "team_abbrev": "STL",
       "player_id": "8484393",
       "position_group": "forwards",
       "roster_name": "Juraj Pekarcik",
@@ -61478,6 +61478,29 @@
       "has_history": false,
       "gsax_adj_sv_pct": null,
       "age_int_for_curve": 24,
+      "goalie_age_adj": 0
+    },
+    {
+      "team_abbrev": "STL",
+      "player_id": "8486263",
+      "position_group": "goalies",
+      "roster_name": "Vladimir Proskurin",
+      "birth_date": "2008-05-28",
+      "birth_date_parsed": "2008-05-28",
+      "age_at_season_start": 18.3436,
+      "years_in_nhl": null,
+      "player_name": "Vladimir Proskurin",
+      "n_seasons": null,
+      "proj_gp": null,
+      "proj_wins": null,
+      "proj_losses": null,
+      "proj_otl": null,
+      "proj_gaa": null,
+      "proj_sv_pct": null,
+      "proj_shutouts": null,
+      "has_history": false,
+      "gsax_adj_sv_pct": null,
+      "age_int_for_curve": 18,
       "goalie_age_adj": 0
     },
     {
