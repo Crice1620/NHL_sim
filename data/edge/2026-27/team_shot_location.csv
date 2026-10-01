@@ -1,0 +1,256 @@
+season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
+2027,2,5,PIT,Behind the Net,0,0,NA
+2027,2,5,PIT,Beyond Red Line,0,1,NA
+2027,2,5,PIT,Center Point,0,3,NA
+2027,2,5,PIT,Crease,0,2,NA
+2027,2,5,PIT,High Slot,0,2,NA
+2027,2,5,PIT,L Circle,3,6,0.5
+2027,2,5,PIT,L Corner,0,0,NA
+2027,2,5,PIT,L Net Side,0,1,NA
+2027,2,5,PIT,L Point,0,2,NA
+2027,2,5,PIT,Low Slot,3,12,0.25
+2027,2,5,PIT,Offensive Neutral Zone,0,0,NA
+2027,2,5,PIT,Outside L,0,0,NA
+2027,2,5,PIT,Outside R,0,0,NA
+2027,2,5,PIT,R Circle,0,2,NA
+2027,2,5,PIT,R Corner,0,0,NA
+2027,2,5,PIT,R Net Side,1,1,1
+2027,2,5,PIT,R Point,0,6,NA
+2027,2,21,COL,Behind the Net,0,0,NA
+2027,2,21,COL,Beyond Red Line,0,0,NA
+2027,2,21,COL,Center Point,0,0,NA
+2027,2,21,COL,Crease,0,1,NA
+2027,2,21,COL,High Slot,0,2,NA
+2027,2,21,COL,L Circle,2,6,0.3333
+2027,2,21,COL,L Corner,0,0,NA
+2027,2,21,COL,L Net Side,2,3,0.6667
+2027,2,21,COL,L Point,0,2,NA
+2027,2,21,COL,Low Slot,3,6,0.5
+2027,2,21,COL,Offensive Neutral Zone,0,0,NA
+2027,2,21,COL,Outside L,0,1,NA
+2027,2,21,COL,Outside R,0,2,NA
+2027,2,21,COL,R Circle,1,4,0.25
+2027,2,21,COL,R Corner,0,0,NA
+2027,2,21,COL,R Net Side,0,0,NA
+2027,2,21,COL,R Point,0,2,NA
+2027,2,54,VGK,Behind the Net,0,1,NA
+2027,2,54,VGK,Beyond Red Line,0,0,NA
+2027,2,54,VGK,Center Point,0,6,NA
+2027,2,54,VGK,Crease,0,1,NA
+2027,2,54,VGK,High Slot,1,1,1
+2027,2,54,VGK,L Circle,2,4,0.5
+2027,2,54,VGK,L Corner,0,0,NA
+2027,2,54,VGK,L Net Side,0,0,NA
+2027,2,54,VGK,L Point,0,1,NA
+2027,2,54,VGK,Low Slot,2,11,0.1818
+2027,2,54,VGK,Offensive Neutral Zone,0,0,NA
+2027,2,54,VGK,Outside L,0,4,NA
+2027,2,54,VGK,Outside R,0,1,NA
+2027,2,54,VGK,R Circle,0,3,NA
+2027,2,54,VGK,R Corner,0,0,NA
+2027,2,54,VGK,R Net Side,0,2,NA
+2027,2,54,VGK,R Point,0,2,NA
+2027,2,6,BOS,Behind the Net,0,1,NA
+2027,2,6,BOS,Beyond Red Line,0,0,NA
+2027,2,6,BOS,Center Point,0,1,NA
+2027,2,6,BOS,Crease,0,0,NA
+2027,2,6,BOS,High Slot,1,5,0.2
+2027,2,6,BOS,L Circle,0,1,NA
+2027,2,6,BOS,L Corner,0,0,NA
+2027,2,6,BOS,L Net Side,0,0,NA
+2027,2,6,BOS,L Point,0,1,NA
+2027,2,6,BOS,Low Slot,2,6,0.3333
+2027,2,6,BOS,Offensive Neutral Zone,0,0,NA
+2027,2,6,BOS,Outside L,0,1,NA
+2027,2,6,BOS,Outside R,0,3,NA
+2027,2,6,BOS,R Circle,0,2,NA
+2027,2,6,BOS,R Corner,0,0,NA
+2027,2,6,BOS,R Net Side,0,0,NA
+2027,2,6,BOS,R Point,0,2,NA
+2027,2,8,MTL,Behind the Net,0,0,NA
+2027,2,8,MTL,Beyond Red Line,0,1,NA
+2027,2,8,MTL,Center Point,0,1,NA
+2027,2,8,MTL,Crease,0,1,NA
+2027,2,8,MTL,High Slot,0,1,NA
+2027,2,8,MTL,L Circle,0,3,NA
+2027,2,8,MTL,L Corner,0,0,NA
+2027,2,8,MTL,L Net Side,0,1,NA
+2027,2,8,MTL,L Point,0,3,NA
+2027,2,8,MTL,Low Slot,2,7,0.2857
+2027,2,8,MTL,Offensive Neutral Zone,0,1,NA
+2027,2,8,MTL,Outside L,0,2,NA
+2027,2,8,MTL,Outside R,0,0,NA
+2027,2,8,MTL,R Circle,0,0,NA
+2027,2,8,MTL,R Corner,0,0,NA
+2027,2,8,MTL,R Net Side,0,0,NA
+2027,2,8,MTL,R Point,1,3,0.3333
+2027,2,23,VAN,Behind the Net,0,0,NA
+2027,2,23,VAN,Beyond Red Line,0,1,NA
+2027,2,23,VAN,Center Point,0,3,NA
+2027,2,23,VAN,Crease,1,1,1
+2027,2,23,VAN,High Slot,1,2,0.5
+2027,2,23,VAN,L Circle,0,5,NA
+2027,2,23,VAN,L Corner,0,0,NA
+2027,2,23,VAN,L Net Side,0,0,NA
+2027,2,23,VAN,L Point,0,0,NA
+2027,2,23,VAN,Low Slot,3,6,0.5
+2027,2,23,VAN,Offensive Neutral Zone,0,1,NA
+2027,2,23,VAN,Outside L,0,0,NA
+2027,2,23,VAN,Outside R,0,0,NA
+2027,2,23,VAN,R Circle,1,2,0.5
+2027,2,23,VAN,R Corner,0,0,NA
+2027,2,23,VAN,R Net Side,0,0,NA
+2027,2,23,VAN,R Point,0,2,NA
+2027,2,13,FLA,Behind the Net,0,1,NA
+2027,2,13,FLA,Beyond Red Line,0,2,NA
+2027,2,13,FLA,Center Point,1,1,1
+2027,2,13,FLA,Crease,0,0,NA
+2027,2,13,FLA,High Slot,0,1,NA
+2027,2,13,FLA,L Circle,0,1,NA
+2027,2,13,FLA,L Corner,0,0,NA
+2027,2,13,FLA,L Net Side,0,1,NA
+2027,2,13,FLA,L Point,0,2,NA
+2027,2,13,FLA,Low Slot,0,5,NA
+2027,2,13,FLA,Offensive Neutral Zone,0,2,NA
+2027,2,13,FLA,Outside L,0,3,NA
+2027,2,13,FLA,Outside R,0,0,NA
+2027,2,13,FLA,R Circle,0,0,NA
+2027,2,13,FLA,R Corner,0,0,NA
+2027,2,13,FLA,R Net Side,0,0,NA
+2027,2,13,FLA,R Point,0,1,NA
+2027,2,10,TOR,Behind the Net,0,0,NA
+2027,2,10,TOR,Beyond Red Line,0,1,NA
+2027,2,10,TOR,Center Point,0,4,NA
+2027,2,10,TOR,Crease,0,0,NA
+2027,2,10,TOR,High Slot,0,6,NA
+2027,2,10,TOR,L Circle,0,10,NA
+2027,2,10,TOR,L Corner,0,0,NA
+2027,2,10,TOR,L Net Side,0,1,NA
+2027,2,10,TOR,L Point,0,0,NA
+2027,2,10,TOR,Low Slot,3,16,0.1875
+2027,2,10,TOR,Offensive Neutral Zone,0,0,NA
+2027,2,10,TOR,Outside L,0,6,NA
+2027,2,10,TOR,Outside R,0,1,NA
+2027,2,10,TOR,R Circle,1,5,0.2
+2027,2,10,TOR,R Corner,0,0,NA
+2027,2,10,TOR,R Net Side,0,3,NA
+2027,2,10,TOR,R Point,0,1,NA
+2027,2,22,EDM,Behind the Net,0,0,NA
+2027,2,22,EDM,Beyond Red Line,0,0,NA
+2027,2,22,EDM,Center Point,1,2,0.5
+2027,2,22,EDM,Crease,1,1,1
+2027,2,22,EDM,High Slot,0,4,NA
+2027,2,22,EDM,L Circle,1,3,0.3333
+2027,2,22,EDM,L Corner,0,2,NA
+2027,2,22,EDM,L Net Side,0,0,NA
+2027,2,22,EDM,L Point,1,3,0.3333
+2027,2,22,EDM,Low Slot,1,9,0.1111
+2027,2,22,EDM,Offensive Neutral Zone,0,2,NA
+2027,2,22,EDM,Outside L,0,2,NA
+2027,2,22,EDM,Outside R,0,0,NA
+2027,2,22,EDM,R Circle,0,2,NA
+2027,2,22,EDM,R Corner,0,0,NA
+2027,2,22,EDM,R Net Side,0,2,NA
+2027,2,22,EDM,R Point,0,5,NA
+2027,2,12,CAR,Behind the Net,0,0,NA
+2027,2,12,CAR,Beyond Red Line,0,0,NA
+2027,2,12,CAR,Center Point,0,0,NA
+2027,2,12,CAR,Crease,0,0,NA
+2027,2,12,CAR,High Slot,0,3,NA
+2027,2,12,CAR,L Circle,0,0,NA
+2027,2,12,CAR,L Corner,0,0,NA
+2027,2,12,CAR,L Net Side,0,0,NA
+2027,2,12,CAR,L Point,0,1,NA
+2027,2,12,CAR,Low Slot,0,4,NA
+2027,2,12,CAR,Offensive Neutral Zone,0,0,NA
+2027,2,12,CAR,Outside L,0,1,NA
+2027,2,12,CAR,Outside R,0,2,NA
+2027,2,12,CAR,R Circle,0,3,NA
+2027,2,12,CAR,R Corner,0,0,NA
+2027,2,12,CAR,R Net Side,0,0,NA
+2027,2,12,CAR,R Point,0,1,NA
+2027,2,2,NYI,Behind the Net,0,0,NA
+2027,2,2,NYI,Beyond Red Line,0,1,NA
+2027,2,2,NYI,Center Point,0,1,NA
+2027,2,2,NYI,Crease,0,0,NA
+2027,2,2,NYI,High Slot,0,1,NA
+2027,2,2,NYI,L Circle,0,0,NA
+2027,2,2,NYI,L Corner,0,0,NA
+2027,2,2,NYI,L Net Side,0,1,NA
+2027,2,2,NYI,L Point,0,1,NA
+2027,2,2,NYI,Low Slot,1,9,0.1111
+2027,2,2,NYI,Offensive Neutral Zone,0,2,NA
+2027,2,2,NYI,Outside L,0,2,NA
+2027,2,2,NYI,Outside R,0,3,NA
+2027,2,2,NYI,R Circle,0,3,NA
+2027,2,2,NYI,R Corner,0,0,NA
+2027,2,2,NYI,R Net Side,0,1,NA
+2027,2,2,NYI,R Point,0,2,NA
+2027,2,16,CHI,Behind the Net,0,0,NA
+2027,2,16,CHI,Beyond Red Line,0,2,NA
+2027,2,16,CHI,Center Point,0,1,NA
+2027,2,16,CHI,Crease,0,2,NA
+2027,2,16,CHI,High Slot,0,2,NA
+2027,2,16,CHI,L Circle,0,2,NA
+2027,2,16,CHI,L Corner,0,0,NA
+2027,2,16,CHI,L Net Side,0,0,NA
+2027,2,16,CHI,L Point,0,3,NA
+2027,2,16,CHI,Low Slot,1,4,0.25
+2027,2,16,CHI,Offensive Neutral Zone,0,1,NA
+2027,2,16,CHI,Outside L,0,2,NA
+2027,2,16,CHI,Outside R,0,1,NA
+2027,2,16,CHI,R Circle,1,3,0.3333
+2027,2,16,CHI,R Corner,0,0,NA
+2027,2,16,CHI,R Net Side,0,1,NA
+2027,2,16,CHI,R Point,0,2,NA
+2027,2,3,NYR,Behind the Net,0,0,NA
+2027,2,3,NYR,Beyond Red Line,0,1,NA
+2027,2,3,NYR,Center Point,0,1,NA
+2027,2,3,NYR,Crease,0,3,NA
+2027,2,3,NYR,High Slot,0,3,NA
+2027,2,3,NYR,L Circle,0,2,NA
+2027,2,3,NYR,L Corner,0,0,NA
+2027,2,3,NYR,L Net Side,0,0,NA
+2027,2,3,NYR,L Point,0,1,NA
+2027,2,3,NYR,Low Slot,0,7,NA
+2027,2,3,NYR,Offensive Neutral Zone,0,0,NA
+2027,2,3,NYR,Outside L,0,1,NA
+2027,2,3,NYR,Outside R,0,1,NA
+2027,2,3,NYR,R Circle,0,4,NA
+2027,2,3,NYR,R Corner,0,0,NA
+2027,2,3,NYR,R Net Side,0,0,NA
+2027,2,3,NYR,R Point,0,0,NA
+2027,2,26,LAK,Behind the Net,0,0,NA
+2027,2,26,LAK,Beyond Red Line,0,2,NA
+2027,2,26,LAK,Center Point,1,3,0.3333
+2027,2,26,LAK,Crease,0,0,NA
+2027,2,26,LAK,High Slot,1,2,0.5
+2027,2,26,LAK,L Circle,1,4,0.25
+2027,2,26,LAK,L Corner,0,0,NA
+2027,2,26,LAK,L Net Side,0,1,NA
+2027,2,26,LAK,L Point,0,1,NA
+2027,2,26,LAK,Low Slot,0,8,NA
+2027,2,26,LAK,Offensive Neutral Zone,0,1,NA
+2027,2,26,LAK,Outside L,0,1,NA
+2027,2,26,LAK,Outside R,0,1,NA
+2027,2,26,LAK,R Circle,1,3,0.3333
+2027,2,26,LAK,R Corner,0,0,NA
+2027,2,26,LAK,R Net Side,0,1,NA
+2027,2,26,LAK,R Point,0,3,NA
+2027,2,4,PHI,Behind the Net,0,1,NA
+2027,2,4,PHI,Beyond Red Line,0,0,NA
+2027,2,4,PHI,Center Point,0,3,NA
+2027,2,4,PHI,Crease,0,0,NA
+2027,2,4,PHI,High Slot,0,3,NA
+2027,2,4,PHI,L Circle,0,2,NA
+2027,2,4,PHI,L Corner,0,0,NA
+2027,2,4,PHI,L Net Side,0,0,NA
+2027,2,4,PHI,L Point,0,2,NA
+2027,2,4,PHI,Low Slot,0,1,NA
+2027,2,4,PHI,Offensive Neutral Zone,0,2,NA
+2027,2,4,PHI,Outside L,0,1,NA
+2027,2,4,PHI,Outside R,0,1,NA
+2027,2,4,PHI,R Circle,0,2,NA
+2027,2,4,PHI,R Corner,0,0,NA
+2027,2,4,PHI,R Net Side,0,1,NA
+2027,2,4,PHI,R Point,0,0,NA
