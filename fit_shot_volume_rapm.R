@@ -57,7 +57,7 @@ get_arg <- function(name, default = NULL) {
   if (length(hit) == 0) return(default)
   sub(paste0("^--", name, "="), "", hit[1])
 }
-MODE <- get_arg("mode", "backfill")
+MODE <- get_arg("mode", "current")
 SEASON_ARG <- get_arg("season", NA_character_)
 
 GH_ONICE <- "https://raw.githubusercontent.com/Crice1620/NHL_sim/main/data/onice"
