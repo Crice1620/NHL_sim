@@ -1,0 +1,9 @@
+season,game_type,game_id,game_date,home_full,away_abbrev,home_score,away_score,period_type
+2027,2,2026020001,2026-09-29,Carolina Hurricanes,FLA,0,1,REG
+2027,2,2026020005,2026-09-29,Vegas Golden Knights,CHI,5,2,REG
+2027,2,2026020003,2026-09-29,Boston Bruins,NYR,3,0,REG
+2027,2,2026020004,2026-09-29,Edmonton Oilers,VAN,5,6,REG
+2027,2,2026020002,2026-09-29,Toronto Maple Leafs,MTL,2,3,REG
+2027,2,2026020007,2026-09-30,Colorado Avalanche,LAK,8,4,REG
+2027,2,2026020006,2026-09-30,Philadelphia Flyers,PIT,0,7,REG
+2027,2,2026020008,2026-09-30,Toronto Maple Leafs,NYI,2,1,REG
