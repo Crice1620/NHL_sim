@@ -56,12 +56,6 @@ suppressMessages({
   library(httr)
   library(jsonlite)
   library(xgboost)
-  obj <- readRDS("data/xg_model/xg_model.rds")
-  xgb.save(obj$model, "data/xg_model/xg_model.ubj")
-  meta <- obj
-  meta$feature_names <- obj$model$feature_names   # if this is NULL on your version, use colnames() of the training matrix
-  meta$model <- NULL
-  saveRDS(meta, "data/xg_model/xg_meta.rds")
 })
 
 `%||%` <- function(a, b) {
