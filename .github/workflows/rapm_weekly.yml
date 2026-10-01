@@ -42,11 +42,11 @@ jobs:
         # and fit_shot_volume_rapm.R are also both covered by this same
         # install step (dplyr, and Matrix/glmnet for the latter).
       - name: Run RAPM refit for current season
-        run: Rscript fit_rapm.R --mode=current --season=2027
+        run: Rscript fit_rapm.R --mode=current --season=season_year
       - name: Run skater finishing-skill refit for current season
-        run: Rscript fit_skater_finishing.R --mode=current --season=2027
+        run: Rscript fit_skater_finishing.R --mode=current --season=season_year
       - name: Run shot-volume RAPM refit for current season
-        run: Rscript fit_shot_volume_rapm.R --mode=current --season=2027
+        run: Rscript fit_shot_volume_rapm.R --mode=current --season=season_year
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
