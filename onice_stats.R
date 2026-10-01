@@ -56,6 +56,12 @@ suppressMessages({
   library(httr)
   library(jsonlite)
   library(xgboost)
+  obj <- readRDS("data/xg_model/xg_model.rds")
+  xgb.save(obj$model, "data/xg_model/xg_model.ubj")
+  meta <- obj
+  meta$feature_names <- obj$model$feature_names   # if this is NULL on your version, use colnames() of the training matrix
+  meta$model <- NULL
+  saveRDS(meta, "data/xg_model/xg_meta.rds")
 })
 
 `%||%` <- function(a, b) {
@@ -94,12 +100,21 @@ LINEUP_OUT    <- file.path(OUT_DIR, "shot_lineups.csv")  # full on-ice lineups p
 STINTS_OUT    <- file.path(OUT_DIR, "stints.csv")  # 5v5 stint-level lineups + shot counts + duration — shot-VOLUME RAPM's design-matrix input (see build_stints())
 
 # ── xG model loading and scoring ────────────────────────────────────────────
-XG_MODEL_PATH <- file.path("data", "xg_model", "xg_model.rds")
-xg_model_obj <- if (file.exists(XG_MODEL_PATH)) tryCatch(readRDS(XG_MODEL_PATH), error = function(e) NULL) else NULL
-if (is.null(xg_model_obj)) {
-  cat("No trained xG model found at", XG_MODEL_PATH, "— shots will be written without xg scores, goalie GSAx will be NA.\n")
-} else {
-  cat("Loaded xG model (trained", as.character(xg_model_obj$trained_at), "| seasons:", paste(xg_model_obj$seasons, collapse=", "), ")\n")
+XG_MODEL_PATH <- file.path("data", "xg_model", "xg_model.ubj")
+XG_META_PATH  <- file.path("data", "xg_model", "xg_meta.rds")
+xg_model_obj <- tryCatch({
+  meta <- readRDS(XG_META_PATH)
+  meta$model <- xgb.load(XG_MODEL_PATH)
+  meta
+}, error = function(e) { cat("xG model load error:", conditionMessage(e), "\n"); NULL })
+
+if (!is.null(xg_model_obj)) {
+  ok <- tryCatch({
+    k <- xg_model_obj$feature_names
+    predict(xg_model_obj$model, xgb.DMatrix(matrix(0, 1, length(k), dimnames = list(NULL, k))))
+    TRUE
+  }, error = function(e) { cat("xG model failed a test prediction:", conditionMessage(e), "\n"); FALSE })
+  if (!ok) stop("xG model is unusable in this environment; refusing to process games without xG.")
 }
 
 score_shots_with_xg <- function(shots_df, xg_obj) {
@@ -147,7 +162,7 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
     X_raw <- model.matrix(~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1,
                             data = s[valid, c("dist_to_net","angle_to_net","is_rebound","shot_type_clean","shooter_strength")] %>%
                               mutate(is_rebound = as.integer(is_rebound)))
-    train_cols <- xg_obj$model$feature_names
+    train_cols <- xg_obj$feature_names
     X_new <- matrix(0, nrow = nrow(X_raw), ncol = length(train_cols), dimnames = list(NULL, train_cols))
     common_cols <- intersect(train_cols, colnames(X_raw))
     X_new[, common_cols] <- X_raw[, common_cols]
