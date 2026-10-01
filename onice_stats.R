@@ -189,8 +189,9 @@ MAX_GAMES_PER_RUN <- if (MODE == "backfill") Inf else 50L
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
 nhl_get <- function(url, timeout_s = 25) {
-  resp <- tryCatch(GET(url, timeout(timeout_s)), error = function(e) NULL)
-  if (is.null(resp) || status_code(resp) != 200) return(NULL)
+  resp <- tryCatch(GET(url, timeout(timeout_s)), error = function(e) { cat("  GET error:", conditionMessage(e), "\n"); NULL })
+  if (is.null(resp)) return(NULL)
+  if (status_code(resp) != 200) { cat("  HTTP", status_code(resp), "for", url, "\n"); return(NULL) }
   tryCatch(fromJSON(content(resp, "text", encoding = "UTF-8"), simplifyVector = FALSE),
            error = function(e) NULL)
 }
@@ -214,24 +215,23 @@ find_recent_games <- function(days_back) {
   unique(ids)
 }
 
-find_season_games <- function(season_end_year) {
-  ids <- character(0)
-  start_date <- as.Date(paste0(season_end_year - 1L, "-09-01"))
-  end_date <- min(Sys.Date(), as.Date(paste0(season_end_year, "-07-15")))
-  d <- start_date
-  while (d <= end_date) {
-    raw <- nhl_get(paste0("https://api-web.nhle.com/v1/schedule/", format(d, "%Y-%m-%d")))
-    if (!is.null(raw) && !is.null(raw$gameWeek)) {
-      for (day in raw$gameWeek %||% list()) {
-        for (g in day$games %||% list()) {
-          state <- tryCatch(g$gameState %||% "", error = function(e) "")
-          gtype <- tryCatch(as.integer(g$gameType %||% 0), error = function(e) 0L)
-          if (state %in% c("OFF", "FINAL") && gtype %in% c(2L, 3L)) ids <- c(ids, as.character(g$id))
-        }
+find_recent_games <- function(days_back) {
+  ids <- character(0); seen <- character(0)
+  cat("Sys.Date() on this runner:", format(Sys.Date()), "\n")
+  for (d in 0:days_back) {
+    date_str <- format(Sys.Date() - d, "%Y-%m-%d")
+    raw <- nhl_get(paste0("https://api-web.nhle.com/v1/schedule/", date_str))
+    if (is.null(raw) || is.null(raw$gameWeek)) { cat("  schedule", date_str, ": NO DATA (request failed or empty)\n"); next }
+    for (day in raw$gameWeek %||% list()) {
+      for (g in day$games %||% list()) {
+        state <- tryCatch(g$gameState %||% "", error = function(e) "")
+        gtype <- tryCatch(as.integer(g$gameType %||% 0), error = function(e) 0L)
+        seen <- c(seen, paste0("type", gtype, "/", state))
+        if (state %in% c("OFF", "FINAL") && gtype %in% c(2L, 3L)) ids <- c(ids, as.character(g$id))
       }
     }
-    d <- d + 7
   }
+  cat("Game types/states seen in schedule:\n"); print(table(seen))
   unique(ids)
 }
 
