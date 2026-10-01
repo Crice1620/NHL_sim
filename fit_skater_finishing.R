@@ -79,7 +79,7 @@ get_arg <- function(name, default = NULL) {
   if (length(hit) == 0) return(default)
   sub(paste0("^--", name, "="), "", hit[1])
 }
-MODE <- if (exists("MODE_OVERRIDE")) MODE_OVERRIDE else get_arg("mode", "backfill")
+MODE <- if (exists("MODE_OVERRIDE")) MODE_OVERRIDE else get_arg("mode", "current")
 SEASON_ARG <- if (exists("SEASON_OVERRIDE")) as.character(SEASON_OVERRIDE) else get_arg("season", NA_character_)
 WINDOW_ARG <- if (exists("WINDOW_OVERRIDE")) as.character(WINDOW_OVERRIDE) else get_arg("window", NA_character_)  # explicit override — see below
 
