@@ -1040,7 +1040,7 @@ if (length(all_pids) > 0) {
 
 if (length(shots_raw_new) > 0) {
   new_shots_df <- bind_rows(shots_raw_new)
-  existing_shots_raw <- if (file.exists(SHOTS_RAW_OUT)) tryCatch(read.csv(SHOTS_RAW_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
+  existing_shots_raw <- if (file.exists(SHOTS_RAW_OUT)) read_prev(SHOTS_RAW_OUT) else NULL
   combined_shots_df <- if (!is.null(existing_shots_raw) && nrow(existing_shots_raw) > 0) {
     new_shots_df <- new_shots_df[!(new_shots_df$game_id %in% existing_shots_raw$game_id), ]
     bind_rows(existing_shots_raw, new_shots_df)
@@ -1051,7 +1051,7 @@ if (length(shots_raw_new) > 0) {
 
 if (length(lineup_rows_new) > 0) {
   new_lineup_df <- bind_rows(lineup_rows_new)
-  existing_lineup <- if (file.exists(LINEUP_OUT)) tryCatch(read.csv(LINEUP_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
+  existing_lineup    <- if (file.exists(LINEUP_OUT))    read_prev(LINEUP_OUT)    else NULL
   combined_lineup_df <- if (!is.null(existing_lineup) && nrow(existing_lineup) > 0) {
     new_lineup_df <- new_lineup_df[!(new_lineup_df$game_id %in% existing_lineup$game_id), ]
     bind_rows(existing_lineup, new_lineup_df)
@@ -1062,7 +1062,7 @@ if (length(lineup_rows_new) > 0) {
 
 if (length(stint_rows_new) > 0) {
   new_stints_df <- bind_rows(stint_rows_new)
-  existing_stints <- if (file.exists(STINTS_OUT)) tryCatch(read.csv(STINTS_OUT, stringsAsFactors = FALSE), error = function(e) NULL) else NULL
+  existing_stints    <- if (file.exists(STINTS_OUT))    read_prev(STINTS_OUT)    else NULL
   combined_stints_df <- if (!is.null(existing_stints) && nrow(existing_stints) > 0) {
     new_stints_df <- new_stints_df[!(new_stints_df$game_id %in% existing_stints$game_id), ]
     bind_rows(existing_stints, new_stints_df)
