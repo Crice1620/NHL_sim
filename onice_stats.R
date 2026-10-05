@@ -10,45 +10,21 @@
 #   - skater_onice.csv: SKATER-level on-ice Corsi/Goals at 5v5, individual
 #                        EV/PP scoring, on-ice PK goals-against.
 #
-# IMPORTANT ARCHITECTURE NOTE: team- and goalie-level stats are computed
-# DIRECTLY from play-by-play alone — every shot/goal event already carries
-# eventOwnerTeamId (which team) and goalieInNetId (which goalie was facing
-# it), so NO shift-chart data is needed for those two files. Only
-# SKATER-level on-ice attribution needs shifts (to know who else was on the
-# ice). This matters because the NHL's shift-chart feed has real, recurring
-# gaps (see the header note below) — team and goalie stats have ZERO gaps
-# as a result of this design, even for games where skater-level data has to
-# be skipped.
+# PLUS event-level files: shots_raw.csv, shot_lineups.csv, stints.csv.
 #
-# HONEST CAVEATS (read these before debugging a discrepancy):
-#   - situationCode format ("1551" etc: [awayGoalie][awaySkaters][homeSkaters]
-#     [homeGoalie]) and play-by-play field names (eventOwnerTeamId,
-#     goalieInNetId, scoringPlayerId, assist1PlayerId, assist2PlayerId) have
-#     been CONFIRMED against real live API responses during development —
-#     these are not guesses.
-#   - The shift-chart endpoint (api.nhle.com/stats/rest/en/shiftcharts) has
-#     a real, recurring gap of missing games each season (confirmed via
-#     testing — a multi-hundred-game stretch with clean valid-but-empty
-#     responses, with data intact before and after). This is NOT a bug in
-#     this script and is not fixable by changing the query — it appears to
-#     be a genuine upstream data gap. Affected games simply don't get
-#     skater-level on-ice stats; team/goalie stats are unaffected.
-#   - PK "shots against"/"goals against" logic doesn't finely distinguish
-#     the rare case of a shorthanded goal scored BY the penalty-killing team
-#     (a true "shorthanded goal") — this edge case is simplified rather than
-#     precisely tracked, since it's uncommon and not central to what this
-#     data feeds (team shot-rate simulation, PP/PK percentile rankings).
-#   - Delayed penalties, own-goals, and penalty-shot goals fall into "other"
-#     situationCode buckets and simply won't count toward 5v5/PP/PK totals
-#     — the safe (if slightly conservative) behavior.
-#   - Goalies are excluded from all SKATER on-ice accumulation.
+# ARCHITECTURE NOTE: team- and goalie-level stats are computed DIRECTLY from
+# play-by-play alone (every shot/goal event carries eventOwnerTeamId and
+# goalieInNetId), so NO shift-chart data is needed for those two files. Only
+# SKATER-level on-ice attribution needs shifts. The NHL shift-chart feed has
+# real, recurring gaps — team and goalie stats are unaffected by them.
 #
-# BACKFILL BEHAVIOR: this script scans the WHOLE season so far (not just a
-# few recent days) in backfill mode, bounded to that season's actual end
-# date (not always today) so backfilling an older season doesn't sweep in
-# later seasons' games too. No per-run cap in backfill mode — a full season
-# processes in one run (can take 30-90+ minutes). Daily mode only looks back
-# 4 days and always targets the current season.
+# xG MODEL: loaded from data/xg_model/xg_model.rds ONLY. If it is missing,
+# unreadable, or uses features the scorer can't build, the script STOPS
+# instead of silently writing NA xG.
+#
+# BACKFILL BEHAVIOR: scans the whole season so far (bounded to that season's
+# end date) and skips games already in processed_games.txt. Daily mode only
+# looks back 4 days and always targets the current season.
 # =============================================================================
 
 suppressMessages({
@@ -64,10 +40,6 @@ suppressMessages({
   a
 }
 
-# ── Mode: "daily" (default) only looks back a few days and targets the
-# CURRENT season. "backfill" scans an entire season's schedule (optionally
-# for a past season via --season=YYYY) and is meant to be triggered
-# manually. See onice_daily.yml and onice_backfill.yml.
 args <- commandArgs(trailingOnly = TRUE)
 get_arg <- function(name, default = NULL) {
   hit <- grep(paste0("^--", name, "="), args, value = TRUE)
@@ -89,33 +61,80 @@ STATE_FILE  <- file.path(OUT_DIR, "processed_games.txt")
 SKATER_OUT  <- file.path(OUT_DIR, "skater_onice.csv")
 TEAM_OUT    <- file.path(OUT_DIR, "team_onice.csv")
 GOALIE_OUT  <- file.path(OUT_DIR, "goalie_onice.csv")
-SHOTS_RAW_OUT <- file.path(OUT_DIR, "shots_raw.csv")  # event-level shot data for future xG training — one row per shot attempt
-LINEUP_OUT    <- file.path(OUT_DIR, "shot_lineups.csv")  # full on-ice lineups per 5v5 shot event — RAPM's design-matrix input, joinable to shots_raw.csv via game_id+event_idx
-STINTS_OUT    <- file.path(OUT_DIR, "stints.csv")  # 5v5 stint-level lineups + shot counts + duration — shot-VOLUME RAPM's design-matrix input (see build_stints())
+SHOTS_RAW_OUT <- file.path(OUT_DIR, "shots_raw.csv")
+LINEUP_OUT    <- file.path(OUT_DIR, "shot_lineups.csv")
+STINTS_OUT    <- file.path(OUT_DIR, "stints.csv")
 
-# ── xG model loading and scoring ────────────────────────────────────────────
-XG_MODEL_PATH <- file.path("data", "xg_model", "xg_model.ubj")
-XG_META_PATH  <- file.path("data", "xg_model", "xg_meta.rds")
-xg_model_obj <- tryCatch({
-  meta <- readRDS(XG_META_PATH)
-  meta$model <- xgb.load(XG_MODEL_PATH)
-  meta
-}, error = function(e) { cat("xG model load error:", conditionMessage(e), "\n"); NULL })
+# ── xG model loading (xg_model.rds only) ────────────────────────────────────
+XG_PATH <- file.path("data", "xg_model", "xg_model.rds")
 
-if (!is.null(xg_model_obj)) {
-  ok <- tryCatch({
-    k <- xg_model_obj$feature_names
-    predict(xg_model_obj$model, xgb.DMatrix(matrix(0, 1, length(k), dimnames = list(NULL, k))))
-    TRUE
-  }, error = function(e) { cat("xG model failed a test prediction:", conditionMessage(e), "\n"); FALSE })
-  if (!ok) stop("xG model is unusable in this environment; refusing to process games without xG.")
+# Feature names the scorer below knows how to build.
+xg_feature_supported <- function(fn) {
+  fn %in% c("dist_to_net", "angle_to_net", "is_rebound") |
+    startsWith(fn, "shot_type_clean") | startsWith(fn, "shooter_strength")
 }
 
-score_shots_with_xg <- function(shots_df, xg_obj) {
-  if (is.null(xg_obj) || is.null(shots_df) || nrow(shots_df) == 0) {
-    if (!is.null(shots_df)) shots_df$xg <- NA_real_
-    return(shots_df)
+load_xg_model <- function(path) {
+  if (!file.exists(path)) stop("xG model not found at ", path, ". Refusing to process games without xG.")
+  obj <- readRDS(path)
+
+  # Find the booster: either the object itself, or an element inside a list.
+  model <- NULL
+  if (inherits(obj, "xgb.Booster")) {
+    model <- obj
+  } else if (is.list(obj)) {
+    for (nm in c("model", "booster", "xgb", "fit")) {
+      if (!is.null(obj[[nm]]) && inherits(obj[[nm]], "xgb.Booster")) { model <- obj[[nm]]; break }
+    }
+    if (is.null(model)) {
+      hits <- Filter(function(x) inherits(x, "xgb.Booster"), obj)
+      if (length(hits) > 0) model <- hits[[1]]
+    }
   }
+  if (is.null(model)) {
+    stop("xg_model.rds does not contain an xgboost booster. Object class: ",
+         paste(class(obj), collapse = "/"),
+         if (is.list(obj)) paste0(" | list names: ", paste(names(obj), collapse = ", ")) else "")
+  }
+
+  # Find the feature names: stored alongside the model, or inside the booster.
+  fn <- NULL
+  if (is.list(obj) && !inherits(obj, "xgb.Booster")) {
+    for (nm in c("feature_names", "features", "train_cols", "cols")) {
+      if (!is.null(obj[[nm]])) { fn <- obj[[nm]]; break }
+    }
+  }
+  if (is.null(fn)) fn <- tryCatch(model$feature_names, error = function(e) NULL)
+  if (is.null(fn)) fn <- tryCatch(colnames(model), error = function(e) NULL)
+  if (is.null(fn) || length(fn) == 0) {
+    stop("Could not find feature names for the xG model (not stored in xg_model.rds or inside the booster).")
+  }
+  fn <- as.character(fn)
+
+  bad <- fn[!xg_feature_supported(fn)]
+  if (length(bad) > 0) {
+    stop("xG model uses features this script can't build: ", paste(bad, collapse = ", "),
+         ". Scoring would silently be wrong, so stopping.")
+  }
+  cat("xG model features (", length(fn), "): ", paste(fn, collapse = ", "), "\n", sep = "")
+  list(model = model, feature_names = fn)
+}
+
+# No tryCatch: a missing or broken model must fail the job, not write NA xG.
+xg_model_obj <- load_xg_model(XG_PATH)
+
+local({
+  k <- xg_model_obj$feature_names
+  tryCatch(
+    predict(xg_model_obj$model, xgb.DMatrix(matrix(0, 1, length(k), dimnames = list(NULL, k)))),
+    error = function(e) stop("xG model failed a test prediction (", conditionMessage(e),
+                             "). If xg_model.rds was saved by an older xgboost version, retrain it.")
+  )
+})
+cat("xG model loaded and passed test prediction.\n")
+
+score_shots_with_xg <- function(shots_df, xg_obj) {
+  if (is.null(shots_df) || nrow(shots_df) == 0) return(shots_df)
   s <- shots_df %>%
     mutate(
       is_home_shooter = (owner_team_id == home_id),
@@ -146,21 +165,24 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
            is_rebound = !is.na(time_since_own_last_shot) & time_since_own_last_shot <= 3) %>%
     ungroup()
 
-  s$shot_type_clean  <- factor(s$shot_type_clean,  levels = xg_obj$shot_type_levels)
-  s$shooter_strength <- factor(s$shooter_strength, levels = xg_obj$shooter_strength_levels)
-
   valid <- !is.na(s$dist_to_net) & !is.na(s$angle_to_net) & !is.na(s$is_rebound) &
-           !is.na(s$shot_type_clean) & !is.na(s$shooter_strength) & !is.na(s$target_side) & !is.na(s$goalie_id)
+           !is.na(s$target_side) & !is.na(s$goalie_id)
   xg_vals <- rep(NA_real_, nrow(s))
   if (any(valid)) {
-    X_raw <- model.matrix(~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1,
-                            data = s[valid, c("dist_to_net","angle_to_net","is_rebound","shot_type_clean","shooter_strength")] %>%
-                              mutate(is_rebound = as.integer(is_rebound)))
+    sv <- s[valid, ]
     train_cols <- xg_obj$feature_names
-    X_new <- matrix(0, nrow = nrow(X_raw), ncol = length(train_cols), dimnames = list(NULL, train_cols))
-    common_cols <- intersect(train_cols, colnames(X_raw))
-    X_new[, common_cols] <- X_raw[, common_cols]
-    X_new <- matrix(as.numeric(X_new), nrow = nrow(X_new), ncol = ncol(X_new), dimnames = dimnames(X_new))
+    # Build each model column by name (full one-hot for categoricals), so this
+    # doesn't depend on factor baselines or contrast coding used in training.
+    build_col <- function(cn) {
+      if (cn == "dist_to_net") sv$dist_to_net
+      else if (cn == "angle_to_net") sv$angle_to_net
+      else if (cn == "is_rebound") as.numeric(sv$is_rebound)
+      else if (startsWith(cn, "shot_type_clean")) as.numeric(sv$shot_type_clean == sub("^shot_type_clean", "", cn))
+      else if (startsWith(cn, "shooter_strength")) as.numeric(sv$shooter_strength == sub("^shooter_strength", "", cn))
+      else rep(0, nrow(sv))
+    }
+    X_new <- matrix(0, nrow = nrow(sv), ncol = length(train_cols), dimnames = list(NULL, train_cols))
+    for (cn in train_cols) X_new[, cn] <- build_col(cn)
     xg_vals[valid] <- predict(xg_obj$model, xgb.DMatrix(data = X_new))
   }
   shots_df_scored <- s %>% select(-is_home_shooter, -target_side, -norm_x, -norm_y, -dist_to_net, -angle_to_net,
@@ -170,19 +192,10 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
   shots_df_scored
 }
 
-# Fallback for when home_defending_side is missing (confirmed: the NHL API
-# doesn't include this field for older seasons — 100% missing for 2011-2016
-# tested, 0% missing for 2023/2025). Infers it from shot coordinates
-# instead: teams switch ends every period (a fixed rule, not a tendency),
-# so the home team's own shots should cluster toward whichever net they're
-# ATTACKING that period — the opposite of what they defend. VALIDATED
-# against 2023 (real ground truth available): 100% agreement at both the
-# row level (164,336 shots) and the game-period level (4,593 periods),
-# zero disagreements even in the lowest-sample-size bucket — a strong,
-# checked result, not an unverified guess. Logged when it fires (not
-# silent) — if this triggers during NORMAL daily processing of a current
-# season, that would be surprising and worth a second look, unlike its
-# expected use backfilling old seasons.
+# Fallback for when home_defending_side is missing (the NHL API doesn't
+# include this field for older seasons). Infers it from shot coordinates:
+# teams switch ends every period, so the home team's own shots cluster toward
+# the net they're ATTACKING. Validated 100% against 2023 ground truth.
 infer_defending_side <- function(shots_df) {
   per_period <- shots_df %>%
     filter(owner_team_id == home_id, !is.na(x_coord)) %>%
@@ -205,24 +218,19 @@ nhl_get <- function(url, timeout_s = 25) {
            error = function(e) NULL)
 }
 
-processed_ids <- if (file.exists(STATE_FILE)) readLines(STATE_FILE) else character(0)
+# Reads everything as character so ID columns keep the same type as new rows.
+# Deliberately no tryCatch: a failed read must stop the run, not overwrite history.
+read_prev <- function(path) read.csv(path, stringsAsFactors = FALSE, colClasses = "character")
 
-find_recent_games <- function(days_back) {
-  ids <- character(0)
-  for (d in 0:days_back) {
-    date_str <- format(Sys.Date() - d, "%Y-%m-%d")
-    raw <- nhl_get(paste0("https://api-web.nhle.com/v1/schedule/", date_str))
-    if (is.null(raw) || is.null(raw$gameWeek)) next
-    for (day in raw$gameWeek %||% list()) {
-      for (g in day$games %||% list()) {
-        state <- tryCatch(g$gameState %||% "", error = function(e) "")
-        gtype <- tryCatch(as.integer(g$gameType %||% 0), error = function(e) 0L)
-        if (state %in% c("OFF", "FINAL") && gtype %in% c(2L, 3L)) ids <- c(ids, as.character(g$id))
-      }
-    }
-  }
-  unique(ids)
+combine_csv <- function(existing, new) {
+  if (is.null(existing) || nrow(existing) == 0) return(new)
+  new <- new[!(new$game_id %in% existing$game_id), , drop = FALSE]
+  if (nrow(new) == 0) return(type.convert(existing, as.is = TRUE))
+  new[] <- lapply(new, as.character)
+  type.convert(bind_rows(existing, new), as.is = TRUE)
 }
+
+processed_ids <- if (file.exists(STATE_FILE)) readLines(STATE_FILE) else character(0)
 
 find_recent_games <- function(days_back) {
   ids <- character(0); seen <- character(0)
@@ -241,6 +249,35 @@ find_recent_games <- function(days_back) {
     }
   }
   cat("Game types/states seen in schedule:\n"); print(table(seen))
+  unique(ids)
+}
+
+# Whole-season scan for backfill mode. Walks the schedule one week at a time,
+# bounded to the season's end, and keeps only game ids that start with the
+# season's start year (2026020001 = 2026-27 season), so a neighbouring
+# season's games are never swept in.
+find_season_games <- function(season_year) {
+  start  <- as.Date(sprintf("%d-09-15", season_year - 1L))
+  end    <- min(Sys.Date(), as.Date(sprintf("%d-07-01", season_year)))
+  prefix <- as.character(season_year - 1L)
+  ids <- character(0)
+  d <- start
+  while (d <= end) {
+    raw <- nhl_get(paste0("https://api-web.nhle.com/v1/schedule/", format(d, "%Y-%m-%d")))
+    if (!is.null(raw) && !is.null(raw$gameWeek)) {
+      for (day in raw$gameWeek) {
+        for (g in day$games %||% list()) {
+          state <- tryCatch(g$gameState %||% "", error = function(e) "")
+          gtype <- tryCatch(as.integer(g$gameType %||% 0), error = function(e) 0L)
+          gid   <- as.character(g$id)
+          if (state %in% c("OFF", "FINAL") && gtype %in% c(2L, 3L) && startsWith(gid, prefix))
+            ids <- c(ids, gid)
+        }
+      }
+    }
+    d <- d + 7
+    Sys.sleep(0.1)
+  }
   unique(ids)
 }
 
@@ -322,20 +359,9 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
   toi_5v5 <- list(); toi_pp <- list(); toi_pk <- list()
   player_team_id <- list()
   # RAPM needs the FULL lineup combination for every event (who was on the
-  # ice TOGETHER), not just each player's own marginal total the way
-  # for_on/against_on (and their PP/PK equivalents) get used everywhere
-  # else below (via bump()). This is genuinely new — everything else in
-  # this function already computed these on-ice lists for every shot, at
-  # both 5v5 and PP/PK, they just never got kept. One row per shot event,
-  # both sides' full rosters as semicolon-joined strings (compact — full
-  # long-format one-row-per-player-per-event would run ~10x larger across
-  # 15 seasons' worth of games) — matches shots_raw.csv's granularity
-  # exactly (one row per shot, joinable via game_id+event_idx).
-  # situation_code is preserved on every row so the exact strength state
-  # (5v5, 5v4, 5v3, 4v3, etc.) can be recovered later — PP/PK RAPM needs
-  # to handle asymmetric strength states differently from 5v5's uniform
-  # 5-a-side case, and that's a modeling decision for later, not something
-  # this capture step should pre-judge by discarding the raw code.
+  # ice TOGETHER). One row per shot event, both sides' rosters as
+  # semicolon-joined strings; joinable to shots_raw.csv via game_id+event_idx.
+  # situation_code is preserved so the exact strength state can be recovered.
   lineup_rows <- list()
 
   if (nrow(sit_df) > 0) {
@@ -378,17 +404,12 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
       cf <- bump(cf, for_on); ca <- bump(ca, against_on)
       if (typ == "goal") { gf <- bump(gf, for_on); ga <- bump(ga, against_on) }
       shot_xg <- unname(shots_xg_lookup[as.character(play_i)])
-      if (!is.na(shot_xg)) {
+      if (length(shot_xg) == 1 && !is.na(shot_xg)) {
         xg_for_5v5 <- bump(xg_for_5v5, for_on, by = shot_xg)
         xg_against_5v5 <- bump(xg_against_5v5, against_on, by = shot_xg)
       }
-      # NEW — RAPM capture: same for_on/against_on already computed above
-      # for the counter-bumping, just also written down as a row instead
-      # of discarded. Only kept when both sides have a plausible full
-      # complement (>=3 skaters) — a shift-chart gap or mid-transition
-      # artifact producing an obviously incomplete lineup would poison a
-      # RAPM regression far more than it would a simple per-player counter,
-      # so this is a stricter bar than bump() above needs.
+      # RAPM capture: only keep when both sides have a plausible full
+      # complement (>=3 skaters) so shift-chart gaps don't poison the regression.
       if (length(for_on) >= 3 && length(against_on) >= 3) {
         lineup_rows[[length(lineup_rows) + 1]] <- data.frame(
           game_id = game_id, event_idx = play_i, situation_code = code,
@@ -412,15 +433,8 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
           pp_gf_onice_ind <- bump(pp_gf_onice_ind, pp_shooters_on)
           pk_ga_onice_ind <- bump(pk_ga_onice_ind, pk_defenders_on)
         }
-        # NEW — RAPM capture for PP/PK, same principle as the 5v5 capture
-        # above: pp_shooters_on/pk_defenders_on are already computed right
-        # here for the counter bumps, just also written down instead of
-        # discarded. Deliberately a LOOSER gate than 5v5's >=3 (just
-        # non-empty on both sides) rather than a hardcoded skater count —
-        # PP/PK strength states aren't uniform (5v4, 5v3, 4v3 all have
-        # different natural counts), so raw situation_code is preserved
-        # instead, letting the actual modeling step decide how to bucket
-        # by exact strength state rather than this capture step guessing.
+        # RAPM capture for PP/PK: looser gate (non-empty both sides) since
+        # strength states aren't uniform; raw situation_code is preserved.
         if (length(pp_shooters_on) > 0 && length(pk_defenders_on) > 0) {
           lineup_rows[[length(lineup_rows) + 1]] <- data.frame(
             game_id = game_id, event_idx = play_i, situation_code = code,
@@ -467,37 +481,21 @@ process_game_skaters <- function(pbp, shifts_raw, home_id, away_id, sit_df, shot
        toi_5v5 = toi_5v5, toi_pp = toi_pp, toi_pk = toi_pk,
        lineup = if (length(lineup_rows) > 0) bind_rows(lineup_rows) else NULL,
        # Returned so process_game() can build shot-volume RAPM stints
-       # without duplicating this function's own shift-parsing logic —
-       # process_game() already independently builds sit_df's 5v5 segment
-       # boundaries and shot_rows' timestamps in its own scope, so this is
-       # the one missing piece needed there.
+       # without duplicating this function's shift-parsing logic.
        shifts_df = shifts_df)
 }
 
 # ── Shot-volume RAPM stint reconstruction ────────────────────────────────────
-# Unlike xG-RAPM (one row per SHOT EVENT — shot_lineups.csv already covers
-# this), shot-VOLUME RAPM needs to model shots-per-minute-of-ice-time,
-# which requires knowing every continuous interval of unchanged on-ice
-# personnel — "stints" — whether or not a shot happened during them. A
-# 5v5 segment (from sit_df, already built for team-level TOI tracking)
-# can span many individual player shifts (line changes don't change the
-# STRENGTH STATE, just who's on the ice) — each shift-change point WITHIN
-# a 5v5 segment splits it into a separate stint.
-#
-# Reuses three things that already exist elsewhere in this script, rather
-# than fetching or computing anything new: sit_df's 5v5 segment
-# boundaries (built for team_toi tracking), shifts_df's individual player
-# shift start/end times (returned from process_game_skaters — see its own
-# return statement for why), and shots_raw_df's shot timestamps (built by
-# process_game()'s own play-by-play loop). This function just combines
-# those three, it doesn't re-derive any of them from scratch.
+# Shot-VOLUME RAPM models shots-per-minute-of-ice-time, which needs every
+# continuous interval of unchanged on-ice personnel ("stints"). Each
+# shift-change point WITHIN a 5v5 segment splits it into a separate stint.
 stint_diag <- new.env()
 stint_diag$segments_considered <- 0L
 stint_diag$segments_skipped_bad_bounds <- 0L
 stint_diag$segments_skipped_no_cutpoints <- 0L
 stint_diag$candidate_stints <- 0L
 stint_diag$rejected_guard <- 0L
-stint_diag$rejected_player_counts <- list()  # tally of (home_count, away_count) pairs seen on rejection
+stint_diag$rejected_player_counts <- list()
 stint_diag$accepted_stints <- 0L
 
 build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id) {
@@ -505,17 +503,9 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
   game_end_abs <- suppressWarnings(max(shifts_df$end_abs, na.rm = TRUE))
   seg_start <- sit_df$t_abs; seg_end <- c(sit_df$t_abs[-1], game_end_abs); seg_label <- sit_df$label
 
-  # "5v5" means 5 SKATERS per side — each team's own goalie is ALSO on the
-  # ice, making 6 total on-ice players per team. The diagnostic run
-  # confirmed this precisely: 98.4% of all rejections were exactly "6v6",
-  # meaning on_ice_at_local() was correctly finding 6 players and being
-  # WRONGLY rejected by a guard that expected 5. shots_raw_df already
-  # records goalie_id on every shot event, so known goalies for this game
-  # can be identified without any new data — excluding them here is the
-  # actual, correct fix (shot-volume RAPM should credit/blame the 5
-  # skaters for shot generation, not the goalie, who doesn't influence
-  # shot volume — only whether shots become goals, already covered by
-  # GSAx separately).
+  # "5v5" means 5 SKATERS per side; each goalie is also on the ice (6 total
+  # per team). Known goalies are identified from shots_df$goalie_id and
+  # excluded so the 5-skater guard below works.
   known_goalies <- if (!is.null(shots_df) && "goalie_id" %in% names(shots_df)) {
     unique(na.omit(shots_df$goalie_id))
   } else character(0)
@@ -527,16 +517,13 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
 
   stint_rows <- list()
   for (i in seq_along(seg_start)) {
-    if (is.na(seg_label[i]) || seg_label[i] != "5v5") next  # 5v5-only, matching xG-RAPM's own scope decision
+    if (is.na(seg_label[i]) || seg_label[i] != "5v5") next
     s_start <- seg_start[i]; s_end <- seg_end[i]
     stint_diag$segments_considered <- stint_diag$segments_considered + 1L
     if (is.na(s_start) || is.na(s_end) || s_end <= s_start) {
       stint_diag$segments_skipped_bad_bounds <- stint_diag$segments_skipped_bad_bounds + 1L
       next
     }
-    # Shift-change points STRICTLY inside this 5v5 segment split it into
-    # separate stints — a line change partway through a 5v5 segment means
-    # the on-ice personnel changed even though the strength state didn't.
     boundaries <- unique(c(
       shifts_df$start_abs[shifts_df$start_abs > s_start & shifts_df$start_abs < s_end],
       shifts_df$end_abs[shifts_df$end_abs > s_start & shifts_df$end_abs < s_end]
@@ -550,14 +537,9 @@ build_stints <- function(sit_df, shifts_df, shots_df, home_id, away_id, game_id)
       stint_start <- cut_points[j]; stint_end <- cut_points[j + 1]
       if (stint_end <= stint_start) next
       stint_diag$candidate_stints <- stint_diag$candidate_stints + 1L
-      # Probe strictly inside the stint (not exactly at a boundary) to
-      # avoid ambiguity in on_ice_at_local's own strict-inequality check.
       probe_t <- stint_start + min(0.5, (stint_end - stint_start) / 2)
       home_on <- on_ice_at_local(probe_t, home_id)
       away_on <- on_ice_at_local(probe_t, away_id)
-      # Guard: only keep genuine, complete 5-on-5 stints — same quality
-      # gate philosophy as shot_lineups.csv, so a shift-data gap doesn't
-      # silently masquerade as a real (but incomplete) stint.
       if (length(home_on) != 5 || length(away_on) != 5) {
         stint_diag$rejected_guard <- stint_diag$rejected_guard + 1L
         key <- paste0(length(home_on), "v", length(away_on))
@@ -696,8 +678,7 @@ process_game <- function(game_id) {
       any(is.na(shots_raw_df$home_defending_side))) {
     n_missing <- sum(is.na(shots_raw_df$home_defending_side))
     cat("  home_defending_side missing for", n_missing, "of", nrow(shots_raw_df),
-        "shots in game", game_id, "— inferring from shot coordinates",
-        "(validated 100% agreement against known-good seasons; see onice_stats.R notes).\n")
+        "shots in game", game_id, "— inferring from shot coordinates.\n")
     shots_raw_df <- infer_defending_side(shots_raw_df) %>%
       mutate(home_defending_side = coalesce(home_defending_side, inferred_side)) %>%
       select(-inferred_side)
@@ -822,8 +803,8 @@ skater_games_ok <- 0L
 team_games_ok <- 0L
 player_team_rows <- list()
 shots_raw_new <- list()
-lineup_rows_new <- list()  # accumulates across games, same append pattern as shots_raw_new
-stint_rows_new <- list()  # shot-volume RAPM's design-matrix input — same append pattern as lineup_rows_new
+lineup_rows_new <- list()
+stint_rows_new <- list()
 
 for (gid in new_games) {
   cat("Processing game", gid, "...\n")
@@ -873,8 +854,6 @@ for (gid in new_games) {
 
   if (!is.null(res$stints) && nrow(res$stints) > 0) {
     st <- res$stints
-    # home_id/away_id aren't in scope here the way tr$home_id is (tr is
-    # this game's team_result) — reusing that instead of re-deriving them.
     st$home_abbrev <- tr$home_abbrev
     st$away_abbrev <- tr$away_abbrev
     stint_rows_new[[length(stint_rows_new) + 1]] <- st
@@ -1039,46 +1018,32 @@ if (length(all_pids) > 0) {
 }
 
 if (length(shots_raw_new) > 0) {
-  new_shots_df <- bind_rows(shots_raw_new)
   existing_shots_raw <- if (file.exists(SHOTS_RAW_OUT)) read_prev(SHOTS_RAW_OUT) else NULL
-  combined_shots_df <- if (!is.null(existing_shots_raw) && nrow(existing_shots_raw) > 0) {
-    new_shots_df <- new_shots_df[!(new_shots_df$game_id %in% existing_shots_raw$game_id), ]
-    bind_rows(existing_shots_raw, new_shots_df)
-  } else new_shots_df
+  combined_shots_df  <- combine_csv(existing_shots_raw, bind_rows(shots_raw_new))
   write.csv(combined_shots_df, SHOTS_RAW_OUT, row.names = FALSE)
-  cat("Wrote", SHOTS_RAW_OUT, "-", nrow(combined_shots_df), "shot events total (", nrow(new_shots_df), "new)\n")
+  cat("Wrote", SHOTS_RAW_OUT, "-", nrow(combined_shots_df), "shot events total\n")
 }
 
 if (length(lineup_rows_new) > 0) {
-  new_lineup_df <- bind_rows(lineup_rows_new)
-  existing_lineup    <- if (file.exists(LINEUP_OUT))    read_prev(LINEUP_OUT)    else NULL
-  combined_lineup_df <- if (!is.null(existing_lineup) && nrow(existing_lineup) > 0) {
-    new_lineup_df <- new_lineup_df[!(new_lineup_df$game_id %in% existing_lineup$game_id), ]
-    bind_rows(existing_lineup, new_lineup_df)
-  } else new_lineup_df
+  existing_lineup    <- if (file.exists(LINEUP_OUT)) read_prev(LINEUP_OUT) else NULL
+  combined_lineup_df <- combine_csv(existing_lineup, bind_rows(lineup_rows_new))
   write.csv(combined_lineup_df, LINEUP_OUT, row.names = FALSE)
-  cat("Wrote", LINEUP_OUT, "-", nrow(combined_lineup_df), "shot-lineup rows total (", nrow(new_lineup_df), "new)\n")
+  cat("Wrote", LINEUP_OUT, "-", nrow(combined_lineup_df), "shot-lineup rows total\n")
 }
 
 if (length(stint_rows_new) > 0) {
-  new_stints_df <- bind_rows(stint_rows_new)
-  existing_stints    <- if (file.exists(STINTS_OUT))    read_prev(STINTS_OUT)    else NULL
-  combined_stints_df <- if (!is.null(existing_stints) && nrow(existing_stints) > 0) {
-    new_stints_df <- new_stints_df[!(new_stints_df$game_id %in% existing_stints$game_id), ]
-    bind_rows(existing_stints, new_stints_df)
-  } else new_stints_df
+  existing_stints    <- if (file.exists(STINTS_OUT)) read_prev(STINTS_OUT) else NULL
+  combined_stints_df <- combine_csv(existing_stints, bind_rows(stint_rows_new))
   write.csv(combined_stints_df, STINTS_OUT, row.names = FALSE)
-  cat("Wrote", STINTS_OUT, "-", nrow(combined_stints_df), "stint rows total (", nrow(new_stints_df), "new)\n")
+  cat("Wrote", STINTS_OUT, "-", nrow(combined_stints_df), "stint rows total\n")
 }
 
 # ── TEMPORARY: stint-building diagnostic summary — remove once the stint
-# reconstruction is confirmed working correctly. Reveals exactly where
-# candidate stints are being lost, rather than just showing a suspiciously
-# low final count with no visibility into why.
+# reconstruction is confirmed working correctly.
 cat("\n=== Stint-building diagnostic summary (this run) ===\n")
 cat("5v5 segments considered:", stint_diag$segments_considered, "\n")
 cat("  Skipped (bad/zero-length bounds):", stint_diag$segments_skipped_bad_bounds, "\n")
-cat("  Skipped (no cut points found, i.e. length(cut_points) < 2):", stint_diag$segments_skipped_no_cutpoints, "\n")
+cat("  Skipped (no cut points found):", stint_diag$segments_skipped_no_cutpoints, "\n")
 cat("Candidate stints generated (after cut-point splitting):", stint_diag$candidate_stints, "\n")
 cat("  Rejected by 5-player guard:", stint_diag$rejected_guard,
     sprintf("(%.1f%% of candidates)", if (stint_diag$candidate_stints > 0) 100 * stint_diag$rejected_guard / stint_diag$candidate_stints else NA), "\n")
