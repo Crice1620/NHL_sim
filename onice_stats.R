@@ -78,6 +78,27 @@ load_xg_model <- function(path) {
   if (!file.exists(path)) stop("xG model not found at ", path, ". Refusing to process games without xG.")
   obj <- readRDS(path)
 
+  # Current format (written by train_xg_model.R): the booster stored as raw UBJ
+  # bytes, which load under any xgboost version, plus the model's feature names.
+  # (A booster saved directly with saveRDS() carries a version-specific handle
+  # that breaks whenever the runner's xgboost differs from the trainer's.)
+  if (is.list(obj) && !is.null(obj$model_raw)) {
+    if (is.null(obj$feature_names) || length(obj$feature_names) == 0) {
+      stop("xg_model.rds has model_raw but no feature_names. Retrain with train_xg_model.R.")
+    }
+    fn <- as.character(obj$feature_names)
+    bad <- fn[!xg_feature_supported(fn)]
+    if (length(bad) > 0) {
+      stop("xG model uses features this script can't build: ", paste(bad, collapse = ", "),
+           ". Scoring would silently be wrong, so stopping.")
+    }
+    cat("xG model trained with xgboost", obj$xgboost_version %||% "?", "| running", as.character(packageVersion("xgboost")), "\n")
+    cat("xG model features (", length(fn), "): ", paste(fn, collapse = ", "), "\n", sep = "")
+    return(list(model = xgb.load.raw(obj$model_raw), feature_names = fn))
+  }
+
+  # Legacy formats below (a booster saved straight into the .rds). These often
+  # fail the test prediction on a newer xgboost; if so, retrain.
   # Find the booster: either the object itself, or an element inside a list.
   model <- NULL
   if (inherits(obj, "xgb.Booster")) {
@@ -159,11 +180,23 @@ score_shots_with_xg <- function(shots_df, xg_obj) {
       ),
       shot_type_clean = ifelse(is.na(shot_type) | shot_type == "", "unknown", shot_type)
     ) %>%
-    arrange(game_id, t_abs) %>%
-    group_by(game_id, owner_team_id) %>%
-    mutate(time_since_own_last_shot = t_abs - lag(t_abs),
-           is_rebound = !is.na(time_since_own_last_shot) & time_since_own_last_shot <= 3) %>%
-    ungroup()
+    arrange(game_id, t_abs)
+
+  # Rebound = within 3s of the same team's previous shot. train_xg_model.R
+  # computes this AFTER dropping blocked shots and empty-net shots, so do the
+  # same here (lag over eligible rows only) or the feature means something
+  # different at scoring time than it did in training.
+  s$time_since_own_last_shot <- NA_real_
+  s$is_rebound <- FALSE
+  elig <- which(s$event_type %in% c("shot-on-goal", "missed-shot", "goal") & !is.na(s$goalie_id))
+  if (length(elig) > 0) {
+    elig_df <- s[elig, ] %>%
+      group_by(game_id, owner_team_id) %>%
+      mutate(gap = t_abs - lag(t_abs)) %>%
+      ungroup()
+    s$time_since_own_last_shot[elig] <- elig_df$gap
+    s$is_rebound[elig] <- !is.na(elig_df$gap) & elig_df$gap <= 3
+  }
 
   valid <- !is.na(s$dist_to_net) & !is.na(s$angle_to_net) & !is.na(s$is_rebound) &
            !is.na(s$target_side) & !is.na(s$goalie_id)
