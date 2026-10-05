@@ -6,14 +6,23 @@
 # needs fresh numbers every day), the shot-to-goal relationship doesn't
 # meaningfully drift day to day, so there's no reason to retrain constantly.
 #
-# Output: a saved model file (data/xg_model/xg_model.rds) that the live app
-# and season_sim.R can load and score new shots against — this script only
-# TRAINS, it never runs inside the user-facing app itself.
+# Output: data/xg_model/xg_model.rds, which onice_stats.R loads to score new
+# shots. This script only TRAINS, it never runs inside the user-facing app.
+#
+# SAVE FORMAT (changed): the booster is stored as raw UBJ bytes
+# (xgb.save.raw), NOT as a booster object passed to saveRDS(). A booster saved
+# with saveRDS() carries a version-specific internal handle and fails with
+# "'xgb.Booster' object is corrupted or is from an incompatible XGBoost
+# version" whenever the loading machine's xgboost differs from the training
+# machine's (e.g. trained locally, loaded on a GitHub Actions runner). Raw UBJ
+# loads under any xgboost version.
 
 suppressPackageStartupMessages({
   library(dplyr)
   library(xgboost)
 })
+
+cat("xgboost version:", as.character(packageVersion("xgboost")), "\n")
 
 # ── Config ───────────────────────────────────────────────────────────────
 # Edit this list as more seasons get backfilled. Starting with ~5-6 recent
@@ -38,7 +47,16 @@ pieces <- lapply(SEASONS, function(s) {
   cat("  ", s, ":", nrow(d), "shot events\n")
   d
 })
-shots <- bind_rows(Filter(Negate(is.null), pieces))
+# Normalize types across seasons before binding (older files may have read
+# an ID column as integer and newer ones as character, or vice versa).
+pieces <- Filter(Negate(is.null), pieces)
+pieces <- lapply(pieces, function(d) {
+  for (col in c("game_id", "owner_team_id", "home_id", "goalie_id", "shooter_id")) {
+    if (col %in% names(d)) d[[col]] <- as.character(d[[col]])
+  }
+  d
+})
+shots <- bind_rows(pieces)
 if (nrow(shots) == 0) stop("No shot data found for any requested season — check that shots_raw.csv has actually been backfilled for at least one season in SEASONS.")
 cat("Total shot events loaded:", nrow(shots), "\n\n")
 
@@ -51,13 +69,8 @@ cat("Total shot events loaded:", nrow(shots), "\n\n")
 # Empty-net shots are ALSO excluded — goalie_id is NA exactly when there's
 # no goalie in net, and an empty net is essentially guaranteed to score
 # regardless of distance/angle. Left in, this would flatten (or invert) the
-# expected distance-vs-goal-rate relationship for far-away shots and
-# inflate conversion rates for whatever situational bucket empty-net shots
-# happen to fall into — which is exactly what the first training run's
-# sanity checks showed (the two farthest distance buckets came back nearly
-# identical instead of continuing to drop, and "other" situations converted
-# unusually high). This isn't measuring shot quality, it's measuring
-# "no goalie," so it doesn't belong in an xG model the same way.
+# expected distance-vs-goal-rate relationship for far-away shots. This isn't
+# measuring shot quality, it's measuring "no goalie."
 before_n <- nrow(shots)
 shots <- shots %>%
   filter(event_type %in% c("shot-on-goal", "missed-shot", "goal")) %>%
@@ -77,6 +90,8 @@ if (nrow(shots) < 5000) {
 #   - home_defending_side = the side where the home team's OWN net sits.
 #   - A team's ATTACKING (target) net is on the OPPOSITE side from
 #     whichever net that team defends.
+# NOTE: onice_stats.R's score_shots_with_xg() must build these features the
+# exact same way — if you change anything in this section, change it there too.
 shots <- shots %>%
   mutate(
     is_home_shooter = (owner_team_id == home_id),
@@ -105,8 +120,8 @@ shots <- shots %>%
   filter(!is.na(target_side), !is.na(dist_to_net), dist_to_net < 200)  # drop rows with obviously bad coordinates
 
 # Rebound detection: a shot attempt within 3 seconds of the SAME team's
-# previous shot attempt in the same game. Rebounds convert at a much
-# higher rate than the average shot — a well-established, real xG feature.
+# previous shot attempt in the same game (among the filtered events above).
+# Rebounds convert at a much higher rate than the average shot.
 shots <- shots %>%
   arrange(game_id, t_abs) %>%
   group_by(game_id, owner_team_id) %>%
@@ -117,9 +132,7 @@ shots <- shots %>%
 # ── Sanity checks — DO NOT SKIP THESE ────────────────────────────────────
 # If the coordinate normalization above is flipped or otherwise wrong, the
 # model will still "train" without erroring, it'll just be quietly
-# meaningless — exactly the kind of failure mode that's bitten this project
-# before (units/scope mismatches that produced a number, just the wrong
-# one). Check these prints BEFORE trusting anything downstream:
+# meaningless. Check these prints BEFORE trusting anything downstream:
 cat("\n── Sanity checks (verify these look like real hockey before trusting anything below) ──\n")
 cat("  Median distance to net:", round(median(shots$dist_to_net, na.rm = TRUE), 1), "ft (expect roughly 25-35)\n")
 cat("  Goal rate by distance bucket (MUST decrease as distance increases):\n")
@@ -143,6 +156,7 @@ model_df <- shots %>%
 X <- model.matrix(is_goal ~ dist_to_net + angle_to_net + is_rebound + shot_type_clean + shooter_strength - 1, data = model_df)
 y <- model_df$is_goal
 cat("Training rows:", nrow(X), "| overall goal rate:", round(mean(y), 4), "\n")
+cat("Model columns:", paste(colnames(X), collapse = ", "), "\n")
 
 set.seed(42)
 train_idx <- sample(seq_len(nrow(X)), size = floor(0.8 * nrow(X)))
@@ -153,9 +167,14 @@ dtest  <- xgb.DMatrix(data = X[-train_idx, ], label = y[-train_idx])
 params <- list(objective = "binary:logistic", eval_metric = "logloss",
                 max_depth = 4, eta = 0.05, subsample = 0.8, colsample_bytree = 0.8)
 cat("\nTraining xG model...\n")
-xg_model <- xgb.train(params = params, data = dtrain, nrounds = 500,
-                       watchlist = list(train = dtrain, test = dtest),
-                       early_stopping_rounds = 20, print_every_n = 25, verbose = 1)
+
+# xgboost 3.x renamed xgb.train's `watchlist` argument to `evals`. Pick
+# whichever this installed version uses so the script runs on either.
+eval_arg <- if ("evals" %in% names(formals(xgb.train))) "evals" else "watchlist"
+train_args <- list(params = params, data = dtrain, nrounds = 500,
+                   early_stopping_rounds = 20, print_every_n = 25, verbose = 1)
+train_args[[eval_arg]] <- list(train = dtrain, test = dtest)
+xg_model <- do.call(xgb.train, train_args)
 
 # ── 6. Validate ───────────────────────────────────────────────────────────
 preds <- predict(xg_model, dtest)
@@ -170,6 +189,7 @@ cat("Calibration — mean predicted xG:", round(mean(preds), 4), "vs actual goal
 
 writeLines(c(
   paste("Trained:", Sys.time()),
+  paste("xgboost version:", as.character(packageVersion("xgboost"))),
   paste("Seasons:", paste(SEASONS, collapse = ", ")),
   paste("Training rows:", nrow(X)),
   paste("Test log loss:", round(logloss, 4)),
@@ -179,14 +199,31 @@ writeLines(c(
 ), METRICS_OUT)
 
 # ── 7. Save model + everything needed to score new shots later ─────────────
-# Factor levels are saved alongside the model because model.matrix() needs
-# the SAME columns at prediction time as it had during training — a shot
-# type or strength state that didn't appear in training data would
-# otherwise silently break scoring later.
+# model_raw is the booster as raw UBJ bytes (version-proof; see header note).
+# feature_names are the exact model-matrix column names, which onice_stats.R
+# uses to build scoring features by name.
+raw_model <- xgb.save.raw(xg_model, raw_format = "ubj")
+
+# Round-trip check: reload the raw bytes and confirm it predicts identically,
+# so a bad save fails HERE rather than silently on the next daily run.
+reloaded <- xgb.load.raw(raw_model)
+check_preds <- predict(reloaded, dtest)
+rt_cor  <- suppressWarnings(cor(check_preds, preds))
+rt_diff <- max(abs(check_preds - preds))
+# Tiny differences are possible (e.g. whether predict() uses the best
+# early-stopping iteration or all trees); a broken save would show as low correlation.
+if (is.na(rt_cor) || rt_cor < 0.99) {
+  stop("Round-trip check failed: reloaded model predictions don't match the trained model (correlation ",
+       round(rt_cor, 4), ", max diff ", signif(rt_diff, 3), "). Not saving.")
+}
+cat("Round-trip check passed (correlation", round(rt_cor, 6), "| max diff", signif(rt_diff, 3), ").\n")
+
 saveRDS(list(
-  model = xg_model,
+  model_raw = raw_model,
+  feature_names = colnames(X),
   shot_type_levels = levels(shots$shot_type_clean),
   shooter_strength_levels = levels(shots$shooter_strength),
+  xgboost_version = as.character(packageVersion("xgboost")),
   trained_at = Sys.time(),
   seasons = SEASONS
 ), MODEL_OUT)
