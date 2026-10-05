@@ -40,6 +40,9 @@ jobs:
         run: |
           Rscript -e 'install.packages(c("dplyr","httr","jsonlite","xgboost"), repos="https://packagemanager.posit.co/cran/__linux__/jammy/latest")'
 
+      - name: Show installed xgboost version
+        run: Rscript -e 'cat("xgboost", as.character(packageVersion("xgboost")), "\n")'
+
       - name: Run daily on-ice stats update
         run: Rscript onice_stats.R --mode=daily
 
