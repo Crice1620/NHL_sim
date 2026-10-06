@@ -20,7 +20,7 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,22,EDM,Beyond Red Line,0,5,NA
 2027,2,22,EDM,Center Point,1,5,0.2
 2027,2,22,EDM,Crease,1,2,0.5
-2027,2,22,EDM,High Slot,0,14,NA
+2027,2,22,EDM,High Slot,0,15,NA
 2027,2,22,EDM,L Circle,1,5,0.2
 2027,2,22,EDM,L Corner,0,2,NA
 2027,2,22,EDM,L Net Side,1,1,1
@@ -33,6 +33,23 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,22,EDM,R Corner,0,0,NA
 2027,2,22,EDM,R Net Side,0,2,NA
 2027,2,22,EDM,R Point,0,11,NA
+2027,2,52,WPG,Behind the Net,0,0,NA
+2027,2,52,WPG,Beyond Red Line,0,3,NA
+2027,2,52,WPG,Center Point,0,11,NA
+2027,2,52,WPG,Crease,0,4,NA
+2027,2,52,WPG,High Slot,2,10,0.2
+2027,2,52,WPG,L Circle,0,7,NA
+2027,2,52,WPG,L Corner,0,0,NA
+2027,2,52,WPG,L Net Side,0,1,NA
+2027,2,52,WPG,L Point,1,2,0.5
+2027,2,52,WPG,Low Slot,4,18,0.2222
+2027,2,52,WPG,Offensive Neutral Zone,0,1,NA
+2027,2,52,WPG,Outside L,0,8,NA
+2027,2,52,WPG,Outside R,1,6,0.1667
+2027,2,52,WPG,R Circle,0,14,NA
+2027,2,52,WPG,R Corner,0,0,NA
+2027,2,52,WPG,R Net Side,0,2,NA
+2027,2,52,WPG,R Point,1,7,0.1429
 2027,2,21,COL,Behind the Net,0,0,NA
 2027,2,21,COL,Beyond Red Line,0,0,NA
 2027,2,21,COL,Center Point,1,6,0.1667
@@ -67,24 +84,24 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,30,MIN,R Corner,0,0,NA
 2027,2,30,MIN,R Net Side,0,4,NA
 2027,2,30,MIN,R Point,2,5,0.4
-2027,2,5,PIT,Behind the Net,0,0,NA
-2027,2,5,PIT,Beyond Red Line,0,1,NA
-2027,2,5,PIT,Center Point,0,6,NA
-2027,2,5,PIT,Crease,0,2,NA
-2027,2,5,PIT,High Slot,0,5,NA
-2027,2,5,PIT,L Circle,3,6,0.5
-2027,2,5,PIT,L Corner,0,0,NA
-2027,2,5,PIT,L Net Side,0,2,NA
-2027,2,5,PIT,L Point,0,4,NA
-2027,2,5,PIT,Low Slot,7,23,0.3043
-2027,2,5,PIT,Offensive Neutral Zone,0,0,NA
-2027,2,5,PIT,Outside L,0,2,NA
-2027,2,5,PIT,Outside R,0,0,NA
-2027,2,5,PIT,R Circle,2,7,0.2857
-2027,2,5,PIT,R Corner,0,0,NA
-2027,2,5,PIT,R Net Side,1,1,1
-2027,2,5,PIT,R Point,0,9,NA
-2027,2,24,ANA,Behind the Net,0,1,NA
+2027,2,9,OTT,Behind the Net,0,0,NA
+2027,2,9,OTT,Beyond Red Line,0,4,NA
+2027,2,9,OTT,Center Point,0,5,NA
+2027,2,9,OTT,Crease,3,8,0.375
+2027,2,9,OTT,High Slot,1,3,0.3333
+2027,2,9,OTT,L Circle,0,0,NA
+2027,2,9,OTT,L Corner,0,0,NA
+2027,2,9,OTT,L Net Side,2,4,0.5
+2027,2,9,OTT,L Point,0,2,NA
+2027,2,9,OTT,Low Slot,1,11,0.0909
+2027,2,9,OTT,Offensive Neutral Zone,0,2,NA
+2027,2,9,OTT,Outside L,0,1,NA
+2027,2,9,OTT,Outside R,0,3,NA
+2027,2,9,OTT,R Circle,0,5,NA
+2027,2,9,OTT,R Corner,0,0,NA
+2027,2,9,OTT,R Net Side,0,1,NA
+2027,2,9,OTT,R Point,0,4,NA
+2027,2,24,ANA,Behind the Net,0,0,NA
 2027,2,24,ANA,Beyond Red Line,0,2,NA
 2027,2,24,ANA,Center Point,0,2,NA
 2027,2,24,ANA,Crease,0,1,NA
@@ -101,23 +118,6 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,24,ANA,R Corner,0,0,NA
 2027,2,24,ANA,R Net Side,0,0,NA
 2027,2,24,ANA,R Point,0,1,NA
-2027,2,28,SJS,Behind the Net,0,0,NA
-2027,2,28,SJS,Beyond Red Line,0,1,NA
-2027,2,28,SJS,Center Point,0,5,NA
-2027,2,28,SJS,Crease,2,3,0.6667
-2027,2,28,SJS,High Slot,1,6,0.1667
-2027,2,28,SJS,L Circle,1,6,0.1667
-2027,2,28,SJS,L Corner,0,0,NA
-2027,2,28,SJS,L Net Side,0,0,NA
-2027,2,28,SJS,L Point,0,4,NA
-2027,2,28,SJS,Low Slot,2,9,0.2222
-2027,2,28,SJS,Offensive Neutral Zone,0,3,NA
-2027,2,28,SJS,Outside L,1,1,1
-2027,2,28,SJS,Outside R,0,2,NA
-2027,2,28,SJS,R Circle,1,8,0.125
-2027,2,28,SJS,R Corner,0,0,NA
-2027,2,28,SJS,R Net Side,0,2,NA
-2027,2,28,SJS,R Point,1,7,0.1429
 2027,2,55,SEA,Behind the Net,0,0,NA
 2027,2,55,SEA,Beyond Red Line,0,4,NA
 2027,2,55,SEA,Center Point,0,6,NA
@@ -169,23 +169,57 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,54,VGK,R Corner,0,0,NA
 2027,2,54,VGK,R Net Side,0,2,NA
 2027,2,54,VGK,R Point,0,7,NA
-2027,2,6,BOS,Behind the Net,0,5,NA
-2027,2,6,BOS,Beyond Red Line,0,2,NA
-2027,2,6,BOS,Center Point,1,5,0.2
-2027,2,6,BOS,Crease,0,1,NA
-2027,2,6,BOS,High Slot,2,10,0.2
-2027,2,6,BOS,L Circle,0,9,NA
-2027,2,6,BOS,L Corner,0,1,NA
-2027,2,6,BOS,L Net Side,0,0,NA
-2027,2,6,BOS,L Point,0,6,NA
-2027,2,6,BOS,Low Slot,5,19,0.2632
-2027,2,6,BOS,Offensive Neutral Zone,0,0,NA
-2027,2,6,BOS,Outside L,0,7,NA
-2027,2,6,BOS,Outside R,0,4,NA
-2027,2,6,BOS,R Circle,0,6,NA
-2027,2,6,BOS,R Corner,0,0,NA
-2027,2,6,BOS,R Net Side,0,1,NA
-2027,2,6,BOS,R Point,0,4,NA
+2027,2,14,TBL,Behind the Net,0,0,NA
+2027,2,14,TBL,Beyond Red Line,0,0,NA
+2027,2,14,TBL,Center Point,0,16,NA
+2027,2,14,TBL,Crease,1,4,0.25
+2027,2,14,TBL,High Slot,1,9,0.1111
+2027,2,14,TBL,L Circle,0,8,NA
+2027,2,14,TBL,L Corner,1,1,1
+2027,2,14,TBL,L Net Side,0,3,NA
+2027,2,14,TBL,L Point,0,3,NA
+2027,2,14,TBL,Low Slot,2,22,0.0909
+2027,2,14,TBL,Offensive Neutral Zone,1,1,1
+2027,2,14,TBL,Outside L,0,5,NA
+2027,2,14,TBL,Outside R,0,1,NA
+2027,2,14,TBL,R Circle,2,12,0.1667
+2027,2,14,TBL,R Corner,0,0,NA
+2027,2,14,TBL,R Net Side,0,1,NA
+2027,2,14,TBL,R Point,0,4,NA
+2027,2,5,PIT,Behind the Net,0,1,NA
+2027,2,5,PIT,Beyond Red Line,0,3,NA
+2027,2,5,PIT,Center Point,0,8,NA
+2027,2,5,PIT,Crease,0,3,NA
+2027,2,5,PIT,High Slot,1,8,0.125
+2027,2,5,PIT,L Circle,3,8,0.375
+2027,2,5,PIT,L Corner,0,0,NA
+2027,2,5,PIT,L Net Side,0,2,NA
+2027,2,5,PIT,L Point,0,7,NA
+2027,2,5,PIT,Low Slot,8,34,0.2353
+2027,2,5,PIT,Offensive Neutral Zone,0,0,NA
+2027,2,5,PIT,Outside L,0,5,NA
+2027,2,5,PIT,Outside R,0,0,NA
+2027,2,5,PIT,R Circle,2,10,0.2
+2027,2,5,PIT,R Corner,0,0,NA
+2027,2,5,PIT,R Net Side,1,1,1
+2027,2,5,PIT,R Point,0,10,NA
+2027,2,28,SJS,Behind the Net,0,0,NA
+2027,2,28,SJS,Beyond Red Line,0,1,NA
+2027,2,28,SJS,Center Point,0,6,NA
+2027,2,28,SJS,Crease,2,3,0.6667
+2027,2,28,SJS,High Slot,1,6,0.1667
+2027,2,28,SJS,L Circle,1,8,0.125
+2027,2,28,SJS,L Corner,0,0,NA
+2027,2,28,SJS,L Net Side,0,0,NA
+2027,2,28,SJS,L Point,0,5,NA
+2027,2,28,SJS,Low Slot,2,14,0.1429
+2027,2,28,SJS,Offensive Neutral Zone,0,3,NA
+2027,2,28,SJS,Outside L,1,2,0.5
+2027,2,28,SJS,Outside R,0,2,NA
+2027,2,28,SJS,R Circle,1,10,0.1
+2027,2,28,SJS,R Corner,0,0,NA
+2027,2,28,SJS,R Net Side,0,2,NA
+2027,2,28,SJS,R Point,1,8,0.125
 2027,2,13,FLA,Behind the Net,0,1,NA
 2027,2,13,FLA,Beyond Red Line,0,2,NA
 2027,2,13,FLA,Center Point,1,4,0.25
@@ -220,6 +254,23 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,23,VAN,R Corner,0,1,NA
 2027,2,23,VAN,R Net Side,1,3,0.3333
 2027,2,23,VAN,R Point,0,5,NA
+2027,2,6,BOS,Behind the Net,0,5,NA
+2027,2,6,BOS,Beyond Red Line,0,2,NA
+2027,2,6,BOS,Center Point,1,8,0.125
+2027,2,6,BOS,Crease,0,1,NA
+2027,2,6,BOS,High Slot,2,12,0.1667
+2027,2,6,BOS,L Circle,0,12,NA
+2027,2,6,BOS,L Corner,1,2,0.5
+2027,2,6,BOS,L Net Side,0,0,NA
+2027,2,6,BOS,L Point,0,8,NA
+2027,2,6,BOS,Low Slot,5,21,0.2381
+2027,2,6,BOS,Offensive Neutral Zone,0,0,NA
+2027,2,6,BOS,Outside L,0,9,NA
+2027,2,6,BOS,Outside R,0,6,NA
+2027,2,6,BOS,R Circle,0,8,NA
+2027,2,6,BOS,R Corner,0,0,NA
+2027,2,6,BOS,R Net Side,0,1,NA
+2027,2,6,BOS,R Point,0,4,NA
 2027,2,8,MTL,Behind the Net,0,0,NA
 2027,2,8,MTL,Beyond Red Line,0,3,NA
 2027,2,8,MTL,Center Point,0,3,NA
@@ -237,23 +288,6 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,8,MTL,R Corner,0,0,NA
 2027,2,8,MTL,R Net Side,1,1,1
 2027,2,8,MTL,R Point,1,5,0.2
-2027,2,52,WPG,Behind the Net,0,0,NA
-2027,2,52,WPG,Beyond Red Line,0,1,NA
-2027,2,52,WPG,Center Point,0,9,NA
-2027,2,52,WPG,Crease,0,3,NA
-2027,2,52,WPG,High Slot,1,5,0.2
-2027,2,52,WPG,L Circle,0,4,NA
-2027,2,52,WPG,L Corner,0,0,NA
-2027,2,52,WPG,L Net Side,0,1,NA
-2027,2,52,WPG,L Point,1,2,0.5
-2027,2,52,WPG,Low Slot,2,12,0.1667
-2027,2,52,WPG,Offensive Neutral Zone,0,0,NA
-2027,2,52,WPG,Outside L,0,6,NA
-2027,2,52,WPG,Outside R,1,5,0.2
-2027,2,52,WPG,R Circle,0,7,NA
-2027,2,52,WPG,R Corner,0,0,NA
-2027,2,52,WPG,R Net Side,0,0,NA
-2027,2,52,WPG,R Point,1,5,0.2
 2027,2,12,CAR,Behind the Net,0,2,NA
 2027,2,12,CAR,Beyond Red Line,0,1,NA
 2027,2,12,CAR,Center Point,0,8,NA
@@ -271,23 +305,6 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,12,CAR,R Corner,0,0,NA
 2027,2,12,CAR,R Net Side,0,3,NA
 2027,2,12,CAR,R Point,0,6,NA
-2027,2,9,OTT,Behind the Net,0,0,NA
-2027,2,9,OTT,Beyond Red Line,0,1,NA
-2027,2,9,OTT,Center Point,0,3,NA
-2027,2,9,OTT,Crease,2,5,0.4
-2027,2,9,OTT,High Slot,0,1,NA
-2027,2,9,OTT,L Circle,0,0,NA
-2027,2,9,OTT,L Corner,0,0,NA
-2027,2,9,OTT,L Net Side,1,2,0.5
-2027,2,9,OTT,L Point,0,1,NA
-2027,2,9,OTT,Low Slot,0,5,NA
-2027,2,9,OTT,Offensive Neutral Zone,0,0,NA
-2027,2,9,OTT,Outside L,0,1,NA
-2027,2,9,OTT,Outside R,0,2,NA
-2027,2,9,OTT,R Circle,0,5,NA
-2027,2,9,OTT,R Corner,0,0,NA
-2027,2,9,OTT,R Net Side,0,1,NA
-2027,2,9,OTT,R Point,0,2,NA
 2027,2,2,NYI,Behind the Net,0,0,NA
 2027,2,2,NYI,Beyond Red Line,0,2,NA
 2027,2,2,NYI,Center Point,0,5,NA
@@ -334,7 +351,7 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,29,CBJ,Low Slot,2,11,0.1818
 2027,2,29,CBJ,Offensive Neutral Zone,1,1,1
 2027,2,29,CBJ,Outside L,0,3,NA
-2027,2,29,CBJ,Outside R,0,1,NA
+2027,2,29,CBJ,Outside R,0,2,NA
 2027,2,29,CBJ,R Circle,0,2,NA
 2027,2,29,CBJ,R Corner,0,0,NA
 2027,2,29,CBJ,R Net Side,0,0,NA
@@ -390,23 +407,6 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,7,BUF,R Corner,0,0,NA
 2027,2,7,BUF,R Net Side,0,3,NA
 2027,2,7,BUF,R Point,0,1,NA
-2027,2,14,TBL,Behind the Net,0,0,NA
-2027,2,14,TBL,Beyond Red Line,0,0,NA
-2027,2,14,TBL,Center Point,0,10,NA
-2027,2,14,TBL,Crease,0,1,NA
-2027,2,14,TBL,High Slot,1,6,0.1667
-2027,2,14,TBL,L Circle,0,5,NA
-2027,2,14,TBL,L Corner,1,1,1
-2027,2,14,TBL,L Net Side,0,2,NA
-2027,2,14,TBL,L Point,0,3,NA
-2027,2,14,TBL,Low Slot,0,14,NA
-2027,2,14,TBL,Offensive Neutral Zone,1,1,1
-2027,2,14,TBL,Outside L,0,4,NA
-2027,2,14,TBL,Outside R,0,1,NA
-2027,2,14,TBL,R Circle,1,4,0.25
-2027,2,14,TBL,R Corner,0,0,NA
-2027,2,14,TBL,R Net Side,0,0,NA
-2027,2,14,TBL,R Point,0,2,NA
 2027,2,1,NJD,Behind the Net,0,0,NA
 2027,2,1,NJD,Beyond Red Line,0,1,NA
 2027,2,1,NJD,Center Point,0,6,NA
@@ -424,6 +424,23 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,1,NJD,R Corner,0,0,NA
 2027,2,1,NJD,R Net Side,0,2,NA
 2027,2,1,NJD,R Point,0,8,NA
+2027,2,25,DAL,Behind the Net,2,4,0.5
+2027,2,25,DAL,Beyond Red Line,0,4,NA
+2027,2,25,DAL,Center Point,0,5,NA
+2027,2,25,DAL,Crease,0,4,NA
+2027,2,25,DAL,High Slot,1,4,0.25
+2027,2,25,DAL,L Circle,1,8,0.125
+2027,2,25,DAL,L Corner,0,0,NA
+2027,2,25,DAL,L Net Side,0,1,NA
+2027,2,25,DAL,L Point,0,4,NA
+2027,2,25,DAL,Low Slot,1,20,0.05
+2027,2,25,DAL,Offensive Neutral Zone,0,2,NA
+2027,2,25,DAL,Outside L,0,6,NA
+2027,2,25,DAL,Outside R,0,5,NA
+2027,2,25,DAL,R Circle,1,6,0.1667
+2027,2,25,DAL,R Corner,0,0,NA
+2027,2,25,DAL,R Net Side,0,1,NA
+2027,2,25,DAL,R Point,0,7,NA
 2027,2,10,TOR,Behind the Net,0,1,NA
 2027,2,10,TOR,Beyond Red Line,0,2,NA
 2027,2,10,TOR,Center Point,0,5,NA
@@ -443,21 +460,21 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,10,TOR,R Point,0,2,NA
 2027,2,4,PHI,Behind the Net,0,1,NA
 2027,2,4,PHI,Beyond Red Line,0,1,NA
-2027,2,4,PHI,Center Point,0,7,NA
+2027,2,4,PHI,Center Point,0,9,NA
 2027,2,4,PHI,Crease,0,1,NA
-2027,2,4,PHI,High Slot,1,7,0.1429
-2027,2,4,PHI,L Circle,1,8,0.125
+2027,2,4,PHI,High Slot,1,11,0.0909
+2027,2,4,PHI,L Circle,2,12,0.1667
 2027,2,4,PHI,L Corner,0,0,NA
 2027,2,4,PHI,L Net Side,0,0,NA
 2027,2,4,PHI,L Point,0,4,NA
-2027,2,4,PHI,Low Slot,2,11,0.1818
+2027,2,4,PHI,Low Slot,2,12,0.1667
 2027,2,4,PHI,Offensive Neutral Zone,0,2,NA
 2027,2,4,PHI,Outside L,0,5,NA
 2027,2,4,PHI,Outside R,0,3,NA
-2027,2,4,PHI,R Circle,0,7,NA
+2027,2,4,PHI,R Circle,0,8,NA
 2027,2,4,PHI,R Corner,0,0,NA
-2027,2,4,PHI,R Net Side,0,2,NA
-2027,2,4,PHI,R Point,0,3,NA
+2027,2,4,PHI,R Net Side,0,3,NA
+2027,2,4,PHI,R Point,0,4,NA
 2027,2,26,LAK,Behind the Net,0,1,NA
 2027,2,26,LAK,Beyond Red Line,0,3,NA
 2027,2,26,LAK,Center Point,1,5,0.2
@@ -478,7 +495,7 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,17,DET,Behind the Net,0,1,NA
 2027,2,17,DET,Beyond Red Line,0,4,NA
 2027,2,17,DET,Center Point,0,7,NA
-2027,2,17,DET,Crease,2,3,0.6667
+2027,2,17,DET,Crease,2,4,0.5
 2027,2,17,DET,High Slot,0,6,NA
 2027,2,17,DET,L Circle,0,8,NA
 2027,2,17,DET,L Corner,0,0,NA
@@ -492,23 +509,6 @@ season,game_type,team_id,team_abbrev,zone,goals,sog,sh_pct
 2027,2,17,DET,R Corner,0,1,NA
 2027,2,17,DET,R Net Side,0,0,NA
 2027,2,17,DET,R Point,0,4,NA
-2027,2,25,DAL,Behind the Net,0,1,NA
-2027,2,25,DAL,Beyond Red Line,0,3,NA
-2027,2,25,DAL,Center Point,0,4,NA
-2027,2,25,DAL,Crease,0,1,NA
-2027,2,25,DAL,High Slot,0,2,NA
-2027,2,25,DAL,L Circle,0,4,NA
-2027,2,25,DAL,L Corner,0,0,NA
-2027,2,25,DAL,L Net Side,0,1,NA
-2027,2,25,DAL,L Point,0,4,NA
-2027,2,25,DAL,Low Slot,0,13,NA
-2027,2,25,DAL,Offensive Neutral Zone,0,2,NA
-2027,2,25,DAL,Outside L,0,4,NA
-2027,2,25,DAL,Outside R,0,3,NA
-2027,2,25,DAL,R Circle,1,5,0.2
-2027,2,25,DAL,R Corner,0,0,NA
-2027,2,25,DAL,R Net Side,0,1,NA
-2027,2,25,DAL,R Point,0,7,NA
 2027,2,16,CHI,Behind the Net,0,0,NA
 2027,2,16,CHI,Beyond Red Line,0,5,NA
 2027,2,16,CHI,Center Point,0,4,NA
