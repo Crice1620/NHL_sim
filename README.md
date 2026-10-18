@@ -1,3 +1,3 @@
 # NHL Edge Stats
 
-Auto-generated: 2026-10-17 12:08 UTC
+Auto-generated: 2026-10-18 12:36 UTC
