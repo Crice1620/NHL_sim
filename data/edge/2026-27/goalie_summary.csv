@@ -7,7 +7,7 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2027,2,8476999,G,Linus,Ullmark,OTT,10,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8480280,G,Jeremy,Swayman,BOS,15,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8482221,G,Devon,Levi,EDM,10,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2027,2,8484170,G,Jacob,Fowler,MTL,12,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2027,2,8484170,G,Jacob,Fowler,MTL,13,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8480981,G,Joel,Hofer,STL,15,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8476945,G,Connor,Hellebuyck,NJD,7,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8477424,G,Juuse,Saros,NSH,15,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -19,7 +19,7 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2027,2,8474593,G,Jacob,Markstrom,FLA,11,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8474596,G,Jake,Allen,NJD,10,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8477465,G,Tristan,Jarry,EDM,10,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2027,2,8478872,G,Karel,Vejmelka,UTA,15,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2027,2,8478872,G,Karel,Vejmelka,UTA,16,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8479394,G,Carter,Hart,VGK,12,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8481033,G,Akira,Schmid,FLA,11,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8482137,G,Yaroslav,Askarov,SJS,15,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -44,6 +44,7 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2027,2,8483548,G,Brandon,Bussi,CAR,8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8483710,G,Dennis,Hildeby,TBL,5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8475683,G,Sergei,Bobrovsky,TOR,13,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2027,2,8476914,G,Joonas,Korpisalo,NYR,3,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8478024,G,Ville,Husso,ANA,7,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8478048,G,Igor,Shesterkin,NYR,5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8478435,G,Dan,Vladar,PHI,12,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -55,7 +56,6 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2027,2,8482447,G,Leevi,Meriläinen,VAN,16,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8482487,G,Jakub,Dobes,MTL,8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8473575,G,Semyon,Varlamov,NYI,6,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
-2027,2,8476914,G,Joonas,Korpisalo,NYR,2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8479193,G,Casey,DeSmith,DAL,6,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8482982,G,Jet,Greaves,CBJ,11,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8483703,G,Sergei,Murashov,PIT,8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
@@ -66,6 +66,7 @@ season,game_type,player_id,position,first_name,last_name,team_abbrev,gp,dist_per
 2027,2,8477992,G,Jonas,Johansson,OTT,4,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8480947,G,Kevin,Lankinen,VAN,9,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8483532,G,Clay,Stevenson,WPG,5,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
+2027,2,8484268,G,Nikita,Tolopilo,VAN,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8485545,G,Michal,Postava,DET,2,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8473503,G,James,Reimer,NYR,1,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
 2027,2,8476341,G,Anton,Forsberg,LAK,8,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA
